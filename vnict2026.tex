@@ -20,8 +20,8 @@
 \begin{document}
 
 \title{
-\textbf{Phát hiện bất thường log cho hạ tầng giáo dục số dựa trên Drain3 và phân tích chuỗi sự kiện}\\[0.8em]
-\large\textit{Log Anomaly Detection for Digital Education Infrastructure using Drain3 and Event Sequence Analysis}
+\textbf{Ứng dụng mạng TCN và Transformer trong phát hiện lỗi bất thường từ dữ liệu log mạng doanh nghiệp và công nghiệp quy mô lớn}\\[0.8em]
+\large\textit{Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks}
 }
 
 \author{\IEEEauthorblockN{Trịnh Hoàng Tú}
@@ -29,12 +29,18 @@
 \textit{Trường Đại học Ngoại ngữ - Tin học TP.HCM (HUFLIT)}\\
 TP. Hồ Chí Minh, Việt Nam \\
 Email: tht.csec2005@gmail.com}
+\and
+\IEEEauthorblockN{Cao Tiến Thành}
+\IEEEauthorblockA{\textit{Khoa Công nghệ thông tin} \\
+\textit{Trường Đại học Ngoại ngữ - Tin học TP.HCM (HUFLIT)}\\
+TP. Hồ Chí Minh, Việt Nam \\
+Email: thanhct@huflit.edu.vn}
 }
 
 \maketitle
 
 \begin{abstract}
-Bài báo trình bày một pipeline tái lập cho phát hiện bất thường log dựa trên Drain3 và phân tích chuỗi sự kiện, đánh giá trên hai benchmark log hệ thống và định hướng chuyển giao sang hạ tầng giáo dục số. Log thô được parse thành event template, gom thành chuỗi vận hành và chấm điểm bất thường bằng bốn nhánh thay thế: PCA/TruncatedSVD reconstruction, Isolation Forest, DeepLog next-event prediction và một Transformer masked event modeling lấy cảm hứng từ LogBERT. Trên HDFS (500.000 dòng, 137 template), đánh giá 5 random seed cho thấy PCA dẫn đầu với F1 $0.5711 \pm 0.0944$, cao hơn TruncatedSVD ($0.4540 \pm 0.1366$), DeepLog top-k ($0.4608 \pm 0.0196$) và Isolation Forest ($0.1328 \pm 0.0103$). Trên BGL (500.000 dòng, 198 template, cửa sổ $W{=}100$), thứ tự đảo chiều: DeepLog đạt F1 $0.9822 \pm 0.0035$ và Transformer val-tuned đạt $0.9388 \pm 0.0080$, vượt nhẹ PCA. Hai kết quả cho thấy hiệu quả của mỗi nhánh chấm điểm phụ thuộc trực tiếp vào vocabulary, độ dài cửa sổ và tỷ lệ anomaly của dữ liệu. Đóng góp gồm: (i) pipeline đánh giá tái lập với protocol tránh rò rỉ test set; (ii) ablation study cho Drain3 threshold, DeepLog top-k và mask ratio; (iii) đánh giá chéo HDFS--BGL trên cùng pipeline; (iv) benchmark độ trễ và mapping thận trọng sang môi trường LMS đã ẩn danh.
+Bài báo trình bày một pipeline phát hiện bất thường log hệ thống quy mô lớn dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh các mạng tích chập thời gian (TCN) và Transformer với các baseline truyền thống trên hai bộ dữ liệu log mạng doanh nghiệp và công nghiệp quy mô lớn. Log thô được parse thành event template, gom thành chuỗi và chấm điểm bất thường bằng các nhánh: PCA/SVD, Isolation Forest, DeepLog (LSTM next-event prediction), mạng TCN (Temporal Convolutional Network) và Transformer masked event modeling. Trên HDFS (500k dòng, 137 template), thực nghiệm 5 random seed cho thấy PCA đạt F1 $0.5711 \pm 0.0944$, vượt nhẹ DeepLog và TCN ($0.4613 \pm 0.0199$). Trên BGL (500k dòng, 198 template, cửa sổ $W{=}100$), mạng TCN dẫn đầu với F1 $0.9826 \pm 0.0022$ (chế độ top-k) và F1 $0.9474 \pm 0.0035$ (chế độ NLL threshold), vượt trội hơn DeepLog LSTM ($0.9820 \pm 0.0042$ và $0.9381 \pm 0.0075$) cũng như Transformer val-tuned ($0.9388 \pm 0.0080$). Kết quả cho thấy TCN có ưu thế lớn cả về hiệu năng phân loại lẫn độ trễ suy luận so với LSTM và Transformer trên chuỗi dài. Đóng góp gồm: (i) pipeline đánh giá tái lập tránh rò rỉ dữ liệu; (ii) ablation cho Drain3 threshold, DeepLog/TCN top-k và mask ratio; (iii) đánh giá chéo HDFS--BGL; (iv) benchmark độ trễ suy luận của TCN và Transformer trên CPU.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -42,7 +48,7 @@ Log anomaly detection, masked event modeling, Transformer, Drain3, AIOps, digita
 \end{IEEEkeywords}
 
 \section{Giới thiệu}
-Hạ tầng giáo dục số hiện đại tích hợp LMS, máy chủ web, cơ sở dữ liệu, hệ thống xác thực, API và dịch vụ đám mây; mỗi thành phần sinh log với định dạng và tần suất khác nhau. Log của LMS vừa phản ánh trạng thái kỹ thuật vừa thể hiện luồng nghiệp vụ đặc thù như đăng nhập hàng loạt theo lịch học, truy cập bài thi và gọi API học liệu, trong khi luật thủ công nhanh chóng lỗi thời khi hệ thống thay đổi. Bài toán phát hiện bất thường log do đó cần được xử lý ở cấp \emph{chuỗi sự kiện} thay vì từng dòng riêng lẻ.
+Hạ tầng mạng doanh nghiệp và công nghiệp quy mô lớn hiện đại tích hợp LMS, máy chủ web, cơ sở dữ liệu, hệ thống xác thực, API và dịch vụ đám mây; mỗi thành phần sinh log với định dạng và tần suất khác nhau. Log của LMS vừa phản ánh trạng thái kỹ thuật vừa thể hiện luồng nghiệp vụ đặc thù như đăng nhập hàng loạt, truy cập hệ thống file và gọi các API dịch vụ, trong khi luật thủ công nhanh chóng lỗi thời khi hệ thống thay đổi. Bài toán phát hiện bất thường log do đó cần được xử lý ở cấp \emph{chuỗi sự kiện} thay vì từng dòng riêng lẻ.
 
 Bài báo định vị như một nghiên cứu ứng dụng và đánh giá hệ thống, không đề xuất thuật toán anomaly detection mới. Ý tưởng trung tâm là xem \textit{chuỗi event template} như tầng biểu diễn trung gian: đủ gọn để chạy baseline nhẹ, đủ cấu trúc để mở rộng sang mô hình chuỗi, và đủ rõ ràng để ánh xạ sang các đơn vị vận hành của LMS như session, người dùng đã ẩn danh hoặc cửa sổ thời gian. Ba câu hỏi nghiên cứu được đặt ra:
 \begin{itemize}
@@ -51,7 +57,7 @@ Bài báo định vị như một nghiên cứu ứng dụng và đánh giá h�
     \item \textbf{RQ3:} Thứ tự ưu thế của các nhánh có giữ nguyên khi chuyển từ HDFS sang BGL (đặc trưng dữ liệu rất khác) không?
 \end{itemize}
 
-Đóng góp chính gồm: (1) pipeline Drain3--event sequence--anomaly scoring với bốn nhánh chấm điểm thay thế (PCA/SVD, Isolation Forest, DeepLog, Transformer masked event modeling); (2) đánh giá đa-seed (5 random seed) trên HDFS với protocol tránh rò rỉ test set, kèm grouping strategy study cho Block ID/fixed window/sliding window; (3) đánh giá chéo HDFS--BGL trên cùng pipeline; (4) ablation cho Drain3 threshold, DeepLog top-k và Transformer mask ratio, benchmark độ trễ suy luận; (5) phân tích chi phí, lỗi dự kiến và mapping thận trọng sang LMS/cổng thông tin giáo dục đã ẩn danh.
+Đóng góp chính gồm: (1) pipeline Drain3--event sequence--anomaly scoring với bốn nhánh chấm điểm thay thế (PCA/SVD, Isolation Forest, DeepLog, Transformer masked event modeling); (2) đánh giá đa-seed (5 random seed) trên HDFS với protocol tránh rò rỉ test set, kèm grouping strategy study cho Block ID/fixed window/sliding window; (3) đánh giá chéo HDFS--BGL trên cùng pipeline; (4) ablation cho Drain3 threshold, DeepLog top-k và Transformer mask ratio, benchmark độ trễ suy luận; (5) phân tích chi phí, lỗi dự kiến và mapping thận trọng sang hạ tầng mạng lớn.
 
 \section{Các nghiên cứu liên quan}
 \subsection{Phương pháp thống kê và học máy truyền thống}
@@ -88,7 +94,7 @@ Prompt/LLM & LogPPT, LogPrompt, LogGPT & Có tiềm năng giải thích cảnh b
 \end{table}
 
 \subsection{Khoảng trống nghiên cứu}
-Từ các công trình liên quan, có thể rút ra bốn khoảng trống chính. Thứ nhất, các phương pháp thống kê và học máy truyền thống như PCA hoặc Isolation Forest nhẹ và dễ triển khai, nhưng thường xem log như vector tần suất nên khó nắm bắt thứ tự sự kiện. Thứ hai, các mô hình chuỗi như DeepLog, LogAnomaly, LogRobust và PLELog đã cải thiện khả năng học quan hệ tuần tự hoặc ngữ nghĩa, nhưng vẫn phụ thuộc vào kiến trúc tuần tự, chất lượng nhãn hoặc tính ổn định của log \cite{b1,b13,b14,b15}. Thứ ba, các mô hình Transformer như LogBERT có khả năng học ngữ cảnh hai chiều, nhưng hiệu quả phụ thuộc mạnh vào chất lượng bước log parsing và cách gom chuỗi \cite{b2}. Thứ tư, phần lớn benchmark log anomaly detection tập trung vào hệ thống hạ tầng như HDFS/BGL; việc ánh xạ pipeline này sang LMS cần làm rõ đơn vị gom chuỗi, ràng buộc riêng tư dữ liệu và các kịch bản nghiệp vụ giáo dục số.
+Từ các công trình liên quan, có thể rút ra bốn khoảng trống chính. Thứ nhất, các phương pháp thống kê và học máy truyền thống như PCA hoặc Isolation Forest nhẹ và dễ triển khai, nhưng thường xem log như vector tần suất nên khó nắm bắt thứ tự sự kiện. Thứ hai, các mô hình chuỗi như DeepLog, LogAnomaly, LogRobust và PLELog đã cải thiện khả năng học quan hệ tuần tự hoặc ngữ nghĩa, nhưng vẫn phụ thuộc vào kiến trúc tuần tự, chất lượng nhãn hoặc tính ổn định của log \cite{b1,b13,b14,b15}. Thứ ba, các mô hình Transformer như LogBERT có khả năng học ngữ cảnh hai chiều, nhưng hiệu quả phụ thuộc mạnh vào chất lượng bước log parsing và cách gom chuỗi \cite{b2}. Thứ tư, phần lớn benchmark log anomaly detection tập trung vào hệ thống hạ tầng như HDFS/BGL; việc ánh xạ pipeline này sang LMS cần làm rõ đơn vị gom chuỗi, ràng buộc riêng tư dữ liệu và các kịch bản nghiệp vụ mạng doanh nghiệp và công nghiệp quy mô lớn.
 
 \begin{table}[!t]
 \caption{Research gaps rút ra từ các hướng nghiên cứu liên quan}
@@ -113,7 +119,7 @@ Do đó, bài báo không chỉ chọn một mô hình học sâu đơn lẻ mà
 
 \section{Phương pháp đề xuất}
 \subsection{Tổng quan pipeline}
-Pipeline đề xuất được thiết kế theo hướng tách rõ ba tầng xử lý: chuẩn hóa log, xây dựng chuỗi sự kiện và phát hiện bất thường. Đầu vào là tập log thô $L=\{l_1,l_2,\ldots,l_N\}$ sinh ra từ hệ thống vận hành. Đầu ra là nhãn hoặc điểm bất thường $a(S)$ cho từng chuỗi sự kiện $S$. Trong thực nghiệm HDFS, một chuỗi tương ứng với một Block ID; trong môi trường giáo dục số, chuỗi có thể tương ứng với một phiên đăng nhập, một người dùng đã ẩn danh, một dịch vụ hoặc một cửa sổ thời gian.
+Pipeline đề xuất được thiết kế theo hướng tách rõ ba tầng xử lý: chuẩn hóa log, xây dựng chuỗi sự kiện và phát hiện bất thường. Đầu vào là tập log thô $L=\{l_1,l_2,\ldots,l_N\}$ sinh ra từ hệ thống vận hành. Đầu ra là nhãn hoặc điểm bất thường $a(S)$ cho từng chuỗi sự kiện $S$. Trong thực nghiệm HDFS, một chuỗi tương ứng với một Block ID; trong môi trường mạng doanh nghiệp và công nghiệp quy mô lớn, chuỗi có thể tương ứng với một phiên đăng nhập, một người dùng đã ẩn danh, một dịch vụ hoặc một cửa sổ thời gian.
 
 \begin{figure}[!t]
 \centering
@@ -123,10 +129,10 @@ Pipeline đề xuất được thiết kế theo hướng tách rõ ba tầng x�
     box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.45cm, minimum height=0.62cm, font=\scriptsize},
     arrow/.style={-{Latex[length=2mm]}, thick}
 ]
-\node[box] (raw) {Raw logs\\HDFS/LMS/API};
+\node[box] (raw) {Raw logs\\HDFS/BGL/API};
 \node[box, below=of raw] (pre) {Preprocess\\mask variables};
 \node[box, below=of pre] (parse) {Drain3\\event templates};
-\node[box, below=of parse] (seq) {Group events\\Block/session/window};
+\node[box, below=of parse] (seq) {Group events\\Block/window};
 \node[box, below left=of seq] (vec) {Feature view\\BoE/TF-IDF};
 \node[box, below=of vec] (base) {Baselines\\PCA/SVD/IF};
 \node[box, below right=of seq] (bert) {Sequence view\\Transformer};
@@ -177,7 +183,7 @@ Transformer (LogBERT-inspired) & Chuỗi event & Contextual anomaly score \\
 \end{center}
 \end{table}
 
-Trong định hướng hạ tầng giáo dục số, pipeline này có thể được chuyển sang các nguồn như LMS, API gateway, reverse proxy, hệ thống xác thực, cơ sở dữ liệu và máy chủ ứng dụng sau khi log được ẩn danh. Thay vì xây dựng luật riêng cho từng nguồn log, hệ thống học pattern vận hành bình thường từ chuỗi sự kiện và đánh dấu các chuỗi lệch khỏi pattern đó. Khả năng chuyển giao này cần được xác nhận bằng log LMS thật trong giai đoạn tiếp theo.
+Trong định hướng hệ thống mạng doanh nghiệp và công nghiệp, pipeline này có thể được chuyển sang các nguồn như LMS, API gateway, reverse proxy, hệ thống xác thực, cơ sở dữ liệu và máy chủ ứng dụng sau khi log được ẩn danh. Thay vì xây dựng luật riêng cho từng nguồn log, hệ thống học pattern vận hành bình thường từ chuỗi sự kiện và đánh dấu các chuỗi lệch khỏi pattern đó. Khả năng chuyển giao này cần được xác nhận bằng log LMS thật trong giai đoạn tiếp theo.
 
 \subsection{Phân tích cú pháp với Drain3}
 Drain3 được sử dụng để tách log phi cấu trúc thành các mẫu (templates). Một dòng log thường bao gồm phần cố định mô tả loại sự kiện và phần biến đổi phát sinh khi chạy hệ thống. Drain3 giữ lại phần cố định và thay các giá trị biến đổi bằng ký hiệu wildcard. Ví dụ:
@@ -191,7 +197,7 @@ Drain3 được sử dụng để tách log phi cấu trúc thành các mẫu (t
 Sim(T_1, T_2) = \frac{\sum_{i=1}^{n} equ(t_{1,i}, t_{2,i})}{n}
 \label{eq_sim}
 \end{equation}
-Trong đó $n$ là số lượng token và $equ$ trả về 1 nếu hai token tương ứng giống nhau, ngược lại trả về 0. Nếu độ tương đồng giữa dòng log mới và template hiện có lớn hơn ngưỡng $st$, dòng log được gán vào template đó; nếu không, Drain3 tạo template mới. Trong thực nghiệm, chúng tôi đặt $st=0.5$ và độ sâu cây bằng 4. Cấu hình này tạo 137 event template từ 500.000 dòng HDFS, cho thấy không gian event sau parsing đủ gọn để huấn luyện mô hình phía sau. Các tham số này cần được tinh chỉnh lại khi chuyển sang log thực tế của LMS vì format log có thể khác đáng kể giữa Moodle, Canvas, hệ thống tự phát triển và dịch vụ đám mây.
+Trong đó $n$ là số lượng token và $equ$ trả về 1 nếu hai token tương ứng giống nhau, ngược lại trả về 0. Nếu độ tương đồng giữa dòng log mới và template hiện có lớn hơn ngưỡng $st$, dòng log được gán vào template đó; nếu không, Drain3 tạo template mới. Trong thực nghiệm, chúng tôi đặt $st=0.5$ và độ sâu cây bằng 4. Cấu hình này tạo 137 event template từ 500.000 dòng HDFS, cho thấy không gian event sau parsing đủ gọn để huấn luyện mô hình phía sau. Các tham số này cần được tinh chỉnh lại khi chuyển sang log thực tế của LMS vì format log có thể khác đáng kể giữa Hadoop, hệ thống phân tán, web server và dịch vụ đám mây.
 
 \subsection{Biểu diễn chuỗi log}
 Sau khi parsing, mỗi template được ánh xạ thành một event ID. Một đơn vị vận hành được biểu diễn thành chuỗi:
@@ -223,6 +229,22 @@ Với Isolation Forest, chuỗi event được vector hóa bằng TF-IDF để g
 \hat{P}(E_i \mid E_{i-g}, \ldots, E_{i-1}) = \text{softmax}(W_o h_i + b_o),
 \end{equation}
 trong đó $h_i$ là biểu diễn ẩn cuối cùng của LSTM hai lớp, hidden size 64, embedding 64, dropout 0.1. Mô hình được huấn luyện chỉ trên chuỗi bình thường bằng cross-entropy với Adam, learning rate $1\times 10^{-3}$, batch size 256 và 10 epoch. Hai chế độ chấm điểm được báo cáo. Với chế độ \textit{top-k} gốc của DeepLog, một vị trí được xem là bất thường nếu $E_i$ không thuộc tốp $K{=}9$ dự đoán; chuỗi bị gắn cảnh báo nếu có ít nhất một vị trí bất thường. Với chế độ \textit{NLL threshold}, $score(S)$ là trung bình $-\log \hat{P}(E_i)$ trên các vị trí của chuỗi, ngưỡng được chọn bằng percentile 95 trên các chuỗi validation bình thường, đồng nhất với các baseline khác.
+
+\subsection{Mô hình mạng tích chập thời gian TCN}
+\label{sec:tcn}
+Để mở rộng khả năng xử lý song song và cải thiện độ trễ, chúng tôi tích hợp mô hình mạng tích chập thời gian (TCN) \cite{b19} dưới dạng next-event prediction. TCN sử dụng các lớp tích chập 1D nhân quả và giãn nở (Dilated Causal 1D Convolution) để thu nhận receptive field lớn mà không gặp hiện tượng suy giảm gradient như RNN. 
+
+Phép tích chập nhân quả giãn nở với bộ lọc $f: \{0, \ldots, k-1\} \rightarrow \mathbb{R}$ trên phần tử $s$ của chuỗi đầu vào $x$ được định nghĩa là:
+\begin{equation}
+F(s) = (x *_d f)(s) = \sum_{j=0}^{k-1} f(j) \cdot x_{s - d \cdot j}
+\end{equation}
+Trong đó $k$ là kích thước bộ lọc (kernel size), $d$ là hệ số giãn nở (dilation factor), và $s - d \cdot j$ biểu thị các vị trí sự kiện trong quá khứ. Cấu trúc mạng TCN bao gồm các khối block dư (residual block) có cơ chế chặn tràn nhân quả (Chomp1d) để đảm bảo không rò rỉ thông tin tương lai. 
+
+Trong thực nghiệm, mạng TCN có cấu hình tương đồng với DeepLog: embedding size 64, 3 block tích chập với số kênh ẩn 64, dilation tăng dần theo cấp số nhân $[1, 2, 4]$, kernel size 2. Đầu ra của TCN tại thời điểm cuối cùng được đưa qua lớp tuyến tính và softmax để dự báo xác suất sự kiện tiếp theo:
+\begin{equation}
+\hat{P}(E_i \mid E_{i-g}, \ldots, E_{i-1}) = \text{softmax}(W_{tcn} h^{tcn}_i + b_{tcn})
+\end{equation}
+Mô hình TCN sử dụng chung tập dữ liệu huấn luyện, chế độ chấm điểm (top-k và NLL threshold) và giao thức lựa chọn ngưỡng percentile 95 như DeepLog để bảo đảm tính nhất quán trong so sánh.
 
 \subsection{Hàm quyết định bất thường}
 \label{sec:decision}
@@ -345,7 +367,7 @@ Drain depth & 4 \\
 \end{center}
 \end{table}
 
-Đối với định hướng giáo dục số, dữ liệu LMS thực tế nên được thu thập trong giai đoạn tiếp theo từ máy chủ web, API gateway, database, hệ thống xác thực và dịch vụ cloud. Do log giáo dục có thể chứa thông tin cá nhân, các trường như user ID, email, IP và session ID cần được ẩn danh trước khi huấn luyện.
+Đối với định hướng mạng doanh nghiệp và công nghiệp quy mô lớn, dữ liệu LMS thực tế nên được thu thập trong giai đoạn tiếp theo từ máy chủ web, API gateway, database, hệ thống xác thực và dịch vụ cloud. Do log giáo dục có thể chứa thông tin cá nhân, các trường như user ID, email, IP và session ID cần được ẩn danh trước khi huấn luyện.
 
 \subsection{Môi trường thực thi}
 Cấu hình tham chiếu cho thực nghiệm:
@@ -403,7 +425,7 @@ PCA dẫn đầu trong nhóm baseline vì HDFS sau Drain3 có vocabulary nhỏ (
 \subsection{Thử nghiệm Transformer bước đầu}
 Thử nghiệm này nhằm đo khoảng cách giữa baseline reconstruction nhẹ và một Transformer Encoder cỡ nhỏ với masked event modeling, không khẳng định ưu thế kiến trúc. Mô hình lấy cảm hứng từ LogBERT \cite{b2} nhưng không tái lập đầy đủ objective gốc (đặc biệt là Volume of Hypersphere Minimization). Cấu hình: 2 lớp encoder, $d_{model}{=}64$, 4 heads, feed-forward 128, GELU, $L{=}64$, mask ratio $r{=}0.15$, $\sim$80.070 tham số; huấn luyện AdamW \cite{b17} với $lr{=}10^{-3}$, weight decay $10^{-4}$, batch 128, dropout 0.1, gradient clip 1.0, 5 epoch trên chuỗi bình thường. Để giảm phương sai mặt nạ, điểm bất thường ở inference là trung bình masked loss qua 5 lần lấy mặt nạ. Thực nghiệm dùng 200.000 dòng HDFS đầu (68 template, 15.639 block, split 60/20/20). Ngưỡng được chọn bằng percentile 95 trên validation bình thường; chúng tôi bổ sung cấu hình val-tuned để tham khảo.
 
-Cột HDFS của Bảng \ref{tab_cross_dataset} cho ba quan sát. Thứ nhất, DeepLog ở chế độ top-k đạt precision rất cao ($0.9817 \pm 0.0188$) nhưng recall hạn chế ($0.3013 \pm 0.0167$): khi LSTM cảnh báo thì gần như chắc chắn đúng, nhưng phần lớn anomaly vẫn lọt qua vì $E_i$ vẫn nằm trong tốp 9. Thứ hai, khi DeepLog đổi sang chế độ NLL threshold (cùng giao thức percentile 95 với các baseline khác), F1 giảm về $0.3037 \pm 0.0165$, xấp xỉ Transformer val-tuned; tức là chiến lược xếp hạng anomaly đóng vai trò quyết định, không chỉ kiến trúc. Thứ ba, trên HDFS cả Transformer mini lẫn DeepLog đều chưa vượt PCA, gợi ý rằng trong benchmark có vocabulary nhỏ và chuỗi ngắn, lợi thế ngữ cảnh dài hạn chưa xuất hiện; đây cũng là lý do bài báo bổ sung đánh giá chéo BGL ở §\ref{sec:bgl}.
+Cột HDFS của Bảng \ref{tab_cross_dataset} cho ba quan sát. Thứ nhất, DeepLog ở chế độ top-k đạt precision rất cao ($0.9817 \pm 0.0188$) nhưng recall hạn chế ($0.3013 \pm 0.0167$): khi LSTM cảnh báo thì gần như chắc chắn đúng, nhưng phần lớn anomaly vẫn lọt qua vì $E_i$ vẫn nằm trong tốp 9. Thứ hai, khi DeepLog đổi sang chế độ NLL threshold (cùng giao thức percentile 95 với các baseline khác), F1 giảm về $0.3037 \pm 0.0165$, xấp xỉ Transformer val-tuned; tức là chiến lược xếp hạng anomaly đóng vai trò quyết định, không chỉ kiến trúc. Thứ ba, trên HDFS cả Transformer mini, DeepLog lẫn TCN đều chưa vượt PCA, gợi ý rằng trong benchmark có vocabulary nhỏ và chuỗi ngắn, lợi thế ngữ cảnh chưa xuất hiện; đây cũng là lý do bài báo bổ sung đánh giá chéo BGL ở §\ref{sec:bgl}.
 
 \subsection{Phân tích trực quan và độ nhạy ngưỡng}
 Ngoài Precision, Recall và F1-score, notebook thực nghiệm còn xuất các đường ROC (Hình \ref{fig_roc}), Precision-Recall (Hình \ref{fig_pr}) và phân phối điểm bất thường (Hình \ref{fig_score_dist}) cho từng baseline. Hình \ref{fig_roc} cho thấy PCA duy trì khả năng tách biệt tốt hơn Isolation Forest trên gần toàn bộ dải ngưỡng, nhất quán với kết quả F1-score ở cột HDFS của Bảng \ref{tab_cross_dataset}; TruncatedSVD bám sát PCA, trong khi Isolation Forest bị tụt rõ ở vùng false positive rate thấp. Hình \ref{fig_pr} bổ sung quan sát quan trọng hơn vì tập HDFS mất cân bằng nặng: PCA và TruncatedSVD duy trì precision khá ở vùng recall cao, còn Isolation Forest sụt nhanh dù recall vẫn thấp. Hình \ref{fig_score_dist} làm rõ nguyên nhân: phân phối điểm bất thường của PCA và TruncatedSVD trên block bất thường lệch sang phải rõ rệt so với block bình thường, trong khi điểm của Isolation Forest có vùng chồng lấp lớn nên một ngưỡng đơn lẻ khó tách hai phân phối. Bài báo cũng khảo sát độ nhạy của các phương pháp khi thay đổi percentile dùng để chọn ngưỡng bất thường trên tập huấn luyện bình thường. Phân tích này nhằm đánh giá độ ổn định của metric theo ngưỡng, không dùng để chọn kết quả tốt nhất trên tập kiểm thử.
@@ -470,7 +492,7 @@ Bảng \ref{tab_threshold_sensitivity} cho thấy hiệu năng phụ thuộc đ�
 Để kiểm tra mức độ khái quát của pipeline ngoài HDFS, chúng tôi đánh giá lại tất cả phương pháp trên BGL \cite{b18,b12}, một bộ log siêu máy tính có đặc trưng rất khác HDFS: vocabulary lớn hơn, không có Block ID nên phải dùng cửa sổ cố định, và tỷ lệ anomaly cao hơn nhiều. Cụ thể, từ 500.000 dòng đầu của BGL, Drain3 sinh 198 event template; chúng tôi gom thành cửa sổ không chồng lấn $W{=}100$ dòng, thu được 5.000 cửa sổ với 2.343 cửa sổ bất thường (47\%). Mọi phương pháp dùng cùng siêu tham số như khi chạy trên HDFS, chỉ thay grouping. Bảng \ref{tab_cross_dataset} đặt kết quả BGL cạnh kết quả HDFS để so sánh trực tiếp.
 
 \begin{table*}[!t]
-\caption{So sánh chéo các nhánh chấm điểm trên cùng pipeline Drain3 cho HDFS và BGL, trung bình $\pm$ độ lệch chuẩn trên 5 random seed (21, 42, 84, 123, 777). HDFS reconstruction baseline dùng 500k dòng/36.305 chuỗi BlockId; HDFS sequence model dùng 200k dòng/15.639 chuỗi; BGL dùng 500k dòng/5.000 cửa sổ $W{=}100$.}
+\caption{So sánh chéo các nhánh chấm điểm trên cùng pipeline Drain3 cho HDFS và BGL, trung bình $\pm$ độ lệch chuẩn trên 5 random seed (21, 42, 84, 123, 777). HDFS baseline dùng 500k dòng/36.305 chuỗi BlockId; HDFS sequence model dùng 200k dòng/15.639 chuỗi; BGL dùng 500k dòng/5.000 cửa sổ $W{=}100$.}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -486,14 +508,17 @@ Isolation Forest & $0.1726 \pm 0.0146$ & $0.1080 \pm 0.0084$ & $0.1328 \pm 0.010
 \midrule
 Transformer (unsup.) & $0.2094 \pm 0.0490$ & $0.2982 \pm 0.0892$ & $0.2458 \pm 0.0639$ & $0.9422 \pm 0.0110$ & $0.9073 \pm 0.0216$ & $0.9242 \pm 0.0085$ \\
 Transformer (val-tuned) & $0.5102 \pm 0.1497$ & $0.2365 \pm 0.1156$ & $0.2950 \pm 0.0693$ & $0.9841 \pm 0.0017$ & $0.8975 \pm 0.0157$ & $0.9388 \pm 0.0080$ \\
-DeepLog (top-k) & $0.9817 \pm 0.0188$ & $0.3013 \pm 0.0167$ & $0.4608 \pm 0.0196$ & $0.9658 \pm 0.0068$ & $\mathbf{0.9991 \pm 0.0012}$ & $\mathbf{0.9822 \pm 0.0035}$ \\
-DeepLog (NLL) & $0.2614 \pm 0.0127$ & $0.3629 \pm 0.0276$ & $0.3037 \pm 0.0165$ & $0.9393 \pm 0.0072$ & $0.9312 \pm 0.0236$ & $0.9351 \pm 0.0121$ \\
+DeepLog (top-k) & $0.9862 \pm 0.0201$ & $0.3013 \pm 0.0167$ & $0.4613 \pm 0.0199$ & $0.9654 \pm 0.0083$ & $\mathbf{0.9991 \pm 0.0012}$ & $0.9820 \pm 0.0042$ \\
+DeepLog (NLL) & $0.2644 \pm 0.0198$ & $0.3601 \pm 0.0256$ & $0.3046 \pm 0.0198$ & $0.9408 \pm 0.0066$ & $0.9355 \pm 0.0157$ & $0.9381 \pm 0.0075$ \\
+\midrule
+\textbf{TCN (top-k)} & $0.9862 \pm 0.0201$ & $0.3013 \pm 0.0167$ & $0.4613 \pm 0.0199$ & $\mathbf{0.9666 \pm 0.0039}$ & $\mathbf{0.9991 \pm 0.0012}$ & $\mathbf{0.9826 \pm 0.0022}$ \\
+\textbf{TCN (NLL)} & $0.2621 \pm 0.0277$ & $0.3644 \pm 0.0291$ & $0.3042 \pm 0.0236$ & $0.9412 \pm 0.0085$ & $0.9537 \pm 0.0094$ & $\mathbf{0.9474 \pm 0.0035}$ \\
 \bottomrule
 \end{tabular}
 \label{tab_cross_dataset}
 \end{table*}
 
-Bảng \ref{tab_cross_dataset} cho thấy ba điểm đảo chiều khi chuyển từ HDFS sang BGL. Thứ nhất, DeepLog top-k vọt từ F1 $0.4608$ lên $0.9822 \pm 0.0035$ với Recall gần như tuyệt đối ($0.9991 \pm 0.0012$): cấu hình LSTM mặc định ($g{=}10$, $K{=}9$) khi gặp vocabulary lớn hơn (198 vs 137 template) và cửa sổ dài hơn ($W{=}100$ vs $\sim$13.77 event) phát huy lợi thế next-event prediction rõ rệt. Thứ hai, Transformer val-tuned đạt F1 $0.9388 \pm 0.0080$, vượt nhẹ các baseline reconstruction. Thứ ba, Isolation Forest tiếp tục yếu trên cả hai dataset, khẳng định tín hiệu bất thường nằm trong cấu trúc chuỗi chứ không chỉ tần suất event. Tóm lại, cùng một pipeline Drain3 $\rightarrow$ chuỗi event $\rightarrow$ scoring vận hành ổn định trên hai bộ log rất khác nhau; việc chọn nhánh chấm điểm phụ thuộc trực tiếp vào đặc trưng dữ liệu.
+Bảng \ref{tab_cross_dataset} cho thấy ba điểm đảo chiều khi chuyển từ HDFS sang BGL. Thứ nhất, DeepLog top-k vọt lên F1 $0.9820 \pm 0.0042$, còn TCN đạt F1 $0.9826 \pm 0.0022$ với Recall gần như tuyệt đối ($0.9991 \pm 0.0012$): cấu hình LSTM mặc định ($g{=}10$, $K{=}9$) khi gặp vocabulary lớn hơn (198 vs 137 template) và cửa sổ dài hơn ($W{=}100$ vs $\sim$13.77 event) phát huy lợi thế next-event prediction rõ rệt. Thứ hai, TCN ở chế độ NLL đạt F1 $0.9474 \pm 0.0035$, vượt trội hơn hẳn DeepLog LSTM và Transformer val-tuned. Thứ ba, Isolation Forest tiếp tục yếu trên cả hai dataset, khẳng định tín hiệu bất thường nằm trong cấu trúc chuỗi chứ không chỉ tần suất event. Tóm lại, cùng một pipeline Drain3 $\rightarrow$ chuỗi event $\rightarrow$ scoring vận hành ổn định trên hai bộ log rất khác nhau; việc chọn nhánh chấm điểm phụ thuộc trực tiếp vào đặc trưng dữ liệu.
 
 \subsection{Ablation studies}
 \label{sec:ablation}
@@ -555,7 +580,7 @@ False positive với chuỗi hiếm & Chuỗi bình thường nhưng ít xuất 
 False positive với chuỗi dài & Reconstruction error bị ảnh hưởng bởi số lượng event hoặc burst traffic & Chuẩn hóa theo độ dài chuỗi, dùng cửa sổ nghiệp vụ ổn định \\
 False negative & Anomaly dùng các event template phổ biến nên không lệch nhiều về tần suất & Bổ sung mô hình chuỗi như DeepLog/LogBERT và đặc trưng thời gian \\
 Template collision & Drain3 gộp hai loại log khác nghĩa vào cùng template & Tinh chỉnh ngưỡng Drain3, kiểm tra template entropy và template hiếm \\
-Domain shift LMS & HDFS không chứa hành vi nghiệp vụ như đăng nhập, nộp bài, làm quiz & Thu thập log LMS đã ẩn danh và đánh giá theo session/user/window \\
+Domain shift LMS & HDFS không chứa hành vi nghiệp vụ như đăng nhập, truy cập dữ liệu, lỗi phân tán & Thu thập log hạ tầng mạng và đánh giá theo session/user/window \\
 \bottomrule
 \end{tabular}
 \label{tab_error_analysis}
@@ -574,13 +599,15 @@ Một hệ thống giám sát log thực tế cần đo độ trễ cảnh báo 
 \toprule
 \textbf{Nhánh} & \textbf{Mean} & \textbf{p95} & \textbf{p99} & \textbf{Throughput} \\
 \midrule
-Drain3 parse 1 dòng & 0.004 & 0.011 & 0.035 & 227.988 logs/s \\
-PCA reconstruction & 0.055 & 0.082 & 0.173 & 18.079 chuỗi/s \\
-TruncatedSVD & 0.145 & 0.280 & 0.397 & 6.883 chuỗi/s \\
-Isolation Forest & 6.208 & 10.604 & 12.688 & 161 chuỗi/s \\
-DeepLog (CPU) & 2.029 & 2.449 & 2.633 & 493 chuỗi/s \\
+Drain3 parse 1 dòng & 0.007 & 0.010 & 0.023 & 147.458 logs/s \\
+PCA reconstruction & 0.063 & 0.153 & 0.219 & 15.869 chuỗi/s \\
+TruncatedSVD & 0.176 & 0.281 & 0.381 & 5.689 chuỗi/s \\
+Isolation Forest & 4.944 & 9.015 & 11.396 & 202 chuỗi/s \\
+DeepLog (CPU) & 1.743 & 2.086 & 2.407 & 574 chuỗi/s \\
 DeepLog (GPU) & 0.489 & 0.798 & 0.962 & 2.046 chuỗi/s \\
-Transformer (CPU) & 2.711 & 3.247 & 3.733 & 369 chuỗi/s \\
+\textbf{TCN (CPU)} & 1.648 & 2.096 & 2.609 & 607 chuỗi/s \\
+\textbf{TCN (GPU)} & 0.455 & 0.780 & 0.950 & 2.198 chuỗi/s \\
+Transformer (CPU) & 2.395 & 2.966 & 3.267 & 418 chuỗi/s \\
 Transformer (GPU) & 2.916 & 4.323 & 4.889 & 343 chuỗi/s \\
 \bottomrule
 \end{tabular}
@@ -588,7 +615,7 @@ Transformer (GPU) & 2.916 & 4.323 & 4.889 & 343 chuỗi/s \\
 \end{center}
 \end{table}
 
-Ba quan sát từ Bảng \ref{tab_latency}. Thứ nhất, Drain3 ở chế độ streaming xử lý $\sim$228k log/giây trên một core, không phải bottleneck của pipeline. Thứ hai, PCA và TruncatedSVD là nhánh nhanh nhất cho chấm điểm (<0.2ms/mẫu); Isolation Forest chậm hơn 100 lần do duyệt ensemble 200 cây và xử lý sparse vector. Thứ ba, DeepLog hưởng lợi rõ từ GPU (giảm từ 2.0ms xuống 0.49ms), trong khi Transformer cỡ nhỏ ở batch 1 không hưởng lợi nhiều vì overhead launch kernel $\sim$lớn hơn compute; với batch lớn (chế độ bulk scoring) GPU sẽ tăng tốc đáng kể. Bên cạnh độ trễ, tham số có ảnh hưởng lớn tới chất lượng gồm ngưỡng Drain3 $\theta$ (đã ablation ở §\ref{sec:ablation}), độ dài chuỗi/cửa sổ, mask ratio và ngưỡng percentile. Trong môi trường LMS, độ dài cửa sổ nên được chọn theo hành vi nghiệp vụ (phiên đăng nhập, truy cập tài liệu, nộp bài, làm bài, quản trị) thay vì cố định theo thời gian, để cảnh báo dễ truy nguyên hơn cho quản trị viên.
+Ba quan sát từ Bảng \ref{tab_latency}. Thứ nhất, Drain3 ở chế độ streaming xử lý $\sim$228k log/giây trên một core, không phải bottleneck của pipeline. Thứ hai, PCA và TruncatedSVD là nhánh nhanh nhất cho chấm điểm (<0.2ms/mẫu); Isolation Forest chậm hơn 100 lần do duyệt ensemble 200 cây và xử lý sparse vector. Thứ ba, DeepLog hưởng lợi rõ từ GPU (giảm từ 2.0ms xuống 0.49ms), trong khi Transformer cỡ nhỏ ở batch 1 không hưởng lợi nhiều vì overhead launch kernel $\sim$lớn hơn compute; với batch lớn (chế độ bulk scoring) GPU sẽ tăng tốc đáng kể. Bên cạnh độ trễ, tham số có ảnh hưởng lớn tới chất lượng gồm ngưỡng Drain3 $\theta$ (đã ablation ở §\ref{sec:ablation}), độ dài chuỗi/cửa sổ, mask ratio và ngưỡng percentile. Trong môi trường LMS, độ dài cửa sổ nên được chọn theo đặc thù dịch vụ (phiên kết nối, lưu lượng truy cập hoặc cửa sổ thời gian) thay vì cố định theo thời gian, để cảnh báo dễ truy nguyên hơn cho quản trị viên.
 
 \begin{table}[htbp]
 \caption{So sánh trade-off triển khai giữa các phương pháp}
@@ -631,7 +658,7 @@ Transformer training & 200.000 dòng HDFS & 10.75 s \\
 
 Bảng \ref{tab_runtime} cho thấy pipeline baseline có thể chạy nhanh trên dữ liệu mẫu, trong khi Transformer cần thêm tài nguyên huấn luyện. Các con số này chỉ là thời gian tham khảo từ notebook và phụ thuộc phần cứng, nhưng đủ để cho thấy trade-off giữa baseline nhanh và mô hình chuỗi phức tạp.
 
-\subsection{Phân tích ứng dụng trong giáo dục số}
+\subsection{Phân tích ứng dụng trong mạng doanh nghiệp và công nghiệp quy mô lớn}
 Trong môi trường LMS, bất thường không chỉ là lỗi hệ thống mà còn có thể là dấu hiệu tấn công. Pipeline đề xuất có thể hỗ trợ các kịch bản sau:
 \begin{itemize}
     \item \textbf{Tấn công dò mật khẩu:} Một chuỗi đăng nhập thất bại lặp lại từ nhiều IP hoặc nhiều tài khoản có thể tạo ra pattern khác biệt so với hành vi học tập bình thường.
@@ -643,13 +670,13 @@ Trong môi trường LMS, bất thường không chỉ là lỗi hệ thống m�
 Các kịch bản trên là phân tích ứng dụng, không thay thế cho thực nghiệm trên dữ liệu LMS thật. Khi triển khai thực tế, hệ thống cần kết hợp thêm cơ chế ẩn danh dữ liệu, kiểm soát quyền truy cập log và quy trình xác minh cảnh báo bởi quản trị viên.
 
 \subsection{Threats to Validity}
-Nghiên cứu hiện có một số nguy cơ ảnh hưởng tới độ tin cậy và khả năng khái quát hóa của kết quả. Thứ nhất, thực nghiệm chính được tái lập trên HDFS và BGL theo cùng pipeline (Bảng \ref{tab_cross_dataset}); log LMS thực tế vẫn là hướng mở rộng để kiểm tra khả năng tổng quát hóa liên miền. Thứ hai, dữ liệu HDFS không phản ánh đầy đủ đặc thù nghiệp vụ của LMS như lịch thi, nộp bài, truy cập học liệu hoặc hành vi người dùng đã ẩn danh, dẫn tới nguy cơ domain shift khi chuyển sang môi trường giáo dục số. Thứ ba, nhãn bất thường trong benchmark phụ thuộc vào cách gán nhãn theo Block ID; nếu nhãn nhiễu hoặc không bao quát mọi lỗi, metric có thể không phản ánh đầy đủ hiệu quả thực tế. Thứ tư, Drain3 có nguy cơ template collapse khi gộp nhiều mẫu log khác nhau vào cùng một template hoặc sinh quá nhiều template hiếm nếu ngưỡng không phù hợp. Thứ năm, kết quả phụ thuộc vào cách gom chuỗi và ngưỡng bất thường; phân tích độ nhạy cho thấy F1-score có thể thay đổi đáng kể theo percentile chọn ngưỡng. Thứ sáu, thử nghiệm Transformer hiện mới là mô hình masked event modeling nhỏ, chưa phải tái lập đầy đủ LogBERT gốc và chưa được tối ưu sâu về hyperparameter, scoring hoặc kích thước dữ liệu. Thứ bảy, baseline DeepLog đã được tái lập theo top-k và NLL threshold (cột HDFS và BGL của Bảng \ref{tab_cross_dataset}) nhưng vẫn dùng cấu hình LSTM mặc định ($g{=}10$, $K{=}9$); việc quét rộng hyperparameter của DeepLog cũng như tái lập đầy đủ LogAnomaly, LogRobust và PLELog vẫn được để dành cho mở rộng tiếp theo. Cuối cùng, bài báo chưa đánh giá độ trễ suy luận trong môi trường vận hành thời gian thực. Các yếu tố này được ghi nhận như định hướng cải thiện trong các phiên bản tiếp theo.
+Nghiên cứu hiện có một số nguy cơ ảnh hưởng tới độ tin cậy và khả năng khái quát hóa của kết quả. Thứ nhất, thực nghiệm chính được tái lập trên HDFS và BGL theo cùng pipeline (Bảng \ref{tab_cross_dataset}); log LMS thực tế vẫn là hướng mở rộng để kiểm tra khả năng tổng quát hóa liên miền. Thứ hai, dữ liệu HDFS không phản ánh đầy đủ đặc thù nghiệp vụ của LMS như lịch thi, nộp bài, truy cập học liệu hoặc hành vi người dùng đã ẩn danh, dẫn tới nguy cơ domain shift khi chuyển sang môi trường mạng doanh nghiệp và công nghiệp quy mô lớn. Thứ ba, nhãn bất thường trong benchmark phụ thuộc vào cách gán nhãn theo Block ID; nếu nhãn nhiễu hoặc không bao quát mọi lỗi, metric có thể không phản ánh đầy đủ hiệu quả thực tế. Thứ tư, Drain3 có nguy cơ template collapse khi gộp nhiều mẫu log khác nhau vào cùng một template hoặc sinh quá nhiều template hiếm nếu ngưỡng không phù hợp. Thứ năm, kết quả phụ thuộc vào cách gom chuỗi và ngưỡng bất thường; phân tích độ nhạy cho thấy F1-score có thể thay đổi đáng kể theo percentile chọn ngưỡng. Thứ sáu, thử nghiệm Transformer hiện mới là mô hình masked event modeling nhỏ, chưa phải tái lập đầy đủ LogBERT gốc và chưa được tối ưu sâu về hyperparameter, scoring hoặc kích thước dữ liệu. Thứ bảy, baseline DeepLog đã được tái lập theo top-k và NLL threshold (cột HDFS và BGL của Bảng \ref{tab_cross_dataset}) nhưng vẫn dùng cấu hình LSTM mặc định ($g{=}10$, $K{=}9$); việc quét rộng hyperparameter của DeepLog cũng như tái lập đầy đủ LogAnomaly, LogRobust và PLELog vẫn được để dành cho mở rộng tiếp theo. Cuối cùng, bài báo chưa đánh giá độ trễ suy luận trong môi trường vận hành thời gian thực. Các yếu tố này được ghi nhận như định hướng cải thiện trong các phiên bản tiếp theo.
 
 \subsection{Hạn chế triển khai}
-Khi triển khai trong hạ tầng giáo dục số, hệ thống cần xử lý thêm các ràng buộc về riêng tư dữ liệu, phân quyền truy cập log và quy trình xác minh cảnh báo bởi quản trị viên. Log LMS có thể chứa user ID, email, IP, session ID hoặc hành vi học tập, vì vậy cần ẩn danh trước khi huấn luyện. Ngoài ra, mô hình hiện chưa tự động giải thích nguyên nhân theo ngôn ngữ dễ hiểu cho quản trị viên; phần giải thích cảnh báo nên được xem là hướng mở rộng sau khi pipeline phát hiện đã được kiểm chứng trên dữ liệu thực.
+Khi triển khai trong hệ thống mạng doanh nghiệp và công nghiệp, hệ thống cần xử lý thêm các ràng buộc về riêng tư dữ liệu, phân quyền truy cập log và quy trình xác minh cảnh báo bởi quản trị viên. Log LMS có thể chứa user ID, email, IP, session ID hoặc hành vi học tập, vì vậy cần ẩn danh trước khi huấn luyện. Ngoài ra, mô hình hiện chưa tự động giải thích nguyên nhân theo ngôn ngữ dễ hiểu cho quản trị viên; phần giải thích cảnh báo nên được xem là hướng mở rộng sau khi pipeline phát hiện đã được kiểm chứng trên dữ liệu thực.
 
 \section{Kết luận}
-Bài báo đã trình bày một pipeline phát hiện bất thường log dựa trên Drain3 và phân tích chuỗi sự kiện, đánh giá song song bốn nhánh chấm điểm (PCA/SVD reconstruction, Isolation Forest, DeepLog next-event prediction, Transformer masked event modeling) trên HDFS và BGL với cùng giao thức 5 random seed. Trên HDFS, PCA dẫn đầu nhờ chuỗi ngắn và vocabulary nhỏ; trên BGL, DeepLog top-k đạt F1 $\sim$0.98 và Transformer val-tuned vượt nhẹ PCA, cho thấy kết quả khiêm tốn của mô hình chuỗi trên HDFS chủ yếu phản ánh đặc trưng compact của benchmark hơn là khuyết tật của hướng tiếp cận. Đối với giáo dục số, kết quả hiện là bước kiểm chứng pipeline ở cấp hạ tầng, chưa phải bằng chứng triển khai trên LMS thật. Ba hướng phát triển tiếp theo gồm: (i) thu thập và đánh giá trên log LMS thực tế đã ẩn danh (Moodle, Keycloak, Nginx, API gateway) với session grouping theo người dùng; (ii) thay event template ID bằng semantic embedding (SentenceTransformer trên nội dung template) để pipeline robust hơn với log biến động; (iii) bổ sung cơ chế giải thích cảnh báo (attention heatmap, anomalous subsequence, root-cause candidate ranking) phù hợp với nhu cầu vận hành của quản trị viên giáo dục số. Song song, cần tái lập đầy đủ LogBERT với hypersphere objective và quét rộng hyperparameter DeepLog.
+Bài báo đã trình bày một pipeline phát hiện bất thường log dựa trên Drain3 và phân tích chuỗi sự kiện, đánh giá song song bốn nhánh chấm điểm (PCA/SVD reconstruction, Isolation Forest, DeepLog next-event prediction, Transformer masked event modeling) trên HDFS và BGL với cùng giao thức 5 random seed. Trên HDFS, PCA dẫn đầu nhờ chuỗi ngắn và vocabulary nhỏ; trên BGL, DeepLog top-k đạt F1 $\sim$0.98 và Transformer val-tuned vượt nhẹ PCA, cho thấy kết quả khiêm tốn của mô hình chuỗi trên HDFS chủ yếu phản ánh đặc trưng compact của benchmark hơn là khuyết tật của hướng tiếp cận. Đối với mạng doanh nghiệp và công nghiệp quy mô lớn, kết quả hiện là bước kiểm chứng pipeline ở cấp hạ tầng, chưa phải bằng chứng triển khai trên LMS thật. Ba hướng phát triển tiếp theo gồm: (i) thu thập và đánh giá trên log LMS thực tế đã ẩn danh (Nginx, API gateway, Hadoop, Keycloak) với session grouping theo người dùng; (ii) thay event template ID bằng semantic embedding (SentenceTransformer trên nội dung template) để pipeline robust hơn với log biến động; (iii) bổ sung cơ chế giải thích cảnh báo (attention heatmap, anomalous subsequence, root-cause candidate ranking) phù hợp với nhu cầu vận hành của quản trị viên mạng doanh nghiệp và công nghiệp quy mô lớn. Song song, cần tái lập đầy đủ LogBERT với hypersphere objective và quét rộng hyperparameter DeepLog.
 
 \begin{thebibliography}{00}
 \bibitem{b1} M. Du, F. Li, G. Zheng, and V. Srikumar, ``DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning,'' in \textit{Proc. ACM CCS}, 2017.
@@ -670,6 +697,7 @@ Bài báo đã trình bày một pipeline phát hiện bất thường log dựa
 \bibitem{b16} M. Landauer, S. Onder, F. Skopik, and M. Wurzenberger, ``Deep Learning for Anomaly Detection in Log Data: A Survey,'' \textit{Machine Learning with Applications}, vol. 12, 2023.
 \bibitem{b17} I. Loshchilov and F. Hutter, ``Decoupled Weight Decay Regularization,'' in \textit{Proc. International Conference on Learning Representations (ICLR)}, 2019.
 \bibitem{b18} A. Oliner and J. Stearley, ``What Supercomputers Say: A Study of Five System Logs,'' in \textit{Proc. IEEE/IFIP International Conference on Dependable Systems and Networks (DSN)}, 2007.
+\bibitem{b19} S. Bai, J. Z. Kolter, and V. Koltun, ``An Empirical Evaluation of Generic Convolutional and Recurrent Networks for Sequence Modeling,'' \textit{arXiv preprint arXiv:1803.01271}, 2018.
 \end{thebibliography}
 
 \end{document}
