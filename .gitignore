@@ -1,0 +1,47 @@
+# Python Build and Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+*.ipynb
+
+# LaTeX Intermediate Files
+*.aux
+*.log
+*.synctex.gz
+*.toc
+*.blg
+*.bbl
+*.out
+*.nav
+*.snm
+*.vrb
+*.fls
+*.fdb_latexmk
+*.auxlock
+
+# Ignore PDF at root but allow inside images/
+*.pdf
+!images/**/*.pdf
+!images/*.pdf
+
+# Experimental Results
+*.csv
+*.json
+
+# Notes and Documentation
+PRESENTATION_QA.md
+EXPERIMENT_STEPS.md
+
+# IDE and System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archive and Backups
+*.zip
+archive/
+submission/
+overleaf-upload/
+*.log
