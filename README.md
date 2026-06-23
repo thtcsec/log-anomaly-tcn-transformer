@@ -79,3 +79,11 @@ python bgl_experiment.py
 ```bash
 python ablation_experiment.py
 ```
+
+---
+
+## 5. Thành viên thực hiện & Giảng viên hướng dẫn
+* **Tác giả:** **Trịnh Hoàng Tú** (Khoa Công nghệ thông tin, Trường Đại học Ngoại ngữ - Tin học TP.HCM - HUFLIT)
+  * Email: tht.csec2005@gmail.com
+* **Giảng viên hướng dẫn:** **ThS. Cao Tiến Thành** (Khoa Công nghệ thông tin, Trường Đại học Ngoại ngữ - Tin học TP.HCM - HUFLIT)
+
