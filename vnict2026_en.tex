@@ -266,37 +266,6 @@ DeepLog (NLL) & $0.2644 \pm 0.0198$ & $0.3601 \pm 0.0256$ & $0.3046 \pm 0.0198$ 
 \label{tab_cross_dataset}
 \end{table*}
 
-The results in Table~\ref{tab_cross_dataset} reveal that no single model dominates across both datasets — a finding that underscores the importance of evaluating the entire pipeline rather than any individual algorithm. On HDFS, the lightweight baselines achieve competitive results: PCA obtains an F1-score of $0.5711 \pm 0.0944$, outperforming deep learning models including DeepLog LSTM and TCN (both $0.4613 \pm 0.0199$). The mini Transformer obtains a low F1-score of $0.2950 \pm 0.0693$. We note that the Transformer evaluated here is a lightweight variant optimized for low latency; a larger, more deeply tuned Transformer model might yield different classification results but at the cost of higher latency. This observation arises because HDFS is a highly structured log dataset with a small vocabulary (137 templates) and very short sequences (average length of 13.77 events). In such settings, anomalies are often manifested as distributional shifts in event frequencies, which are effectively captured by PCA reconstruction error on bag-of-events features. Conversely, deep sequence models do not benefit from their temporal modeling capacity due to sequence sparsity and the absence of complex contextual transitions.
-
-In contrast, on BGL, the deep sequence models show strong results under the tested configuration: TCN (top-k) achieves the highest F1-score of $0.9826 \pm 0.0022$, followed closely by DeepLog ($0.9820 \pm 0.0042$). In NLL mode, TCN ($0.9474 \pm 0.0035$) continues to outperform DeepLog ($0.9381 \pm 0.0075$) and the Transformer ($0.9388 \pm 0.0080$). Notably, the traditional baselines PCA and TruncatedSVD also perform well on BGL ($0.9217$ and $0.9356$ F1-scores, respectively), indicating that BGL sequence structures are inherently separable. This cross-dataset divergence — where lightweight baselines prevail on HDFS while sequence models excel on BGL — highlights that the choice of scoring branch should be guided by dataset characteristics rather than model complexity alone.
-
-\textbf{Grouping Strategy Study (RQ1):} To address RQ1, we evaluate the anomaly detection performance on BGL under four grouping configurations: non-overlapping fixed windows of size $W{=}50, 100, 200$, and a sliding window of size $W{=}100$ with stride $50$. Table~\ref{tab_grouping} shows the F1-score results for PCA, DeepLog (top-k), and TCN (top-k). Because this study focuses on the relative effect of grouping configurations, all results in Table~\ref{tab_grouping} are reported under a single-seed controlled setting on a 200k BGL log subset (which has a different anomaly ratio) and should not be directly compared with the multi-seed aggregate results in Table~\ref{tab_cross_dataset}.
-
-The results in Table~\ref{tab_grouping} indicate that the window size $W$ directly impacts detection performance. For PCA, F1-score remains low at $W=50$ and $W=100$, but improves substantially at $W=200$, suggesting that larger windows provide more stable frequency distributions for reconstruction-based scoring. Conversely, sequence models (DeepLog, TCN) show robust performance across all window configurations. Crucially, the sliding window configuration ($W{=}100, \text{stride}=50$) yields the highest performance (DeepLog 0.9004, TCN 0.9032) by increasing training sample density and mitigating border-crossing boundary effects.
-
-\begin{table}[htbp]
-\caption{F1-score under different grouping configurations on BGL (seed 42)}
-\begin{center}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lccc}
-\toprule
-\textbf{Grouping Configuration} & \textbf{PCA} & \textbf{DeepLog (top-k)} & \textbf{TCN (top-k)} \\
-\midrule
-$W=50$ (non-overlap) & 0.1500 & 0.8556 & 0.8750 \\
-$W=100$ (non-overlap) & 0.1353 & 0.8571 & 0.8769 \\
-$W=200$ (non-overlap) & 0.4381 & 0.8810 & 0.8506 \\
-$W=100$, stride $50$ (sliding) & 0.2314 & 0.9004 & 0.9032 \\
-\bottomrule
-\end{tabular}
-\label{tab_grouping}
-\end{center}
-\end{table}
-
-\subsection{Parameter Sensitivity, Latency, and Error Analysis}
-\label{sec:ablation}
-To understand the role of the three key hyperparameters, we perform three ablation studies on HDFS 200k (with seed 42): (i) Drain3 similarity threshold $\theta$, (ii) DeepLog top-k parameter $K$, and (iii) Transformer mask ratio $r$. Table~\ref{tab_ablation} summarizes the results.
-
 \begin{table*}[!t]
 \begin{minipage}[t]{0.48\textwidth}
 \caption{Hyperparameter ablation study on HDFS 200k (seed 42)}
@@ -356,18 +325,44 @@ Transformer (GPU) & 2.916 & 4.323 & 4.889 & 343 sequences/s \\
 \end{minipage}
 \end{table*}
 
-The ablation results provide three concrete insights. (A) The Drain3 similarity threshold has a strong impact on the pipeline quality: $\theta{=}0.3$ leads to over-merging (only 25 templates, resulting in low F1 due to mixing different events); $\theta{=}0.7$ causes template explosion (2,455 templates, causing F1 to collapse to $0.0446$); $\theta{=}0.5$ is the sweet spot, which is used as the default value throughout the paper. (B) DeepLog top-k saturates around $K{=}5$--$9$ with high precision and stable recall; $K{=}1$ is too strict (precision of 0.05), while $K{=}15$ begins to miss anomalies. (C) The mask ratio for the mini Transformer achieves the highest F1-score at the default value of $r{=}0.15$ — aligning with the classic BERT mask ratio \cite{b4}; increasing $r$ to 0.20--0.30 reduces effectiveness as too many tokens are masked. The vocabulary growth analysis shows that the number of templates increases from 13 (5k lines) to 137 (500k lines) in a logarithmic pattern, reflecting the template generation characteristics of real system logs.
 
-\textbf{Expected Error Analysis:} Four main types of errors are observed: (i) FP on rare sequences — normal but rare event sequences are incorrectly flagged as anomalies; (ii) FP on long sequences — reconstruction error naturally increases with sequence length, requiring normalization; (iii) FN when anomalies use common templates — requiring sequence models (TCN/DeepLog); (iv) template collision — Drain3 merges different logs due to a loose similarity threshold, requiring fine-tuning of $\theta$.
+The results in Table~\ref{tab_cross_dataset} reveal that no single model dominates across both datasets — a finding that underscores the importance of evaluating the entire pipeline rather than any individual algorithm. On HDFS, the lightweight baselines achieve competitive results: PCA obtains an F1-score of $0.5711 \pm 0.0944$, outperforming deep learning models including DeepLog LSTM and TCN (both $0.4613 \pm 0.0199$). The mini Transformer obtains a low F1-score of $0.2950 \pm 0.0693$. We note that the Transformer evaluated here is a lightweight variant optimized for low latency; a larger, more deeply tuned Transformer model might yield different classification results but at the cost of higher latency. This observation arises because HDFS is a highly structured log dataset with a small vocabulary (137 templates) and very short sequences (average length of 13.77 events). In such settings, anomalies are often manifested as distributional shifts in event frequencies, which are effectively captured by PCA reconstruction error on bag-of-events features. Conversely, deep sequence models do not benefit from their temporal modeling capacity due to sequence sparsity and the absence of complex contextual transitions.
 
-\textbf{Inference Latency and Deployment Cost:} A real-world log monitoring system must measure warning latency alongside the F1-score. To establish a benchmark, we measure the per-sample inference latency for each branch with a batch size of 1 on an RTX 4050 Laptop GPU (Drain3 and baselines measured on CPU; DeepLog/Transformer measured on both CPU and GPU) with 50 warm-up runs, averaged over 1,000 HDFS samples (Table~\ref{tab_latency}).
+\textbf{Visual Analysis and Threshold Sensitivity:} In addition to F1-score, the baselines are analyzed through ROC and Precision-Recall (PR) curves in Fig.~\ref{fig_curves}. The results show that PCA and TruncatedSVD maintain better separability than Isolation Forest across most threshold ranges. For HDFS (which is highly imbalanced), the PR curves indicate that PCA/SVD maintain high Precision at high Recall levels, whereas Isolation Forest declines rapidly. The corresponding AUC-ROC scores for PCA, TruncatedSVD, and Isolation Forest on HDFS (with seed 42) are $0.7722$, $0.7536$, and $0.7136$, respectively, and the Average Precision (AP) scores are $0.5613$, $0.5676$, and $0.1645$, respectively.
 
-Three observations from Table~\ref{tab_latency}: (1) Drain3 processes $\sim$228k logs/sec, which is not a bottleneck; (2) PCA/SVD are the fastest ($<0.2$~ms); IF is 100$\times$ slower due to traversing 200 trees; (3) TCN and DeepLog benefit from GPU execution (latency drops from $\sim$1.7ms to 0.45ms), whereas the small Transformer does not benefit at batch size 1. Training times: Drain3 takes $3.49$~s, PCA $0.74$~s, and Transformer $10.75$~s — a trade-off that needs consideration in real-time monitoring.
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.49\columnwidth]{roc_curves.png}
+\hfill
+\includegraphics[width=0.49\columnwidth]{pr_curves.png}
+\caption{ROC (left) and Precision-Recall (right) curves on HDFS.}
+\label{fig_curves}
+\end{figure}
 
-\subsection{Applications and Limitations}
-The pipeline could potentially support detection of brute-force password scanning (repeated login failures), anomalous API utilization (new templates from Drain3), or service-overload patterns (HTTP 5xx sequences) in production networks after validation on corresponding production logs. This is a proposed application analysis that requires confirmation on anonymized production data.
+In contrast, on BGL, the deep sequence models show strong results under the tested configuration: TCN (top-k) achieves the highest F1-score of $0.9826 \pm 0.0022$, followed closely by DeepLog ($0.9820 \pm 0.0042$). In NLL mode, TCN ($0.9474 \pm 0.0035$) continues to outperform DeepLog ($0.9381 \pm 0.0075$) and the Transformer ($0.9388 \pm 0.0080$). Notably, the traditional baselines PCA and TruncatedSVD also perform well on BGL ($0.9217$ and $0.9356$ F1-scores, respectively), indicating that BGL sequence structures are inherently separable. This cross-dataset divergence — where lightweight baselines prevail on HDFS while sequence models excel on BGL — highlights that the choice of scoring branch should be guided by dataset characteristics rather than model complexity alone.
 
-\textbf{Qualitative Explainability Analysis:} To enhance operational utility, we present a qualitative explainability layer based on next-event prediction mismatches. Table~\ref{tab_explainability} illustrates two concrete anomaly cases extracted from HDFS and BGL test sets using TCN. When a sequence is flagged, the system outputs the failed event position, the actual versus top-3 predicted event templates, and a severity score (NLL). For instance, in BGL sequence \texttt{W20200}, the unexpected occurrence of \texttt{E18} (data TLB error interrupt) instead of the highly probable normal transitions (\texttt{E3}, \texttt{E6}, \texttt{E4}) produces a high anomaly score ($12.68$), immediately guiding operators to a virtual memory subsystem fault.
+\textbf{Grouping Strategy Study (RQ1):} To address RQ1, we evaluate the anomaly detection performance on BGL under four grouping configurations: non-overlapping fixed windows of size $W{=}50, 100, 200$, and a sliding window of size $W{=}100$ with stride $50$. Table~\ref{tab_grouping} shows the F1-score results for PCA, DeepLog (top-k), and TCN (top-k). Because this study focuses on the relative effect of grouping configurations, all results in Table~\ref{tab_grouping} are reported under a single-seed controlled setting on a 200k BGL log subset (which has a different anomaly ratio) and should not be directly compared with the multi-seed aggregate results in Table~\ref{tab_cross_dataset}.
+
+The results in Table~\ref{tab_grouping} indicate that the window size $W$ directly impacts detection performance. For PCA, F1-score remains low at $W=50$ and $W=100$, but improves substantially at $W=200$, suggesting that larger windows provide more stable frequency distributions for reconstruction-based scoring. Conversely, sequence models (DeepLog, TCN) show robust performance across all window configurations. Crucially, the sliding window configuration ($W{=}100, \text{stride}=50$) yields the highest performance (DeepLog 0.9004, TCN 0.9032) by increasing training sample density and mitigating border-crossing boundary effects.
+
+\begin{table}[htbp]
+\caption{F1-score under different grouping configurations on BGL (seed 42)}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Grouping Configuration} & \textbf{PCA} & \textbf{DeepLog (top-k)} & \textbf{TCN (top-k)} \\
+\midrule
+$W=50$ (non-overlap) & 0.1500 & 0.8556 & 0.8750 \\
+$W=100$ (non-overlap) & 0.1353 & 0.8571 & 0.8769 \\
+$W=200$ (non-overlap) & 0.4381 & 0.8810 & 0.8506 \\
+$W=100$, stride $50$ (sliding) & 0.2314 & 0.9004 & 0.9032 \\
+\bottomrule
+\end{tabular}
+\label{tab_grouping}
+\end{center}
+\end{table}
 
 \begin{table}[htbp]
 \caption{Qualitative explainability case studies for log anomalies}
@@ -385,6 +380,26 @@ BGL & W20200 & 1 & E18: data TLB error interrupt... & E3, E6, E4 & 12.68 & kerne
 \label{tab_explainability}
 \end{center}
 \end{table}
+
+\subsection{Parameter Sensitivity, Latency, and Error Analysis}
+\label{sec:ablation}
+To understand the role of the three key hyperparameters, we perform three ablation studies on HDFS 200k (with seed 42): (i) Drain3 similarity threshold $\theta$, (ii) DeepLog top-k parameter $K$, and (iii) Transformer mask ratio $r$. Table~\ref{tab_ablation} summarizes the results.
+
+
+
+The ablation results provide three concrete insights. (A) The Drain3 similarity threshold has a strong impact on the pipeline quality: $\theta{=}0.3$ leads to over-merging (only 25 templates, resulting in low F1 due to mixing different events); $\theta{=}0.7$ causes template explosion (2,455 templates, causing F1 to collapse to $0.0446$); $\theta{=}0.5$ is the sweet spot, which is used as the default value throughout the paper. (B) DeepLog top-k saturates around $K{=}5$--$9$ with high precision and stable recall; $K{=}1$ is too strict (precision of 0.05), while $K{=}15$ begins to miss anomalies. (C) The mask ratio for the mini Transformer achieves the highest F1-score at the default value of $r{=}0.15$ — aligning with the classic BERT mask ratio \cite{b4}; increasing $r$ to 0.20--0.30 reduces effectiveness as too many tokens are masked. The vocabulary growth analysis shows that the number of templates increases from 13 (5k lines) to 137 (500k lines) in a logarithmic pattern, reflecting the template generation characteristics of real system logs.
+
+\textbf{Expected Error Analysis:} Four main types of errors are observed: (i) FP on rare sequences — normal but rare event sequences are incorrectly flagged as anomalies; (ii) FP on long sequences — reconstruction error naturally increases with sequence length, requiring normalization; (iii) FN when anomalies use common templates — requiring sequence models (TCN/DeepLog); (iv) template collision — Drain3 merges different logs due to a loose similarity threshold, requiring fine-tuning of $\theta$.
+
+\textbf{Inference Latency and Deployment Cost:} A real-world log monitoring system must measure warning latency alongside the F1-score. To establish a benchmark, we measure the per-sample inference latency for each branch with a batch size of 1 on an RTX 4050 Laptop GPU (Drain3 and baselines measured on CPU; DeepLog/Transformer measured on both CPU and GPU) with 50 warm-up runs, averaged over 1,000 HDFS samples (Table~\ref{tab_latency}).
+
+Three observations from Table~\ref{tab_latency}: (1) Drain3 processes $\sim$228k logs/sec, which is not a bottleneck; (2) PCA/SVD are the fastest ($<0.2$~ms); IF is 100$\times$ slower due to traversing 200 trees; (3) TCN and DeepLog benefit from GPU execution (latency drops from $\sim$1.7ms to 0.45ms), whereas the small Transformer does not benefit at batch size 1. Training times: Drain3 takes $3.49$~s, PCA $0.74$~s, and Transformer $10.75$~s — a trade-off that needs consideration in real-time monitoring.
+
+\subsection{Applications and Limitations}
+The pipeline could potentially support detection of brute-force password scanning (repeated login failures), anomalous API utilization (new templates from Drain3), or service-overload patterns (HTTP 5xx sequences) in production networks after validation on corresponding production logs. This is a proposed application analysis that requires confirmation on anonymized production data.
+
+\textbf{Qualitative Explainability Analysis:} To enhance operational utility, we present a qualitative explainability layer based on next-event prediction mismatches. Table~\ref{tab_explainability} illustrates two concrete anomaly cases extracted from HDFS and BGL test sets using TCN. When a sequence is flagged, the system outputs the failed event position, the actual versus top-3 predicted event templates, and a severity score (NLL). For instance, in BGL sequence \texttt{W20200}, the unexpected occurrence of \texttt{E18} (data TLB error interrupt) instead of the highly probable normal transitions (\texttt{E3}, \texttt{E6}, \texttt{E4}) produces a high anomaly score ($12.68$), immediately guiding operators to a virtual memory subsystem fault.
+
 
 \textbf{Threats to Validity:} (i) experiments are conducted on standard HDFS/BGL datasets and have not been tested at scale in production environments; (ii) domain shift exists between lab datasets and real logs; (iii) benchmark labels may contain noise; (iv) Drain3 is sensitive to the threshold $\theta$; (v) performance depends heavily on grouping strategies and threshold percentiles; (vi) the mini Transformer is not deeply optimized; (vii) anonymization and warning validation mechanisms are required in practice.
 
