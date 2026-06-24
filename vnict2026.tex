@@ -24,6 +24,10 @@
 \setlength{\intextsep}{3pt plus 1pt minus 1pt}
 \setlength{\abovecaptionskip}{1.5pt plus 0.5pt minus 0.5pt}
 \setlength{\belowcaptionskip}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\abovedisplayskip}{3pt plus 1pt minus 2pt}
+\setlength{\belowdisplayskip}{3pt plus 1pt minus 2pt}
+\setlength{\abovedisplayshortskip}{2pt plus 1pt}
+\setlength{\belowdisplayshortskip}{2pt plus 1pt}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -53,7 +57,7 @@ Email: thanhct@huflit.edu.vn}
 \maketitle
 
 \begin{abstract}
-Bài báo trình bày một pipeline phát hiện bất thường log hệ thống quy mô lớn dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh các mạng tích chập thời gian (TCN) và Transformer với các baseline truyền thống trên hai bộ dữ liệu log hệ thống quy mô lớn. Log thô được parse thành event template, gom thành chuỗi và chấm điểm bất thường bằng các nhánh: PCA/SVD, Isolation Forest, DeepLog (LSTM next-event prediction), mạng TCN (Temporal Convolutional Network) và Transformer masked event modeling. Trên HDFS (500k dòng, 137 template), thực nghiệm 5 random seed cho thấy PCA đạt F1 $0.5711 \pm 0.0944$, vượt nhẹ DeepLog và TCN ($0.4613 \pm 0.0199$). Trên BGL (500k dòng, 198 template, cửa sổ $W{=}100$), mạng TCN dẫn đầu với F1 $0.9826 \pm 0.0022$ (chế độ top-k) và F1 $0.9474 \pm 0.0035$ (chế độ NLL threshold), vượt trội hơn DeepLog LSTM ($0.9820 \pm 0.0042$ và $0.9381 \pm 0.0075$) cũng như Transformer val-tuned ($0.9388 \pm 0.0080$). Trong cấu hình thực nghiệm được khảo sát, TCN thể hiện ưu thế rõ rệt trên BGL cả về hiệu năng phân loại lẫn độ trễ suy luận so với LSTM và Transformer, trong khi PCA vẫn duy trì tính cạnh tranh trên các tập dữ liệu chuỗi ngắn như HDFS. Đóng góp gồm: (i) pipeline đánh giá tái lập tránh rò rỉ dữ liệu; (ii) ablation cho Drain3 threshold, DeepLog/TCN top-k và mask ratio; (iii) đánh giá chéo HDFS--BGL; (iv) benchmark độ trễ suy luận của TCN và Transformer trên CPU.
+Bài báo trình bày một pipeline phát hiện bất thường log hệ thống quy mô lớn dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh các mạng tích chập thời gian (TCN) và Transformer với các baseline truyền thống trên hai bộ dữ liệu log hệ thống quy mô lớn. Log thô được parse thành event template, gom thành chuỗi và chấm điểm bất thường bằng các nhánh: PCA/SVD, Isolation Forest, DeepLog (LSTM next-event prediction), mạng TCN (Temporal Convolutional Network) và Transformer masked event modeling. Trên HDFS (500k dòng, 137 template), thực nghiệm 5 random seed cho thấy PCA đạt F1 $0.5711 \pm 0.0944$, vượt nhẹ DeepLog và TCN ($0.4613 \pm 0.0199$). Trên BGL (500k dòng, 198 template, cửa sổ $W{=}100$), mạng TCN dẫn đầu với F1 $0.9826 \pm 0.0022$ (chế độ top-k) và F1 $0.9474 \pm 0.0035$ (chế độ NLL threshold), vượt trội hơn DeepLog LSTM ($0.9820 \pm 0.0042$ và $0.9381 \pm 0.0075$) cũng như Transformer val-tuned ($0.9388 \pm 0.0080$). Trong cấu hình thực nghiệm được khảo sát, TCN thể hiện ưu thế rõ rệt trên BGL cả về hiệu năng phân loại lẫn độ trễ suy luận so với LSTM và Transformer, trong khi PCA vẫn duy trì tính cạnh tranh trên các tập dữ liệu chuỗi ngắn như HDFS. Đóng góp gồm: (i) pipeline đánh giá tái lập tránh rò rỉ dữ liệu; (ii) đánh giá chéo HDFS--BGL; (iii) khảo sát các chiến lược gom nhóm trên cửa sổ cố định và cửa sổ trượt; (iv) phân tích độ nhạy ablation cho Drain3 threshold, top-k và mask ratio; (v) benchmark độ trễ suy luận và phân tích định tính về khả năng giải thích lỗi.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -353,9 +357,9 @@ Khảo sát độ nhạy của F1-score theo percentile chọn ngưỡng (percen
 
 Kết quả từ Bảng \ref{tab_cross_dataset} cho thấy trên BGL, các mô hình học chuỗi dẫn đầu rõ rệt: TCN (top-k) đạt F1 cao nhất $0.9826 \pm 0.0022$, theo sát là DeepLog ($0.9820 \pm 0.0042$). Ở chế độ NLL, TCN ($0.9474 \pm 0.0035$) tiếp tục vượt DeepLog ($0.9381$) và Transformer ($0.9388$). Ngược lại với HDFS, các baseline PCA và TruncatedSVD trên BGL đạt F1 tốt hơn hẳn ($0.9217$ và $0.9356$), chứng minh cấu trúc chuỗi BGL dễ phân tách hơn.
 
-\textbf{Khảo sát chiến lược gom nhóm (RQ1):} Để trả lời RQ1, chúng tôi đánh giá hiệu năng phát hiện bất thường trên BGL dưới bốn cấu hình gom nhóm khác nhau: cửa sổ cố định không chồng lấn $W{=}50, 100, 200$, và cửa sổ trượt $W{=}100$, stride $50$ (Bảng \ref{tab_grouping}). 
+\textbf{Khảo sát chiến lược gom nhóm (RQ1):} Để trả lời RQ1, chúng tôi đánh giá hiệu năng phát hiện bất thường trên BGL dưới bốn cấu hình gom nhóm khác nhau: cửa sổ cố định không chồng lấn $W{=}50, 100, 200$, và cửa sổ trượt $W{=}100$, stride $50$. Do khảo sát này tập trung vào ảnh hưởng tương đối của các cấu hình gom nhóm, tất cả kết quả trong Bảng \ref{tab_grouping} được báo cáo trong môi trường kiểm soát đơn seed trên tập con 200k log BGL (với tỷ lệ bất thường khác biệt) và không nên so sánh trực tiếp với kết quả tổng hợp đa seed trong Bảng \ref{tab_cross_dataset}.
 
-Kết quả Bảng \ref{tab_grouping} cho thấy cấu hình cửa sổ ảnh hưởng trực tiếp tới hiệu năng. Khi tăng kích thước $W$ từ 50 lên 200, F1-score của PCA tăng đáng kể vì bag-of-events trên cửa sổ dài cung cấp ngữ cảnh phân phối tốt hơn. Ngược lại, các mô hình chuỗi (TCN, DeepLog) hoạt động ổn định trên mọi cấu hình. Đáng chú ý, cấu hình cửa sổ trượt ($W{=}100$, stride 50) đạt F1-score cao nhất (DeepLog 0.9004, TCN 0.9032) nhờ tối ưu mật độ huấn luyện và giảm độ trễ phát hiện tại ranh giới cửa sổ.
+Kết quả Bảng \ref{tab_grouping} cho thấy cấu hình cửa sổ ảnh hưởng trực tiếp tới hiệu năng. Đối với PCA, F1-score duy trì ở mức thấp tại $W=50$ và $W=100$, nhưng được cải thiện đáng kể ở $W=200$, gợi ý rằng cửa sổ lớn hơn cung cấp phân phối tần suất ổn định hơn cho phương pháp chấm điểm dựa trên tái cấu trúc. Ngược lại, các mô hình chuỗi (TCN, DeepLog) hoạt động ổn định trên mọi cấu hình. Đáng chú ý, cấu hình cửa sổ trượt ($W{=}100$, stride 50) đạt F1-score cao nhất (DeepLog 0.9004, TCN 0.9032) nhờ tối ưu mật độ huấn luyện và giảm độ trễ phát hiện tại ranh giới cửa sổ.
 
 \begin{table}[htbp]
 \caption{F1-score theo cấu hình gom nhóm trên BGL (seed 42)}
@@ -392,19 +396,19 @@ Ba quan sát từ Bảng \ref{tab_latency}: (1) Drain3 xử lý $\sim$228k log/g
 \subsection{Ứng dụng và hạn chế}
 Pipeline có tiềm năng hỗ trợ phát hiện các dấu hiệu tấn công dò mật khẩu (chuỗi đăng nhập thất bại lặp lại), khai thác API bất thường (template mới từ Drain3) hoặc quá tải dịch vụ (chuỗi HTTP 5xx) trong môi trường mạng thực tế sau khi được xác thực trên log vận hành tương ứng. Đây là phân tích ứng dụng đề xuất, cần xác nhận thêm trên log thực tế đã ẩn danh.
 
-\textbf{Phân tích tính giải thích (Explainability):} Để hỗ trợ người vận hành phân tích lỗi nhanh, chúng tôi đề xuất trích xuất các trường hợp mismatch dự báo làm thông tin giải thích. Bảng \ref{tab_explainability} mô tả hai trường hợp phát hiện bất thường thực tế từ HDFS và BGL bằng mô hình TCN. Khi phát hiện bất thường, hệ thống báo cáo sự kiện thực tế, top-3 dự báo của mô hình và diễn giải lỗi. Ví dụ, trong cửa sổ BGL \texttt{W20200}, sự kiện ngắt trang \texttt{E18} đột ngột xuất hiện thay vì các sự kiện chuyển tiếp bình thường (\texttt{E3}, \texttt{E6}, \texttt{E4}) dẫn tới điểm bất thường tăng vọt ($12.68$), giúp khoanh vùng nhanh lỗi hệ thống.
+\textbf{Phân tích tính giải thích (Explainability):} Để hỗ trợ người vận hành phân tích lỗi nhanh, chúng tôi đề xuất trích xuất các trường hợp mismatch dự báo làm thông tin giải thích. Bảng \ref{tab_explainability} mô tả hai trường hợp phát hiện bất thường thực tế từ HDFS và BGL bằng mô hình TCN. Khi phát hiện bất thường, hệ thống báo cáo sự kiện thực tế, vị trí lỗi trong chuỗi, dự báo top-3 của mô hình, mức đóng góp điểm NLL và diễn giải lỗi. Ví dụ, trong cửa sổ BGL \texttt{W20200}, sự kiện ngắt trang \texttt{E18} đột ngột xuất hiện thay vì các sự kiện chuyển tiếp bình thường (\texttt{E3}, \texttt{E6}, \texttt{E4}) dẫn tới điểm bất thường tăng vọt ($12.68$), giúp khoanh vùng nhanh lỗi hệ thống.
 
 \begin{table}[htbp]
 \caption{Ví dụ định tính về khả năng giải thích lỗi log}
 \begin{center}
 \scriptsize
 \setlength{\tabcolsep}{2pt}
-\begin{tabular}{lcp{2.4cm}p{1.2cm}p{1.4cm}}
+\begin{tabular}{lccp{2.3cm}p{1.1cm}cp{1.3cm}}
 \toprule
-\textbf{Tập log} & \textbf{ID Chuỗi} & \textbf{Event lỗi thực tế} & \textbf{Dự báo top-3} & \textbf{Diễn giải nghiệp vụ} \\
+\textbf{Tập log} & \textbf{ID Chuỗi} & \textbf{Vị trí} & \textbf{Event lỗi thực tế} & \textbf{Dự báo top-3} & \textbf{NLL} & \textbf{Diễn giải nghiệp vụ} \\
 \midrule
-HDFS & blk\_-68076... & E19: Receiving empty packet... & E5, E3, E4 & lỗi ghi / sao chép block \\
-BGL & W20200 & E18: data TLB error interrupt... & E3, E6, E4 & lỗi ngắt trang nhân hệ thống \\
+HDFS & blk\_-68076... & 4 & E19: Receiving empty packet... & E5, E3, E4 & 12.39 & lỗi ghi block \\
+BGL & W20200 & 1 & E18: data TLB error interrupt... & E3, E6, E4 & 12.68 & lỗi ngắt trang \\
 \bottomrule
 \end{tabular}
 \label{tab_explainability}
