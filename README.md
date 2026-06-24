@@ -1,4 +1,4 @@
-# Ứng dụng mạng TCN và Transformer trong phát hiện lỗi bất thường từ dữ liệu log mạng doanh nghiệp và công nghiệp quy mô lớn
+# Ứng dụng mạng TCN và Transformer trong phát hiện bất thường từ dữ liệu log hệ thống quy mô lớn
 
 Dự án này chứa mã nguồn thực nghiệm và tài liệu học thuật của nghiên cứu ứng dụng mạng tích chập thời gian (**TCN**) và mô hình tự chú ý (**Transformer**) để phát hiện bất thường từ chuỗi sự kiện log hệ thống quy mô lớn, nộp tham dự Hội thảo Quốc gia VNICT 2026.
 
@@ -44,8 +44,8 @@ Dưới đây là kết quả thực nghiệm trung bình $\pm$ độ lệch chu
 | Isolation Forest | $0.1726 \pm 0.0146$ | $0.1080 \pm 0.0084$ | $0.1328 \pm 0.0103$ |
 | Transformer (val-tuned) | $0.5102 \pm 0.1497$ | $0.2365 \pm 0.1156$ | $0.2950 \pm 0.0693$ |
 | DeepLog (top-k) | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
-| **TCN (top-k) - Proposed** | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
-| **TCN (NLL) - Proposed** | $0.2621 \pm 0.0277$ | $0.3644 \pm 0.0291$ | $0.3042 \pm 0.0236$ |
+| **TCN (top-k) - Integrated** | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
+| **TCN (NLL) - Integrated** | $0.2621 \pm 0.0277$ | $0.3644 \pm 0.0291$ | $0.3042 \pm 0.0236$ |
 
 ### Tập dữ liệu BGL (500k log, Cửa sổ $W=100$)
 | Phương pháp | Precision | Recall | F1-Score |
@@ -55,8 +55,8 @@ Dưới đây là kết quả thực nghiệm trung bình $\pm$ độ lệch chu
 | Isolation Forest | $0.1110 \pm 0.0171$ | $0.0248 \pm 0.0045$ | $0.0404 \pm 0.0070$ |
 | Transformer (val-tuned) | $0.9841 \pm 0.0017$ | $0.8975 \pm 0.0157$ | $0.9388 \pm 0.0080$ |
 | DeepLog (top-k) | $0.9654 \pm 0.0083$ | $0.9991 \pm 0.0012$ | $0.9820 \pm 0.0042$ |
-| **TCN (top-k) - Proposed** | $0.9666 \pm 0.0039$ | $0.9991 \pm 0.0012$ | **$0.9826 \pm 0.0022$** |
-| **TCN (NLL) - Proposed** | $0.9412 \pm 0.0085$ | $0.9537 \pm 0.0094$ | **$0.9474 \pm 0.0035$** |
+| **TCN (top-k) - Integrated** | $0.9666 \pm 0.0039$ | $0.9991 \pm 0.0012$ | **$0.9826 \pm 0.0022$** |
+| **TCN (NLL) - Integrated** | $0.9412 \pm 0.0085$ | $0.9537 \pm 0.0094$ | **$0.9474 \pm 0.0035$** |
 
 ---
 

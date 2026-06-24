@@ -29,8 +29,8 @@
 \begin{document}
 
 \title{
-\textbf{Ứng dụng mạng TCN và Transformer trong phát hiện lỗi bất thường từ dữ liệu log mạng doanh nghiệp và công nghiệp quy mô lớn}\\[0.8em]
-\large\textit{Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks}
+\textbf{Ứng dụng mạng TCN và Transformer trong phát hiện bất thường từ dữ liệu log hệ thống quy mô lớn}\\[0.8em]
+\large\textit{Application of TCN and Transformer Networks for Large-Scale System Log Anomaly Detection}
 }
 
 \author{\IEEEauthorblockN{Trịnh Hoàng Tú}
@@ -51,7 +51,7 @@ Email: thanhct@huflit.edu.vn}
 \maketitle
 
 \begin{abstract}
-Bài báo trình bày một pipeline phát hiện bất thường log hệ thống quy mô lớn dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh các mạng tích chập thời gian (TCN) và Transformer với các baseline truyền thống trên hai bộ dữ liệu log mạng doanh nghiệp và công nghiệp quy mô lớn. Log thô được parse thành event template, gom thành chuỗi và chấm điểm bất thường bằng các nhánh: PCA/SVD, Isolation Forest, DeepLog (LSTM next-event prediction), mạng TCN (Temporal Convolutional Network) và Transformer masked event modeling. Trên HDFS (500k dòng, 137 template), thực nghiệm 5 random seed cho thấy PCA đạt F1 $0.5711 \pm 0.0944$, vượt nhẹ DeepLog và TCN ($0.4613 \pm 0.0199$). Trên BGL (500k dòng, 198 template, cửa sổ $W{=}100$), mạng TCN dẫn đầu với F1 $0.9826 \pm 0.0022$ (chế độ top-k) và F1 $0.9474 \pm 0.0035$ (chế độ NLL threshold), vượt trội hơn DeepLog LSTM ($0.9820 \pm 0.0042$ và $0.9381 \pm 0.0075$) cũng như Transformer val-tuned ($0.9388 \pm 0.0080$). Kết quả cho thấy TCN có ưu thế lớn cả về hiệu năng phân loại lẫn độ trễ suy luận so với LSTM và Transformer trên chuỗi dài. Đóng góp gồm: (i) pipeline đánh giá tái lập tránh rò rỉ dữ liệu; (ii) ablation cho Drain3 threshold, DeepLog/TCN top-k và mask ratio; (iii) đánh giá chéo HDFS--BGL; (iv) benchmark độ trễ suy luận của TCN và Transformer trên CPU.
+Bài báo trình bày một pipeline phát hiện bất thường log hệ thống quy mô lớn dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh các mạng tích chập thời gian (TCN) và Transformer với các baseline truyền thống trên hai bộ dữ liệu log hệ thống quy mô lớn. Log thô được parse thành event template, gom thành chuỗi và chấm điểm bất thường bằng các nhánh: PCA/SVD, Isolation Forest, DeepLog (LSTM next-event prediction), mạng TCN (Temporal Convolutional Network) và Transformer masked event modeling. Trên HDFS (500k dòng, 137 template), thực nghiệm 5 random seed cho thấy PCA đạt F1 $0.5711 \pm 0.0944$, vượt nhẹ DeepLog và TCN ($0.4613 \pm 0.0199$). Trên BGL (500k dòng, 198 template, cửa sổ $W{=}100$), mạng TCN dẫn đầu với F1 $0.9826 \pm 0.0022$ (chế độ top-k) và F1 $0.9474 \pm 0.0035$ (chế độ NLL threshold), vượt trội hơn DeepLog LSTM ($0.9820 \pm 0.0042$ và $0.9381 \pm 0.0075$) cũng như Transformer val-tuned ($0.9388 \pm 0.0080$). Kết quả cho thấy TCN có ưu thế lớn cả về hiệu năng phân loại lẫn độ trễ suy luận so với LSTM và Transformer trên chuỗi dài. Đóng góp gồm: (i) pipeline đánh giá tái lập tránh rò rỉ dữ liệu; (ii) ablation cho Drain3 threshold, DeepLog/TCN top-k và mask ratio; (iii) đánh giá chéo HDFS--BGL; (iv) benchmark độ trễ suy luận của TCN và Transformer trên CPU.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -68,7 +68,7 @@ Bài báo định vị như một nghiên cứu ứng dụng và đánh giá h�
     \item \textbf{RQ3:} Thứ tự ưu thế của các nhánh có giữ nguyên khi chuyển từ HDFS sang BGL (đặc trưng dữ liệu rất khác) không?
 \end{itemize}
 
-Đóng góp chính gồm: (1) pipeline Drain3--event sequence--anomaly scoring với bốn nhánh chấm điểm thay thế (PCA/SVD, Isolation Forest, DeepLog, Transformer masked event modeling); (2) đánh giá đa-seed (5 random seed) trên HDFS với protocol tránh rò rỉ test set, kèm grouping strategy study cho Block ID/fixed window/sliding window; (3) đánh giá chéo HDFS--BGL trên cùng pipeline; (4) ablation cho Drain3 threshold, DeepLog top-k và Transformer mask ratio, benchmark độ trễ suy luận; (5) phân tích chi phí, lỗi dự kiến và mapping thận trọng sang hạ tầng mạng lớn.
+Đóng góp chính gồm: (1) pipeline Drain3--event sequence--anomaly scoring với năm nhánh chấm điểm thay thế (PCA/SVD, Isolation Forest, DeepLog, TCN và Transformer masked event modeling); (2) đánh giá đa-seed (5 random seed) trên HDFS với protocol tránh rò rỉ test set, kèm grouping strategy study cho Block ID/fixed window/sliding window; (3) đánh giá chéo HDFS--BGL trên cùng pipeline; (4) ablation cho Drain3 threshold, DeepLog top-k và Transformer mask ratio, benchmark độ trễ suy luận; (5) phân tích chi phí, lỗi dự kiến và mapping thận trọng sang hạ tầng mạng lớn.
 
 \section{Các nghiên cứu liên quan}
 Các phương pháp phân tích bất thường log đầu tiên thường biểu diễn log dưới dạng vector tần suất sự kiện hoặc ma trận đặc trưng, sau đó áp dụng các mô hình học máy truyền thống như PCA, clustering hoặc Isolation Forest \cite{b10,b11}. PCA được sử dụng để tách không gian hành vi bình thường và phát hiện điểm lệch khỏi không gian con chính. Nhóm phương pháp này nhẹ, dễ triển khai nhưng thường bỏ qua thứ tự thời gian và quan hệ ngữ cảnh giữa các sự kiện log.
@@ -99,7 +99,7 @@ Transformer & LogBERT \cite{b2} & Phụ thuộc chất lượng parsing & Tách 
 
 Từ các công trình liên quan, có thể rút ra bốn khoảng trống nghiên cứu chính: (i) các phương pháp thống kê truyền thống không học được thứ tự sự kiện log; (ii) các mô hình LSTM tuần tự hạn chế với chuỗi log dài; (iii) các mô hình Transformer phụ thuộc mạnh vào bước parsing; (iv) việc ánh xạ pipeline phát hiện bất thường sang mạng lớn cần làm rõ đơn vị gom chuỗi và các kịch bản nghiệp vụ. 
 
-Để giải quyết các khoảng trống trên, bài báo xây dựng một pipeline chuẩn hóa tách biệt ba giai đoạn (parsing, grouping, scoring) sử dụng Drain3 làm tiền xử lý để làm sạch không gian token. Chúng tôi đánh giá song song các nhánh chấm điểm bao gồm các baseline nhẹ (PCA, TruncatedSVD, Isolation Forest), mô hình tuần tự LSTM (DeepLog), mạng tích chập thời gian TCN đề xuất và Transformer masked event modeling. Hiệu năng được đo lường cẩn thận bằng Precision, Recall và F1-score trung bình $\pm$ độ lệch chuẩn trên 5 random seed khác nhau nhằm đảm bảo độ tin cậy khoa học.
+Để giải quyết các khoảng trống trên, bài báo xây dựng một pipeline chuẩn hóa tách biệt ba giai đoạn (parsing, grouping, scoring) sử dụng Drain3 làm tiền xử lý để làm sạch không gian token. Chúng tôi đánh giá song song các nhánh chấm điểm bao gồm các baseline nhẹ (PCA, TruncatedSVD, Isolation Forest), mô hình tuần tự LSTM (DeepLog), mạng tích chập thời gian TCN được tích hợp và Transformer masked event modeling. Hiệu năng được đo lường cẩn thận bằng Precision, Recall và F1-score trung bình $\pm$ độ lệch chuẩn trên 5 random seed khác nhau nhằm đảm bảo độ tin cậy khoa học.
 
 
 \section{Phương pháp đề xuất}
@@ -181,7 +181,7 @@ Isolation Forest được áp dụng trên biểu diễn đặc trưng TF-IDF c�
 \end{equation}
 Ở chế độ \emph{top-k}, chuỗi bị coi là bất thường nếu có ít nhất một sự kiện thực tế nằm ngoài top $K$ dự đoán có xác suất cao nhất. Ở chế độ \emph{NLL threshold}, điểm bất thường của chuỗi là trung bình negative log-likelihood (NLL) của các sự kiện.
 
-\textbf{Mạng tích chập thời gian (TCN):} Được đề xuất để cải thiện khả năng song song hóa và mở rộng receptive field. TCN sử dụng tích chập 1D nhân quả giãn nở (Dilated Causal 1D Convolution) \cite{b19}. Phép tích chập trên phần tử $s$ của chuỗi đầu vào $x$ với bộ lọc $f$ kích thước $k$ và hệ số giãn nở $d$ được định nghĩa:
+\textbf{Mạng tích chập thời gian (TCN):} Được tích hợp để cải thiện khả năng song song hóa và mở rộng receptive field. TCN sử dụng tích chập 1D nhân quả giãn nở (Dilated Causal 1D Convolution) \cite{b19}. Phép tích chập trên phần tử $s$ của chuỗi đầu vào $x$ với bộ lọc $f$ kích thước $k$ và hệ số giãn nở $d$ được định nghĩa:
 \begin{equation}
 F(s) = (x *_d f)(s) = \sum_{j=0}^{k-1} f(j) \cdot x_{s - d \cdot j}
 \end{equation}
@@ -197,7 +197,7 @@ Trong đó $M$ là tập các vị trí bị che. Khi suy luận, điểm bất 
 
 \section{Thiết lập thực nghiệm}
 \subsection{Bộ dữ liệu}
-Nghiên cứu sử dụng HDFS và BGL từ benchmark LogHub \cite{b6,b12}. HDFS chứa log từ hệ thống Hadoop và được gán nhãn theo Block ID (bất thường nếu block chứa lỗi). Chúng tôi dùng 500k dòng đầu để kiểm chứng. BGL chứa log từ siêu máy tính và được gom theo cửa sổ không chồng lấn $W{=}100$ dòng để gán nhãn bất thường. Thống kê của hai tập dữ liệu sau bước Drain3 được mô tả ở Bảng \ref{tab_dataset_stats}.
+Nghiên cứu sử dụng HDFS và BGL từ benchmark LogHub \cite{b6,b12}. HDFS chứa log từ hệ thống Hadoop và được gán nhãn theo Block ID (bất thường nếu block chứa lỗi). Chúng tôi dùng 500k dòng đầu để kiểm chứng. BGL chứa log từ siêu máy tính và được gom theo cửa sổ không chồng lấn $W{=}100$ dòng để gán nhãn bất thường. Thống kê của hai tập dữ liệu sau bước Drain3 được mô tả ở Bảng \ref{tab_dataset_stats}. Mặc dù HDFS và BGL là các bộ dữ liệu chuẩn đại diện cho log hệ thống quy mô lớn, chúng tôi thừa nhận rằng chúng có thể chưa phản ánh toàn bộ tính chất động của môi trường mạng doanh nghiệp thực tế. Việc đánh giá thêm trên log vận hành thực tế là hướng đi cần thiết trong tương lai.
 
 \begin{table}[!t]
 \caption{Thống kê các bộ dữ liệu HDFS và BGL sử dụng trong thực nghiệm}
@@ -330,7 +330,7 @@ Một quan sát đáng chú ý là PCA và TruncatedSVD có độ lệch chuẩn
 
 PCA dẫn đầu trong nhóm baseline vì HDFS sau Drain3 có vocabulary nhỏ (137 template) và chuỗi ngắn (trung bình 13.77 event); ở chế độ đó, nhiều bất thường biểu hiện qua thay đổi phân phối event nên reconstruction error trên bag-of-events đủ tạo tín hiệu mạnh. Isolation Forest yếu vì không học cấu trúc chuỗi và bị ảnh hưởng bởi sparsity của TF-IDF. Đánh giá chéo trên BGL ở §\ref{sec:bgl} cho thấy đặc trưng compact của HDFS chính là yếu tố làm baseline nhẹ trở nên mạnh.
 
-\textbf{Thử nghiệm Transformer:} Mô hình lấy cảm hứng từ LogBERT \cite{b2} (2 lớp encoder, $d_{model}{=}64$, 4 heads, mask ratio $r{=}0.15$, $\sim$80k tham số), huấn luyện AdamW \cite{b17} 5 epoch trên chuỗi bình thường, ngưỡng percentile 95 trên validation. Bảng \ref{tab_cross_dataset} cho thấy: DeepLog top-k có precision rất cao ($0.9862$) nhưng recall hạn chế ($0.3013$) vì LSTM chỉ cảnh báo khi chắc chắn. Khi chuyển sang NLL threshold, F1 giảm về $0.3046$, tương đương Transformer val-tuned---chiến lược xếp hạng quyết định hơn kiến trúc. Trên HDFS, cả DeepLog, TCN lẫn Transformer đều chưa vượt PCA vì vocabulary nhỏ và chuỗi ngắn; lý do này thúc đẩy đánh giá chéo BGL ở §\ref{sec:bgl}.
+\textbf{Thử nghiệm Transformer:} Mô hình lấy cảm hứng từ LogBERT \cite{b2} (2 lớp encoder, $d_{model}{=}64$, 4 heads, mask ratio $r{=}0.15$, $\sim$80k tham số), huấn luyện AdamW \cite{b17} 5 epoch trên chuỗi bình thường, ngưỡng percentile 95 trên validation. Chúng tôi lưu ý rằng mô hình Transformer được đánh giá ở đây là một biến thể gọn nhẹ (lightweight baseline) được tối ưu hóa cho độ trễ thấp; một mô hình Transformer lớn và được tinh chỉnh sâu hơn có thể mang lại kết quả phân loại khác biệt nhưng đi kèm với chi phí độ trễ cao hơn. Bảng \ref{tab_cross_dataset} cho thấy: DeepLog top-k có precision rất cao ($0.9862$) nhưng recall hạn chế ($0.3013$) vì LSTM chỉ cảnh báo khi chắc chắn. Khi chuyển sang NLL threshold, F1 giảm về $0.3046$, tương đương Transformer val-tuned---chiến lược xếp hạng quyết định hơn kiến trúc. Trên HDFS, cả DeepLog, TCN lẫn Transformer đều chưa vượt PCA vì vocabulary nhỏ và chuỗi ngắn; lý do này thúc đẩy đánh giá chéo BGL ở §\ref{sec:bgl}.
 
 \textbf{Phân tích trực quan và độ nhạy ngưỡng:} Ngoài F1-score, các baseline được phân tích thông qua đường ROC và Precision-Recall (PR) ở Hình \ref{fig_curves}. Kết quả cho thấy PCA và TruncatedSVD duy trì khả năng tách biệt tốt hơn Isolation Forest trên hầu hết dải ngưỡng. Đối với HDFS (mất cân bằng nặng), đường PR cho thấy PCA/SVD duy trì Precision tốt ở vùng Recall cao, trong khi Isolation Forest sụt giảm nhanh. Điểm AUC-ROC tương ứng của PCA, TruncatedSVD và Isolation Forest trên HDFS (với seed 42) lần lượt là $0.7722$, $0.7536$, và $0.7136$, và điểm Average Precision (AP) tương ứng là $0.5613$, $0.5676$, và $0.1645$.
 
@@ -361,7 +361,7 @@ Kết quả ablation cung cấp ba góc nhìn cụ thể. (A) Ngưỡng Drain3 �
 
 \textbf{Độ trễ suy luận và chi phí triển khai:} Một hệ thống giám sát log thực tế cần đo độ trễ cảnh báo bên cạnh F1-score. Để có chuẩn so sánh, chúng tôi đo per-sample inference latency cho từng nhánh với batch size 1 trên RTX 4050 Laptop (Drain3 và baseline thuần CPU; DeepLog/Transformer đo cả CPU và GPU), warm-up 50 lần và lấy trung bình trên 1.000 mẫu HDFS (Bảng \ref{tab_latency}).
 
-Ba quan sát từ Bảng \ref{tab_latency}: (1) Drain3 xử lý $\sim$228k log/giây, không phải bottleneck; (2) PCA/SVD nhanh nhất (<0.2ms); IF chậm hơn 100× do duyệt 200 cây; (3) TCN và DeepLog hưởng lợi GPU (giảm từ $\sim$1.7ms xuống 0.45ms), Transformer nhỏ không hưởng lợi ở batch 1. Thời gian huấn luyện: Drain3 $3.49$~s, PCA $0.74$~s, Transformer $10.75$~s---trade-off cần cân nhắc trong giám sát thời gian thực.
+Ba quan sát từ Bảng \ref{tab_latency}: (1) Drain3 xử lý $\sim$228k log/giây, không phải bottleneck; (2) PCA/SVD nhanh nhất ($<0.2$~ms); IF chậm hơn 100× do duyệt 200 cây; (3) TCN và DeepLog hưởng lợi GPU (giảm từ $\sim$1.7ms xuống 0.45ms), Transformer nhỏ không hưởng lợi ở batch 1. Thời gian huấn luyện: Drain3 $3.49$~s, PCA $0.74$~s, Transformer $10.75$~s---trade-off cần cân nhắc trong giám sát thời gian thực.
 
 
 \subsection{Ứng dụng và hạn chế}
