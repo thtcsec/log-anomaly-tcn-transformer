@@ -12,16 +12,18 @@
 \usepackage{url}
 \usepackage{cite}
 \usepackage[compact]{titlesec}
-\titlespacing{\section}{0pt}{6pt plus 2pt minus 2pt}{3pt plus 1pt minus 1pt}
-\titlespacing{\subsection}{0pt}{4pt plus 2pt minus 2pt}{2pt plus 1pt minus 1pt}
+\titlespacing{\section}{0pt}{4pt plus 1pt minus 1pt}{2pt plus 1pt minus 1pt}
+\titlespacing{\subsection}{0pt}{3pt plus 1pt minus 1pt}{1.5pt plus 1pt minus 1pt}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
-\setlength{\textfloatsep}{4pt plus 1pt minus 1pt}
-\setlength{\dbltextfloatsep}{4pt plus 1pt minus 1pt}
-\setlength{\intextsep}{4pt plus 1pt minus 1pt}
-\setlength{\abovecaptionskip}{2pt plus 1pt minus 1pt}
-\setlength{\belowcaptionskip}{2pt plus 1pt minus 1pt}
+\setlength{\floatsep}{3pt plus 1pt minus 1pt}
+\setlength{\dblfloatsep}{3pt plus 1pt minus 1pt}
+\setlength{\textfloatsep}{3pt plus 1pt minus 1pt}
+\setlength{\dbltextfloatsep}{3pt plus 1pt minus 1pt}
+\setlength{\intextsep}{3pt plus 1pt minus 1pt}
+\setlength{\abovecaptionskip}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\belowcaptionskip}{1.5pt plus 0.5pt minus 0.5pt}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -68,7 +70,7 @@ Bài báo định vị như một nghiên cứu ứng dụng và đánh giá h�
     \item \textbf{RQ3:} Thứ tự ưu thế của các nhánh có giữ nguyên khi chuyển từ HDFS sang BGL (đặc trưng dữ liệu rất khác) không?
 \end{itemize}
 
-Đóng góp chính gồm: (1) pipeline Drain3--event sequence--anomaly scoring với năm nhánh chấm điểm thay thế (PCA/SVD, Isolation Forest, DeepLog, TCN và Transformer masked event modeling); (2) đánh giá đa-seed (5 random seed) trên HDFS với protocol tránh rò rỉ test set, kèm grouping strategy study cho Block ID/fixed window/sliding window; (3) đánh giá chéo HDFS--BGL trên cùng pipeline; (4) ablation cho Drain3 threshold, DeepLog top-k và Transformer mask ratio, benchmark độ trễ suy luận; (5) phân tích chi phí, lỗi dự kiến và mapping thận trọng sang hạ tầng mạng lớn.
+Đóng góp chính gồm: (1) pipeline Drain3--event sequence--anomaly scoring với năm nhánh chấm điểm thay thế (PCA/SVD, Isolation Forest, DeepLog, TCN và Transformer masked event modeling); (2) đánh giá đa-seed trên HDFS với protocol tránh rò rỉ test set, kèm thực nghiệm so sánh các chiến lược gom nhóm Block-ID, cửa sổ cố định và cửa sổ trượt; (3) đánh giá chéo HDFS--BGL trên cùng pipeline; (4) ablation cho Drain3 threshold, DeepLog top-k và Transformer mask ratio, benchmark độ trễ suy luận; (5) phân tích chi phí, lỗi dự kiến và mapping thận trọng sang hạ tầng mạng lớn.
 
 \section{Các nghiên cứu liên quan}
 Các phương pháp phân tích bất thường log đầu tiên thường biểu diễn log dưới dạng vector tần suất sự kiện hoặc ma trận đặc trưng, sau đó áp dụng các mô hình học máy truyền thống như PCA, clustering hoặc Isolation Forest \cite{b10,b11}. PCA được sử dụng để tách không gian hành vi bình thường và phát hiện điểm lệch khỏi không gian con chính. Nhóm phương pháp này nhẹ, dễ triển khai nhưng thường bỏ qua thứ tự thời gian và quan hệ ngữ cảnh giữa các sự kiện log.
@@ -351,6 +353,29 @@ Khảo sát độ nhạy của F1-score theo percentile chọn ngưỡng (percen
 
 Kết quả từ Bảng \ref{tab_cross_dataset} cho thấy trên BGL, các mô hình học chuỗi dẫn đầu rõ rệt: TCN (top-k) đạt F1 cao nhất $0.9826 \pm 0.0022$, theo sát là DeepLog ($0.9820 \pm 0.0042$). Ở chế độ NLL, TCN ($0.9474 \pm 0.0035$) tiếp tục vượt DeepLog ($0.9381$) và Transformer ($0.9388$). Ngược lại với HDFS, các baseline PCA và TruncatedSVD trên BGL đạt F1 tốt hơn hẳn ($0.9217$ và $0.9356$), chứng minh cấu trúc chuỗi BGL dễ phân tách hơn.
 
+\textbf{Khảo sát chiến lược gom nhóm (RQ1):} Để trả lời RQ1, chúng tôi đánh giá hiệu năng phát hiện bất thường trên BGL dưới bốn cấu hình gom nhóm khác nhau: cửa sổ cố định không chồng lấn $W{=}50, 100, 200$, và cửa sổ trượt $W{=}100$, stride $50$ (Bảng \ref{tab_grouping}). 
+
+Kết quả Bảng \ref{tab_grouping} cho thấy cấu hình cửa sổ ảnh hưởng trực tiếp tới hiệu năng. Khi tăng kích thước $W$ từ 50 lên 200, F1-score của PCA tăng đáng kể vì bag-of-events trên cửa sổ dài cung cấp ngữ cảnh phân phối tốt hơn. Ngược lại, các mô hình chuỗi (TCN, DeepLog) hoạt động ổn định trên mọi cấu hình. Đáng chú ý, cấu hình cửa sổ trượt ($W{=}100$, stride 50) đạt F1-score cao nhất (DeepLog 0.9004, TCN 0.9032) nhờ tối ưu mật độ huấn luyện và giảm độ trễ phát hiện tại ranh giới cửa sổ.
+
+\begin{table}[htbp]
+\caption{F1-score theo cấu hình gom nhóm trên BGL (seed 42)}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Cấu hình gom chuỗi} & \textbf{PCA} & \textbf{DeepLog (top-k)} & \textbf{TCN (top-k)} \\
+\midrule
+$W=50$ (non-overlap) & 0.1500 & 0.8556 & 0.8750 \\
+$W=100$ (non-overlap) & 0.1353 & 0.8571 & 0.8769 \\
+$W=200$ (non-overlap) & 0.4381 & 0.8810 & 0.8506 \\
+$W=100$, stride $50$ (sliding) & 0.2314 & 0.9004 & 0.9032 \\
+\bottomrule
+\end{tabular}
+\label{tab_grouping}
+\end{center}
+\end{table}
+
 \subsection{Khảo sát tham số, độ trễ và phân tích lỗi}
 \label{sec:ablation}
 Để hiểu vai trò của ba siêu tham số then chốt, chúng tôi tiến hành ba khảo sát ablation với seed 42 trên HDFS 200k: (i) ngưỡng tương đồng Drain3 $\theta$, (ii) hyperparameter $K$ của DeepLog top-k, (iii) tỷ lệ mask $r$ của Transformer. Bảng \ref{tab_ablation} tóm tắt kết quả.
@@ -365,20 +390,39 @@ Ba quan sát từ Bảng \ref{tab_latency}: (1) Drain3 xử lý $\sim$228k log/g
 
 
 \subsection{Ứng dụng và hạn chế}
-Pipeline có thể phát hiện dấu hiệu tấn công dò mật khẩu (chuỗi đăng nhập thất bại lặp lại), khai thác API bất thường (template mới từ Drain3) hoặc quá tải dịch vụ (chuỗi HTTP 5xx) trong môi trường mạng thực tế. Đây là phân tích ứng dụng, cần xác nhận trên log hệ thống doanh nghiệp thực tế đã ẩn danh.
+Pipeline có tiềm năng hỗ trợ phát hiện các dấu hiệu tấn công dò mật khẩu (chuỗi đăng nhập thất bại lặp lại), khai thác API bất thường (template mới từ Drain3) hoặc quá tải dịch vụ (chuỗi HTTP 5xx) trong môi trường mạng thực tế sau khi được xác thực trên log vận hành tương ứng. Đây là phân tích ứng dụng đề xuất, cần xác nhận thêm trên log thực tế đã ẩn danh.
+
+\textbf{Phân tích tính giải thích (Explainability):} Để hỗ trợ người vận hành phân tích lỗi nhanh, chúng tôi đề xuất trích xuất các trường hợp mismatch dự báo làm thông tin giải thích. Bảng \ref{tab_explainability} mô tả hai trường hợp phát hiện bất thường thực tế từ HDFS và BGL bằng mô hình TCN. Khi phát hiện bất thường, hệ thống báo cáo sự kiện thực tế, top-3 dự báo của mô hình và diễn giải lỗi. Ví dụ, trong cửa sổ BGL \texttt{W20200}, sự kiện ngắt trang \texttt{E18} đột ngột xuất hiện thay vì các sự kiện chuyển tiếp bình thường (\texttt{E3}, \texttt{E6}, \texttt{E4}) dẫn tới điểm bất thường tăng vọt ($12.68$), giúp khoanh vùng nhanh lỗi hệ thống.
+
+\begin{table}[htbp]
+\caption{Ví dụ định tính về khả năng giải thích lỗi log}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lcp{2.4cm}p{1.2cm}p{1.4cm}}
+\toprule
+\textbf{Tập log} & \textbf{ID Chuỗi} & \textbf{Event lỗi thực tế} & \textbf{Dự báo top-3} & \textbf{Diễn giải nghiệp vụ} \\
+\midrule
+HDFS & blk\_-68076... & E19: Receiving empty packet... & E5, E3, E4 & lỗi ghi / sao chép block \\
+BGL & W20200 & E18: data TLB error interrupt... & E3, E6, E4 & lỗi ngắt trang nhân hệ thống \\
+\bottomrule
+\end{tabular}
+\label{tab_explainability}
+\end{center}
+\end{table}
 
 \textbf{Threats to Validity:} (i) thực nghiệm trên bộ dữ liệu chuẩn HDFS/BGL, chưa thử nghiệm diện rộng ở môi trường sản xuất; (ii) domain shift giữa tập dữ liệu lab và log thực tế; (iii) nhãn benchmark có thể nhiễu; (iv) Drain3 nhạy cảm với $\theta$; (v) hiệu năng phụ thuộc grouping và percentile ngưỡng; (vi) Transformer mini chưa tối ưu sâu; (vii) cần cơ chế ẩn danh và xác minh cảnh báo khi triển khai thực tế.
 
 \section{Kết luận}
 Bài báo đã xây dựng và đánh giá một pipeline phát hiện bất thường log có khả năng tái lập, dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh song song các baseline nhẹ và mô hình chuỗi (TCN, Transformer, LSTM) trên HDFS và BGL qua 5 random seed. Phát hiện quan trọng là không có nhánh chấm điểm nào chiếm ưu thế tuyệt đối trên mọi cấu hình: PCA duy trì tính cạnh tranh trên các tập dữ liệu chuỗi ngắn (HDFS), trong khi TCN thể hiện hiệu năng mạnh trên BGL (F1 $0.9826 \pm 0.0022$) với độ trễ suy luận thấp hơn LSTM và Transformer trên CPU. Kết quả gợi ý rằng người triển khai nên lựa chọn nhánh chấm điểm dựa trên đặc trưng dữ liệu --- dùng baseline nhẹ cho vocabulary log gọn và mô hình chuỗi cho các luồng sự kiện dài và phức tạp hơn.
 
-Về hướng triển khai thực tế, một tầng giải thích (explainability) có thể được tích hợp để báo cáo, cho mỗi chuỗi bất thường, vị trí event mà dự đoán next-event thất bại, event template thực tế so với top-$k$ template dự đoán, và mức đóng góp anomaly score của từng event. Điều này cho phép người vận hành phân biệt cảnh báo do event hiếm, chuyển đổi bất thường hay va chạm template, từ đó giảm công sức phân loại thủ công.
+Về hướng triển khai thực tế, một tầng giải thích (explainability) có thể được tích hợp trong các triển khai tương lai để báo cáo, cho mỗi chuỗi bất thường, vị trí event mà dự đoán next-event thất bại, event template thực tế so với top-$k$ template dự đoán, và mức đóng góp anomaly score của từng event. Điều này cho phép người vận hành phân biệt cảnh báo do event hiếm, chuyển đổi bất thường hay va chạm template, từ đó giảm công sức phân loại thủ công.
 
 Ba hướng phát triển tiếp theo gồm: (i) kiểm chứng pipeline trên log hệ thống vận hành thực tế với ẩn danh phù hợp; (ii) tích hợp semantic embedding cho template log nhằm cải thiện khả năng tổng quát hóa; (iii) phát triển cơ chế giải thích đề xuất thành module chẩn đoán cảnh báo tự động hoàn chỉnh.
 
 \begin{thebibliography}{00}
 \scriptsize
-\setlength{\itemsep}{0pt}
+\setlength{\itemsep}{-1pt}
 \setlength{\parskip}{0pt}
 \bibitem{b1} M. Du, F. Li, G. Zheng, and V. Srikumar, ``DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning,'' in \textit{Proc. ACM CCS}, 2017.
 \bibitem{b2} H. Guo, S. Yuan, and X. Wu, ``LogBERT: Log Anomaly Detection via BERT,'' in \textit{Proc. International Joint Conference on Neural Networks (IJCNN)}, 2021.
