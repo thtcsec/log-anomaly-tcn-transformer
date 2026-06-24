@@ -61,17 +61,17 @@ Dưới đây là kết quả thực nghiệm trung bình $\pm$ độ lệch chu
 ---
 
 ## 4. Minh chứng thực nghiệm (Experiment Logs & Proofs)
-Các kết quả thực nghiệm báo cáo trong bài viết được lưu trữ chi tiết dưới dạng log huấn luyện và file kết quả thô trong thư mục [logs/](file:///d:/tu_projects/LatexProject/vnict2026/logs/). Người đọc có thể đối chiếu các file này làm minh chứng chạy thực nghiệm:
+Các kết quả thực nghiệm báo cáo trong bài viết được lưu trữ chi tiết dưới dạng log huấn luyện và file kết quả thô trong thư mục [logs/](logs/). Người đọc có thể đối chiếu các file này làm minh chứng chạy thực nghiệm:
 * **Kết quả huấn luyện và đánh giá mô hình (DeepLog, TCN, Transformer):**
-  * [logs/deeplog.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/deeplog.log) & [logs/deeplog_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/deeplog_results.json): Log huấn luyện từng epoch, hàm loss, và kết quả Precision/Recall/F1 chi tiết của mô hình DeepLog LSTM trên HDFS.
-  * [logs/bgl.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/bgl.log) & [logs/bgl_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/bgl_results.json): Log huấn luyện chi tiết 5 seeds cho DeepLog, TCN, và Transformer trên bộ dữ liệu BGL.
-  * [logs/multi_seed.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/multi_seed.log) & [logs/multi_seed_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/multi_seed_results.json): Log chạy 5 seeds trên HDFS của baselines và các mô hình chuỗi.
+  * [logs/deeplog.log](logs/deeplog.log) & [logs/deeplog_results.json](logs/deeplog_results.json): Log huấn luyện từng epoch, hàm loss, và kết quả Precision/Recall/F1 chi tiết của mô hình DeepLog LSTM trên HDFS.
+  * [logs/bgl.log](logs/bgl.log) & [logs/bgl_results.json](logs/bgl_results.json): Log huấn luyện chi tiết 5 seeds cho DeepLog, TCN, và Transformer trên bộ dữ liệu BGL.
+  * [logs/multi_seed.log](logs/multi_seed.log) & [logs/multi_seed_results.json](logs/multi_seed_results.json): Log chạy 5 seeds trên HDFS của baselines và các mô hình chuỗi.
 * **Ablation Study (Khảo sát độ nhạy):**
-  * [logs/ablation.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/ablation.log) & [logs/ablation_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/ablation_results.json): Kết quả đo độ nhạy của ngưỡng Drain3, top-K, và tỷ lệ mask của Transformer.
+  * [logs/ablation.log](logs/ablation.log) & [logs/ablation_results.json](logs/ablation_results.json): Kết quả đo độ nhạy của ngưỡng Drain3, top-K, và tỷ lệ mask của Transformer.
 * **Độ trễ suy luận (Inference Latency):**
-  * [logs/latency.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/latency.log) & [logs/latency_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/latency_results.json): Kết quả benchmark thời gian chạy thực tế của TCN, LSTM, Transformer trên CPU/GPU.
+  * [logs/latency.log](logs/latency.log) & [logs/latency_results.json](logs/latency_results.json): Kết quả benchmark thời gian chạy thực tế của TCN, LSTM, Transformer trên CPU/GPU.
 * **Dữ liệu phân tích định tính (Qualitative analysis):**
-  * [logs/qualitative.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/qualitative.log) & [logs/qualitative_examples.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/qualitative_examples.json): Các chuỗi log bình thường và bất thường cụ thể phục vụ cho phân tích trong bài viết.
+  * [logs/qualitative.log](logs/qualitative.log) & [logs/qualitative_examples.json](logs/qualitative_examples.json): Các chuỗi log bình thường và bất thường cụ thể phục vụ cho phân tích trong bài viết.
 
 ---
 
