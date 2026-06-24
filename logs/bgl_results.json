@@ -1,0 +1,412 @@
+{
+  "config": {
+    "seeds": [
+      21,
+      42,
+      84,
+      123,
+      777
+    ],
+    "max_rows": 500000,
+    "window_size": 100
+  },
+  "dataset": {
+    "rows_loaded": 500000,
+    "event_templates": 198,
+    "windows": 5000,
+    "normal": 2657,
+    "anomaly": 2343
+  },
+  "rows": [
+    {
+      "Method": "PCA",
+      "Seed": 21,
+      "Precision": 0.9535928143712575,
+      "Recall": 0.9061166429587483,
+      "F1": 0.9292487235594457
+    },
+    {
+      "Method": "TruncatedSVD",
+      "Seed": 21,
+      "Precision": 0.9502923976608187,
+      "Recall": 0.9246088193456614,
+      "F1": 0.9372746935832732
+    },
+    {
+      "Method": "Isolation Forest",
+      "Seed": 21,
+      "Precision": 0.13071895424836602,
+      "Recall": 0.02844950213371266,
+      "F1": 0.04672897196261682
+    },
+    {
+      "Method": "PCA",
+      "Seed": 42,
+      "Precision": 0.9373177842565598,
+      "Recall": 0.914651493598862,
+      "F1": 0.925845932325414
+    },
+    {
+      "Method": "TruncatedSVD",
+      "Seed": 42,
+      "Precision": 0.9415041782729805,
+      "Recall": 0.9615931721194879,
+      "F1": 0.9514426460239268
+    },
+    {
+      "Method": "Isolation Forest",
+      "Seed": 42,
+      "Precision": 0.11320754716981132,
+      "Recall": 0.025604551920341393,
+      "F1": 0.04176334106728538
+    },
+    {
+      "Method": "PCA",
+      "Seed": 84,
+      "Precision": 0.950920245398773,
+      "Recall": 0.8819345661450925,
+      "F1": 0.915129151291513
+    },
+    {
+      "Method": "TruncatedSVD",
+      "Seed": 84,
+      "Precision": 0.9469026548672567,
+      "Recall": 0.9132290184921764,
+      "F1": 0.9297610427226647
+    },
+    {
+      "Method": "Isolation Forest",
+      "Seed": 84,
+      "Precision": 0.08759124087591241,
+      "Recall": 0.017069701280227598,
+      "F1": 0.02857142857142857
+    },
+    {
+      "Method": "PCA",
+      "Seed": 123,
+      "Precision": 0.9338345864661655,
+      "Recall": 0.883357041251778,
+      "F1": 0.9078947368421053
+    },
+    {
+      "Method": "TruncatedSVD",
+      "Seed": 123,
+      "Precision": 0.9405646359583952,
+      "Recall": 0.9004267425320057,
+      "F1": 0.9200581395348837
+    },
+    {
+      "Method": "Isolation Forest",
+      "Seed": 123,
+      "Precision": 0.10112359550561797,
+      "Recall": 0.025604551920341393,
+      "F1": 0.04086265607264472
+    },
+    {
+      "Method": "PCA",
+      "Seed": 777,
+      "Precision": 0.9606060606060606,
+      "Recall": 0.9018492176386913,
+      "F1": 0.9303008070432869
+    },
+    {
+      "Method": "TruncatedSVD",
+      "Seed": 777,
+      "Precision": 0.9518248175182482,
+      "Recall": 0.9274537695590327,
+      "F1": 0.9394812680115274
+    },
+    {
+      "Method": "Isolation Forest",
+      "Seed": 777,
+      "Precision": 0.12258064516129032,
+      "Recall": 0.02702702702702703,
+      "F1": 0.04428904428904429
+    },
+    {
+      "Method": "Transformer (unsup. threshold)",
+      "Seed": 21,
+      "Precision": 0.9284210526315789,
+      "Recall": 0.9402985074626866,
+      "F1": 0.934322033898305
+    },
+    {
+      "Method": "Transformer (val-tuned threshold)",
+      "Seed": 21,
+      "Precision": 0.9838337182448037,
+      "Recall": 0.908315565031983,
+      "F1": 0.9445676274944568
+    },
+    {
+      "Method": "Transformer (unsup. threshold)",
+      "Seed": 42,
+      "Precision": 0.9469026548672567,
+      "Recall": 0.9145299145299145,
+      "F1": 0.9304347826086956
+    },
+    {
+      "Method": "Transformer (val-tuned threshold)",
+      "Seed": 42,
+      "Precision": 0.9838337182448037,
+      "Recall": 0.9102564102564102,
+      "F1": 0.9456159822419534
+    },
+    {
+      "Method": "Transformer (unsup. threshold)",
+      "Seed": 84,
+      "Precision": 0.9325842696629213,
+      "Recall": 0.8867521367521367,
+      "F1": 0.9090909090909091
+    },
+    {
+      "Method": "Transformer (val-tuned threshold)",
+      "Seed": 84,
+      "Precision": 0.9809523809523809,
+      "Recall": 0.8803418803418803,
+      "F1": 0.9279279279279279
+    },
+    {
+      "Method": "Transformer (unsup. threshold)",
+      "Seed": 123,
+      "Precision": 0.9450800915331807,
+      "Recall": 0.8824786324786325,
+      "F1": 0.912707182320442
+    },
+    {
+      "Method": "Transformer (val-tuned threshold)",
+      "Seed": 123,
+      "Precision": 0.9832935560859188,
+      "Recall": 0.8803418803418803,
+      "F1": 0.9289740698985344
+    },
+    {
+      "Method": "Transformer (unsup. threshold)",
+      "Seed": 777,
+      "Precision": 0.9488888888888889,
+      "Recall": 0.9104477611940298,
+      "F1": 0.9292709466811752
+    },
+    {
+      "Method": "Transformer (val-tuned threshold)",
+      "Seed": 777,
+      "Precision": 0.9815668202764977,
+      "Recall": 0.908315565031983,
+      "F1": 0.9435215946843853
+    },
+    {
+      "Method": "DeepLog (top-k binary)",
+      "Seed": 21,
+      "Precision": 0.9513184584178499,
+      "Recall": 1.0,
+      "F1": 0.975051975051975
+    },
+    {
+      "Method": "DeepLog (NLL threshold)",
+      "Seed": 21,
+      "Precision": 0.9334719334719335,
+      "Recall": 0.9573560767590619,
+      "F1": 0.9452631578947368
+    },
+    {
+      "Method": "DeepLog (top-k binary)",
+      "Seed": 42,
+      "Precision": 0.9648760330578512,
+      "Recall": 0.9978632478632479,
+      "F1": 0.9810924369747899
+    },
+    {
+      "Method": "DeepLog (NLL threshold)",
+      "Seed": 42,
+      "Precision": 0.9493392070484582,
+      "Recall": 0.9209401709401709,
+      "F1": 0.9349240780911063
+    },
+    {
+      "Method": "DeepLog (top-k binary)",
+      "Seed": 84,
+      "Precision": 0.9688796680497925,
+      "Recall": 0.9978632478632479,
+      "F1": 0.9831578947368421
+    },
+    {
+      "Method": "DeepLog (NLL threshold)",
+      "Seed": 84,
+      "Precision": 0.9426751592356688,
+      "Recall": 0.9487179487179487,
+      "F1": 0.9456869009584664
+    },
+    {
+      "Method": "DeepLog (top-k binary)",
+      "Seed": 123,
+      "Precision": 0.970954356846473,
+      "Recall": 1.0,
+      "F1": 0.9852631578947368
+    },
+    {
+      "Method": "DeepLog (NLL threshold)",
+      "Seed": 123,
+      "Precision": 0.9349240780911063,
+      "Recall": 0.9209401709401709,
+      "F1": 0.9278794402583423
+    },
+    {
+      "Method": "DeepLog (top-k binary)",
+      "Seed": 777,
+      "Precision": 0.9710144927536232,
+      "Recall": 1.0,
+      "F1": 0.9852941176470589
+    },
+    {
+      "Method": "DeepLog (NLL threshold)",
+      "Seed": 777,
+      "Precision": 0.9437229437229437,
+      "Recall": 0.929637526652452,
+      "F1": 0.9366272824919442
+    },
+    {
+      "Method": "TCN (top-k binary)",
+      "Seed": 21,
+      "Precision": 0.9650205761316872,
+      "Recall": 1.0,
+      "F1": 0.9821989528795811
+    },
+    {
+      "Method": "TCN (NLL threshold)",
+      "Seed": 21,
+      "Precision": 0.9306122448979591,
+      "Recall": 0.9722814498933902,
+      "F1": 0.9509906152241918
+    },
+    {
+      "Method": "TCN (top-k binary)",
+      "Seed": 42,
+      "Precision": 0.9668737060041408,
+      "Recall": 0.9978632478632479,
+      "F1": 0.982124079915878
+    },
+    {
+      "Method": "TCN (NLL threshold)",
+      "Seed": 42,
+      "Precision": 0.9519650655021834,
+      "Recall": 0.9316239316239316,
+      "F1": 0.9416846652267818
+    },
+    {
+      "Method": "TCN (top-k binary)",
+      "Seed": 84,
+      "Precision": 0.9648760330578512,
+      "Recall": 0.9978632478632479,
+      "F1": 0.9810924369747899
+    },
+    {
+      "Method": "TCN (NLL threshold)",
+      "Seed": 84,
+      "Precision": 0.9466950959488273,
+      "Recall": 0.9487179487179487,
+      "F1": 0.9477054429028815
+    },
+    {
+      "Method": "TCN (top-k binary)",
+      "Seed": 123,
+      "Precision": 0.9629629629629629,
+      "Recall": 1.0,
+      "F1": 0.9811320754716981
+    },
+    {
+      "Method": "TCN (NLL threshold)",
+      "Seed": 123,
+      "Precision": 0.9354166666666667,
+      "Recall": 0.9594017094017094,
+      "F1": 0.9472573839662447
+    },
+    {
+      "Method": "TCN (top-k binary)",
+      "Seed": 777,
+      "Precision": 0.9730290456431535,
+      "Recall": 1.0,
+      "F1": 0.9863301787592008
+    },
+    {
+      "Method": "TCN (NLL threshold)",
+      "Seed": 777,
+      "Precision": 0.9412997903563941,
+      "Recall": 0.9573560767590619,
+      "F1": 0.9492600422832981
+    }
+  ],
+  "aggregated": {
+    "PCA": {
+      "Precision_mean": 0.9472542982197633,
+      "Precision_std": 0.011299430160773326,
+      "Recall_mean": 0.8975817923186344,
+      "Recall_std": 0.0144014628245495,
+      "F1_mean": 0.921683870212353,
+      "F1_std": 0.009771206511710805
+    },
+    "TruncatedSVD": {
+      "Precision_mean": 0.9462177368555398,
+      "Precision_std": 0.005066717655037737,
+      "Recall_mean": 0.9254623044096728,
+      "Recall_std": 0.022839475774027077,
+      "F1_mean": 0.9356035579752551,
+      "F1_std": 0.011667273230304918
+    },
+    "Isolation Forest": {
+      "Precision_mean": 0.1110443965921996,
+      "Precision_std": 0.01712691797790119,
+      "Recall_mean": 0.024751066856330016,
+      "Recall_std": 0.004453051448790477,
+      "F1_mean": 0.04044308839260395,
+      "F1_std": 0.007020668060910764
+    },
+    "Transformer (unsup. threshold)": {
+      "Precision_mean": 0.9403753915167654,
+      "Precision_std": 0.009230747593228936,
+      "Recall_mean": 0.9069013904834801,
+      "Recall_std": 0.023391248798214484,
+      "F1_mean": 0.9231651709199055,
+      "F1_std": 0.011424291168920925
+    },
+    "Transformer (val-tuned threshold)": {
+      "Precision_mean": 0.9826960387608809,
+      "Precision_std": 0.0013473244884412551,
+      "Recall_mean": 0.8975142602008273,
+      "Recall_std": 0.01569617803949437,
+      "F1_mean": 0.9381214404494514,
+      "F1_std": 0.008866583831753783
+    },
+    "DeepLog (top-k binary)": {
+      "Precision_mean": 0.965408601825118,
+      "Precision_std": 0.008262043986274009,
+      "Recall_mean": 0.9991452991452991,
+      "Recall_std": 0.0011703473450965047,
+      "F1_mean": 0.9819719164610806,
+      "F1_std": 0.004240722480827094
+    },
+    "DeepLog (NLL threshold)": {
+      "Precision_mean": 0.9408266643140222,
+      "Precision_std": 0.00658029903526471,
+      "Recall_mean": 0.9355183788019609,
+      "Recall_std": 0.01666393117604694,
+      "F1_mean": 0.9380761719389191,
+      "F1_std": 0.007509731629005669
+    },
+    "TCN (top-k binary)": {
+      "Precision_mean": 0.9665524647599592,
+      "Precision_std": 0.0038759168284878956,
+      "Recall_mean": 0.9991452991452991,
+      "Recall_std": 0.0011703473450965047,
+      "F1_mean": 0.9825755448002296,
+      "F1_std": 0.0021636849762992198
+    },
+    "TCN (NLL threshold)": {
+      "Precision_mean": 0.9411977726744061,
+      "Precision_std": 0.008538737474133497,
+      "Recall_mean": 0.9538762232792084,
+      "Recall_std": 0.01502635205407007,
+      "F1_mean": 0.9473796299206796,
+      "F1_std": 0.0035046000682374063
+    }
+  },
+  "total_seconds": 1889.836936000007
+}

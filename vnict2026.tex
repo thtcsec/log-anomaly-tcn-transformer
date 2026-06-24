@@ -53,13 +53,13 @@ Bài báo trình bày một pipeline phát hiện bất thường log hệ thố
 \end{abstract}
 
 \begin{IEEEkeywords}
-Log anomaly detection, masked event modeling, Transformer, Drain3, AIOps, digital education infrastructure.
+Log anomaly detection, masked event modeling, Transformer, Drain3, AIOps, distributed systems.
 \end{IEEEkeywords}
 
 \section{Giới thiệu}
-Hạ tầng mạng doanh nghiệp và công nghiệp quy mô lớn hiện đại tích hợp LMS, máy chủ web, cơ sở dữ liệu, hệ thống xác thực, API và dịch vụ đám mây; mỗi thành phần sinh log với định dạng và tần suất khác nhau. Log của LMS vừa phản ánh trạng thái kỹ thuật vừa thể hiện luồng nghiệp vụ đặc thù như đăng nhập hàng loạt, truy cập hệ thống file và gọi các API dịch vụ, trong khi luật thủ công nhanh chóng lỗi thời khi hệ thống thay đổi. Bài toán phát hiện bất thường log do đó cần được xử lý ở cấp \emph{chuỗi sự kiện} thay vì từng dòng riêng lẻ.
+Hạ tầng mạng doanh nghiệp và công nghiệp quy mô lớn hiện đại tích hợp máy chủ web, cơ sở dữ liệu, dịch vụ lưu trữ phân tán, hệ thống xác thực, API và dịch vụ đám mây; mỗi thành phần sinh log với định dạng và tần suất khác nhau. Log hệ thống vừa phản ánh trạng thái kỹ thuật vừa thể hiện luồng nghiệp vụ đặc thù như đăng nhập hàng loạt, truy cập hệ thống file và gọi các API dịch vụ, trong khi luật thủ công nhanh chóng lỗi thời khi hệ thống thay đổi. Bài toán phát hiện bất thường log do đó cần được xử lý ở cấp \emph{chuỗi sự kiện} thay vì từng dòng riêng lẻ.
 
-Bài báo định vị như một nghiên cứu ứng dụng và đánh giá hệ thống, không đề xuất thuật toán anomaly detection mới. Ý tưởng trung tâm là xem \textit{chuỗi event template} như tầng biểu diễn trung gian: đủ gọn để chạy baseline nhẹ, đủ cấu trúc để mở rộng sang mô hình chuỗi, và đủ rõ ràng để ánh xạ sang các đơn vị vận hành của LMS như session, người dùng đã ẩn danh hoặc cửa sổ thời gian. Ba câu hỏi nghiên cứu được đặt ra:
+Bài báo định vị như một nghiên cứu ứng dụng và đánh giá hệ thống, không đề xuất thuật toán anomaly detection mới. Ý tưởng trung tâm là xem \textit{chuỗi event template} như tầng biểu diễn trung gian: đủ gọn để chạy baseline nhẹ, đủ cấu trúc để mở rộng sang mô hình chuỗi, và đủ rõ ràng để ánh xạ sang các đơn vị vận hành như session, Block ID, người dùng đã ẩn danh hoặc cửa sổ thời gian. Ba câu hỏi nghiên cứu được đặt ra:
 \begin{itemize}
     \item \textbf{RQ1:} Cách xây dựng chuỗi event sau Drain3 ảnh hưởng như thế nào tới tín hiệu phát hiện bất thường?
     \item \textbf{RQ2:} Bốn nhánh chấm điểm (reconstruction, isolation, next-event, masked event) cho kết quả khác nhau ra sao trên cùng chuỗi event?
@@ -138,7 +138,7 @@ Pipeline đề xuất được thiết kế theo hướng tách rõ ba tầng x�
 
 Quy trình tổng thể gồm sáu bước:
 \begin{itemize}
-    \item \textbf{Bước 1 -- Thu thập log:} nhận log từ hệ thống nguồn như HDFS, LMS, API gateway hoặc máy chủ xác thực.
+    \item \textbf{Bước 1 -- Thu thập log:} nhận log từ hệ thống nguồn như HDFS, BGL, API gateway hoặc máy chủ xác thực.
     \item \textbf{Bước 2 -- Tiền xử lý:} chuẩn hóa các trường biến đổi như timestamp, IP, user ID, session ID và tham số truy vấn.
     \item \textbf{Bước 3 -- Parse log:} dùng Drain3 để ánh xạ mỗi dòng log thành một event template và event ID.
     \item \textbf{Bước 4 -- Gom chuỗi:} gom các event ID theo Block ID hoặc theo session/time window để tạo chuỗi sự kiện.
@@ -147,7 +147,7 @@ Quy trình tổng thể gồm sáu bước:
 \end{itemize}
 
 
-Trong định hướng hệ thống mạng doanh nghiệp và công nghiệp, pipeline này có thể được chuyển sang các nguồn như LMS, API gateway, reverse proxy, hệ thống xác thực, cơ sở dữ liệu và máy chủ ứng dụng sau khi log được ẩn danh. Thay vì xây dựng luật riêng cho từng nguồn log, hệ thống học pattern vận hành bình thường từ chuỗi sự kiện và đánh dấu các chuỗi lệch khỏi pattern đó. Khả năng chuyển giao này cần được xác nhận bằng log LMS thật trong giai đoạn tiếp theo.
+Trong định hướng hệ thống mạng doanh nghiệp và công nghiệp, pipeline này có thể được chuyển sang các nguồn khác như máy chủ ứng dụng, API gateway, reverse proxy, hệ thống xác thực, cơ sở dữ liệu sau khi log được ẩn danh. Thay vì xây dựng luật riêng cho từng nguồn log, hệ thống học pattern vận hành bình thường từ chuỗi sự kiện và đánh dấu các chuỗi lệch khỏi pattern đó. Khả năng chuyển giao này cần được xác nhận bằng log hệ thống thực tế trong giai đoạn tiếp theo.
 
 \subsection{Tiền xử lý, phân tích cú pháp Drain3 và gom chuỗi}
 Đầu vào là tập log thô $L=\{l_1,l_2,\ldots,l_N\}$. Quy trình gồm: (i) chuẩn hóa các tham số biến đổi (IP, timestamp, ID); (ii) parse log thô thành các event template sử dụng Drain3 \cite{b3}; (iii) gom các event ID thành chuỗi theo Block ID hoặc cửa sổ thời gian.
@@ -363,12 +363,12 @@ Ba quan sát từ Bảng \ref{tab_latency}: (1) Drain3 xử lý $\sim$228k log/g
 
 
 \subsection{Ứng dụng và hạn chế}
-Pipeline có thể phát hiện dấu hiệu tấn công dò mật khẩu (chuỗi đăng nhập thất bại lặp lại), khai thác API bất thường (template mới từ Drain3) hoặc quá tải dịch vụ (chuỗi HTTP 5xx) trong môi trường LMS. Đây là phân tích ứng dụng, cần xác nhận trên log LMS thực tế đã ẩn danh.
+Pipeline có thể phát hiện dấu hiệu tấn công dò mật khẩu (chuỗi đăng nhập thất bại lặp lại), khai thác API bất thường (template mới từ Drain3) hoặc quá tải dịch vụ (chuỗi HTTP 5xx) trong môi trường mạng thực tế. Đây là phân tích ứng dụng, cần xác nhận trên log hệ thống doanh nghiệp thực tế đã ẩn danh.
 
-\textbf{Threats to Validity:} (i) thực nghiệm trên HDFS/BGL, chưa có log LMS thực; (ii) domain shift giữa HDFS/BGL và LMS; (iii) nhãn benchmark có thể nhiễu; (iv) Drain3 nhạy cảm với $\theta$; (v) hiệu năng phụ thuộc grouping và percentile ngưỡng; (vi) Transformer mini chưa tối ưu sâu; (vii) cần cơ chế ẩn danh và xác minh cảnh báo khi triển khai thực tế.
+\textbf{Threats to Validity:} (i) thực nghiệm trên bộ dữ liệu chuẩn HDFS/BGL, chưa thử nghiệm diện rộng ở môi trường sản xuất; (ii) domain shift giữa tập dữ liệu lab và log thực tế; (iii) nhãn benchmark có thể nhiễu; (iv) Drain3 nhạy cảm với $\theta$; (v) hiệu năng phụ thuộc grouping và percentile ngưỡng; (vi) Transformer mini chưa tối ưu sâu; (vii) cần cơ chế ẩn danh và xác minh cảnh báo khi triển khai thực tế.
 
 \section{Kết luận}
-Bài báo đã xây dựng và đánh giá pipeline phát hiện bất thường log dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh song song các baseline nhẹ và mô hình chuỗi (TCN, Transformer, LSTM) trên HDFS và BGL qua 5 random seed. Kết quả chỉ ra TCN đạt hiệu năng vượt trội trên BGL (F1 0.9826) và có độ trễ suy luận thấp hơn LSTM và Transformer trên CPU. Ba hướng phát triển tiếp theo gồm: (i) thu thập và kiểm chứng trên log LMS thực tế đã ẩn danh; (ii) áp dụng semantic embedding cho template log; (iii) phát triển cơ chế giải thích nguyên nhân cảnh báo tự động.
+Bài báo đã xây dựng và đánh giá pipeline phát hiện bất thường log dựa trên Drain3 và phân tích chuỗi sự kiện, so sánh song song các baseline nhẹ và mô hình chuỗi (TCN, Transformer, LSTM) trên HDFS và BGL qua 5 random seed. Kết quả chỉ ra TCN đạt hiệu năng vượt trội trên BGL (F1 0.9826) và có độ trễ suy luận thấp hơn LSTM và Transformer trên CPU. Ba hướng phát triển tiếp theo gồm: (i) thu thập và kiểm chứng trên log hệ thống doanh nghiệp thực tế; (ii) áp dụng semantic embedding cho template log; (iii) phát triển cơ chế giải thích nguyên nhân cảnh báo tự động.
 
 \begin{thebibliography}{00}
 \scriptsize

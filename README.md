@@ -42,9 +42,10 @@ Dưới đây là kết quả thực nghiệm trung bình $\pm$ độ lệch chu
 | PCA | $0.6274 \pm 0.1944$ | $0.5450 \pm 0.0055$ | $0.5711 \pm 0.0944$ |
 | TruncatedSVD | $0.4298 \pm 0.2555$ | $0.5527 \pm 0.0106$ | $0.4540 \pm 0.1366$ |
 | Isolation Forest | $0.1726 \pm 0.0146$ | $0.1080 \pm 0.0084$ | $0.1328 \pm 0.0103$ |
-| DeepLog (top-k) | $0.9817 \pm 0.0188$ | $0.3013 \pm 0.0167$ | $0.4608 \pm 0.0196$ |
 | Transformer (val-tuned) | $0.5102 \pm 0.1497$ | $0.2365 \pm 0.1156$ | $0.2950 \pm 0.0693$ |
-| **TCN (Proposed)** | *[Đang thực nghiệm]* | *[Đang thực nghiệm]* | *[Đang thực nghiệm]* |
+| DeepLog (top-k) | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
+| **TCN (top-k) - Proposed** | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
+| **TCN (NLL) - Proposed** | $0.2621 \pm 0.0277$ | $0.3644 \pm 0.0291$ | $0.3042 \pm 0.0236$ |
 
 ### Tập dữ liệu BGL (500k log, Cửa sổ $W=100$)
 | Phương pháp | Precision | Recall | F1-Score |
@@ -52,13 +53,29 @@ Dưới đây là kết quả thực nghiệm trung bình $\pm$ độ lệch chu
 | PCA | $0.9473 \pm 0.0113$ | $0.8976 \pm 0.0144$ | $0.9217 \pm 0.0098$ |
 | TruncatedSVD | $0.9462 \pm 0.0051$ | $0.9255 \pm 0.0228$ | $0.9356 \pm 0.0117$ |
 | Isolation Forest | $0.1110 \pm 0.0171$ | $0.0248 \pm 0.0045$ | $0.0404 \pm 0.0070$ |
-| DeepLog (top-k) | $0.9658 \pm 0.0068$ | $0.9991 \pm 0.0012$ | $0.9822 \pm 0.0035$ |
 | Transformer (val-tuned) | $0.9841 \pm 0.0017$ | $0.8975 \pm 0.0157$ | $0.9388 \pm 0.0080$ |
-| **TCN (Proposed)** | *[Đang thực nghiệm]* | *[Đang thực nghiệm]* | *[Đang thực nghiệm]* |
+| DeepLog (top-k) | $0.9654 \pm 0.0083$ | $0.9991 \pm 0.0012$ | $0.9820 \pm 0.0042$ |
+| **TCN (top-k) - Proposed** | $0.9666 \pm 0.0039$ | $0.9991 \pm 0.0012$ | **$0.9826 \pm 0.0022$** |
+| **TCN (NLL) - Proposed** | $0.9412 \pm 0.0085$ | $0.9537 \pm 0.0094$ | **$0.9474 \pm 0.0035$** |
 
 ---
 
-## 4. Hướng dẫn chạy thực nghiệm
+## 4. Minh chứng thực nghiệm (Experiment Logs & Proofs)
+Các kết quả thực nghiệm báo cáo trong bài viết được lưu trữ chi tiết dưới dạng log huấn luyện và file kết quả thô trong thư mục [logs/](file:///d:/tu_projects/LatexProject/vnict2026/logs/). Người đọc có thể đối chiếu các file này làm minh chứng chạy thực nghiệm:
+* **Kết quả huấn luyện và đánh giá mô hình (DeepLog, TCN, Transformer):**
+  * [logs/deeplog.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/deeplog.log) & [logs/deeplog_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/deeplog_results.json): Log huấn luyện từng epoch, hàm loss, và kết quả Precision/Recall/F1 chi tiết của mô hình DeepLog LSTM trên HDFS.
+  * [logs/bgl.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/bgl.log) & [logs/bgl_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/bgl_results.json): Log huấn luyện chi tiết 5 seeds cho DeepLog, TCN, và Transformer trên bộ dữ liệu BGL.
+  * [logs/multi_seed.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/multi_seed.log) & [logs/multi_seed_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/multi_seed_results.json): Log chạy 5 seeds trên HDFS của baselines và các mô hình chuỗi.
+* **Ablation Study (Khảo sát độ nhạy):**
+  * [logs/ablation.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/ablation.log) & [logs/ablation_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/ablation_results.json): Kết quả đo độ nhạy của ngưỡng Drain3, top-K, và tỷ lệ mask của Transformer.
+* **Độ trễ suy luận (Inference Latency):**
+  * [logs/latency.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/latency.log) & [logs/latency_results.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/latency_results.json): Kết quả benchmark thời gian chạy thực tế của TCN, LSTM, Transformer trên CPU/GPU.
+* **Dữ liệu phân tích định tính (Qualitative analysis):**
+  * [logs/qualitative.log](file:///d:/tu_projects/LatexProject/vnict2026/logs/qualitative.log) & [logs/qualitative_examples.json](file:///d:/tu_projects/LatexProject/vnict2026/logs/qualitative_examples.json): Các chuỗi log bình thường và bất thường cụ thể phục vụ cho phân tích trong bài viết.
+
+---
+
+## 5. Hướng dẫn chạy thực nghiệm
 
 ### Cài đặt thư viện:
 ```bash
@@ -82,8 +99,9 @@ python ablation_experiment.py
 
 ---
 
-## 5. Thành viên thực hiện & Giảng viên hướng dẫn
+## 6. Thành viên thực hiện & Giảng viên hướng dẫn
 * **Tác giả:** **Trịnh Hoàng Tú** (Khoa Công nghệ thông tin, Trường Đại học Ngoại ngữ - Tin học TP.HCM - HUFLIT)
   * Email: tht.csec2005@gmail.com
 * **Giảng viên hướng dẫn:** **ThS. Cao Tiến Thành** (Khoa Công nghệ thông tin, Trường Đại học Ngoại ngữ - Tin học TP.HCM - HUFLIT)
+
 

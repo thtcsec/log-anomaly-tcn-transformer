@@ -7,7 +7,7 @@
     box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.45cm, minimum height=0.62cm, font=\scriptsize},
     arrow/.style={-{Latex[length=2mm]}, thick}
 ]
-\node[box] (raw) {Raw logs\\HDFS/LMS/API};
+\node[box] (raw) {Raw logs\\HDFS/BGL/API};
 \node[box, below=of raw] (pre) {Preprocess\\mask variables};
 \node[box, below=of pre] (parse) {Drain3\\event templates};
 \node[box, below=of parse] (seq) {Group events\\Block/session/window};

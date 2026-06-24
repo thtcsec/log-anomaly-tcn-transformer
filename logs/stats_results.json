@@ -1,0 +1,186 @@
+{
+  "bootstrap_ci": {
+    "HDFS": {
+      "PCA": {
+        "mean": 0.5711054108052188,
+        "std": 0.09436287923923171,
+        "ci95_lo": 0.4922597903327258,
+        "ci95_hi": 0.6394853245662132,
+        "n_seeds": 5
+      },
+      "TruncatedSVD": {
+        "mean": 0.4539918905732798,
+        "std": 0.1366212392234585,
+        "ci95_lo": 0.3526521910176772,
+        "ci95_hi": 0.5707588746027532,
+        "n_seeds": 5
+      },
+      "Isolation Forest": {
+        "mean": 0.13282152891219692,
+        "std": 0.010293572404080867,
+        "ci95_lo": 0.12375347374579489,
+        "ci95_hi": 0.14083832477783,
+        "n_seeds": 5
+      },
+      "Transformer (unsup. threshold)": {
+        "mean": 0.24581004689990643,
+        "std": 0.06392021614676137,
+        "ci95_lo": 0.20695820433436526,
+        "ci95_hi": 0.3044266147279272,
+        "n_seeds": 5
+      },
+      "Transformer (val-tuned threshold)": {
+        "mean": 0.295044585044585,
+        "std": 0.0692673555533109,
+        "ci95_lo": 0.24272616272616268,
+        "ci95_hi": 0.34358974358974353,
+        "n_seeds": 5
+      },
+      "DeepLog (top-k binary)": {
+        "mean": 0.46078867963561276,
+        "std": 0.01960942518763676,
+        "ci95_lo": 0.44603164962715525,
+        "ci95_hi": 0.47554570964407034,
+        "n_seeds": 5
+      },
+      "DeepLog (NLL threshold)": {
+        "mean": 0.30366161159825705,
+        "std": 0.016533289737635442,
+        "ci95_lo": 0.2890348949306644,
+        "ci95_hi": 0.3160061109452648,
+        "n_seeds": 5
+      }
+    },
+    "BGL": {
+      "PCA": {
+        "mean": 0.9216838702123529,
+        "std": 0.00977120651171082,
+        "ci95_lo": 0.9136124170754549,
+        "ci95_hi": 0.9287785820094075,
+        "n_seeds": 5
+      },
+      "TruncatedSVD": {
+        "mean": 0.9356035579752551,
+        "std": 0.011667273230304942,
+        "ci95_lo": 0.927371665358038,
+        "ci95_hi": 0.9442727348755436,
+        "n_seeds": 5
+      },
+      "Isolation Forest": {
+        "mean": 0.040443088392603896,
+        "std": 0.007020668060910773,
+        "ci95_lo": 0.03384369014479801,
+        "ci95_hi": 0.04478429715941244,
+        "n_seeds": 5
+      },
+      "Transformer (unsup. threshold)": {
+        "mean": 0.9242301310391516,
+        "std": 0.008516198881411655,
+        "ci95_lo": 0.9176013551067796,
+        "ci95_hi": 0.9307178364977485,
+        "n_seeds": 5
+      },
+      "Transformer (val-tuned threshold)": {
+        "mean": 0.9387500702295315,
+        "std": 0.00800141501566837,
+        "ci95_lo": 0.932722377627622,
+        "ci95_hi": 0.9445685562694269,
+        "n_seeds": 5
+      },
+      "DeepLog (top-k binary)": {
+        "mean": 0.9821727138916192,
+        "std": 0.0034765851434065075,
+        "ci95_lo": 0.9791146379853094,
+        "ci95_hi": 0.984835450058233,
+        "n_seeds": 5
+      },
+      "DeepLog (NLL threshold)": {
+        "mean": 0.935133985781729,
+        "std": 0.012055655047845476,
+        "ci95_lo": 0.9252260718461667,
+        "ci95_hi": 0.9429326424937561,
+        "n_seeds": 5
+      }
+    }
+  },
+  "wilcoxon": {
+    "HDFS": {
+      "PCA vs TruncatedSVD": {
+        "mean_diff_F1": 0.117113520231939,
+        "wilcoxon_stat": 3.0,
+        "p_value": 0.3125,
+        "n_seeds": 5
+      },
+      "PCA vs DeepLog (top-k binary)": {
+        "mean_diff_F1": 0.11031673116960605,
+        "wilcoxon_stat": 1.0,
+        "p_value": 0.125,
+        "n_seeds": 5
+      },
+      "PCA vs Transformer (val-tuned threshold)": {
+        "mean_diff_F1": 0.27606082576063384,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "DeepLog (top-k binary) vs Transformer (val-tuned threshold)": {
+        "mean_diff_F1": 0.1657440945910278,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "DeepLog (top-k binary) vs DeepLog (NLL threshold)": {
+        "mean_diff_F1": 0.1571270680373557,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "TruncatedSVD vs Isolation Forest": {
+        "mean_diff_F1": 0.3211703616610829,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      }
+    },
+    "BGL": {
+      "PCA vs TruncatedSVD": {
+        "mean_diff_F1": -0.0139196877629022,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "PCA vs DeepLog (top-k binary)": {
+        "mean_diff_F1": -0.060488843679266324,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "PCA vs Transformer (val-tuned threshold)": {
+        "mean_diff_F1": -0.017066200017178623,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "DeepLog (top-k binary) vs Transformer (val-tuned threshold)": {
+        "mean_diff_F1": 0.0434226436620877,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "DeepLog (top-k binary) vs DeepLog (NLL threshold)": {
+        "mean_diff_F1": 0.04703872810989018,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      },
+      "TruncatedSVD vs Isolation Forest": {
+        "mean_diff_F1": 0.8951604695826512,
+        "wilcoxon_stat": 0.0,
+        "p_value": 0.0625,
+        "n_seeds": 5
+      }
+    }
+  },
+  "n_seeds": 5,
+  "n_bootstrap": 1000
+}
