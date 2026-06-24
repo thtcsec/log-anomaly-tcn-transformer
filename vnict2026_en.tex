@@ -12,8 +12,8 @@
 \usepackage{url}
 \usepackage{cite}
 \usepackage[compact]{titlesec}
-\titlespacing{\section}{0pt}{6pt plus 2pt minus 2pt}{3pt plus 1pt minus 1pt}
-\titlespacing{\subsection}{0pt}{4pt plus 2pt minus 2pt}{2pt plus 1pt minus 1pt}
+\titlespacing{\section}{0pt}{5.5pt plus 1pt minus 1.5pt}{3pt plus 1pt minus 1pt}
+\titlespacing{\subsection}{0pt}{3.5pt plus 1pt minus 1pt}{2pt plus 1pt minus 1pt}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
@@ -22,6 +22,10 @@
 \setlength{\intextsep}{4pt plus 1pt minus 1pt}
 \setlength{\abovecaptionskip}{2pt plus 1pt minus 1pt}
 \setlength{\belowcaptionskip}{2pt plus 1pt minus 1pt}
+\setlength{\abovedisplayskip}{3pt plus 1pt minus 2pt}
+\setlength{\belowdisplayskip}{3pt plus 1pt minus 2pt}
+\setlength{\abovedisplayshortskip}{2pt plus 1pt}
+\setlength{\belowdisplayshortskip}{2pt plus 1pt}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -108,7 +112,7 @@ The proposed pipeline is designed to clearly separate three processing layers: l
 
 \begin{figure}[!t]
 \centering
-\resizebox{0.9\columnwidth}{!}{
+\resizebox{0.83\columnwidth}{!}{
 \begin{tikzpicture}[
     node distance=0.35cm and 0.35cm,
     box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.5cm, font=\scriptsize},
@@ -206,7 +210,7 @@ The study uses HDFS and BGL from the LogHub benchmark \cite{b6,b12}. HDFS contai
 \textbf{Metric} & \textbf{HDFS} & \textbf{BGL} \\
 \midrule
 Raw log lines & 500,000 & 500,000 \\
-Sequence grouping unit & Block ID & Non-overlapping window $W{=}100$ \\
+Grouping unit & Block ID & Window ($W{=}100$) \\
 Number of sequences/windows & 36,305 & 5,000 \\
 Number of normal sequences & 34,558 & 2,657 \\
 Number of anomalous sequences & 1,747 & 2,343 (47\%) \\
