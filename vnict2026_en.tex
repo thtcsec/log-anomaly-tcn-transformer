@@ -118,7 +118,7 @@ The proposed pipeline is designed to clearly separate three processing layers: l
     box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.5cm, font=\scriptsize},
     arrow/.style={-{Latex[length=1.5mm]}, thick}
 ]
-\node[box] (raw) {Raw logs\\HDFS/BGL/API};
+\node[box] (raw) {Raw logs\\HDFS/BGL/system logs};
 \node[box, below=of raw] (pre) {Preprocess\\mask variables};
 \node[box, below=of pre] (parse) {Drain3\\event templates};
 \node[box, below=of parse] (seq) {Group events\\Block/window};
