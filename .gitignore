@@ -49,3 +49,8 @@ overleaf-upload/
 *.log
 !logs/*.log
 
+# Sensitive and Private logs
+careerhub_20260604_095930/
+thuvien_20260604_094551/
+
+
