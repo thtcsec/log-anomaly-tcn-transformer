@@ -13,6 +13,14 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
+\setlength{\textfloatsep}{4pt plus 2pt minus 2pt}
+\setlength{\intextsep}{4pt plus 2pt minus 2pt}
+\setlength{\floatsep}{4pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{4pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{4pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{2pt plus 1pt minus 1pt}
+\setlength{\belowcaptionskip}{2pt plus 1pt minus 1pt}
+
 \begin{document}
 %
 \title{Application of TCN and Transformer Networks for Large-Scale System Log Anomaly Detection}
@@ -47,15 +55,15 @@ This paper is positioned as an applied research and system evaluation study, rat
 \begin{itemize}
     \item \textbf{RQ1:} How does the method of constructing event sequences after Drain3 affect the anomaly detection signal?
     \item \textbf{RQ2:} How do the five scoring branches (reconstruction, isolation, next-event prediction, causal convolution, and masked event modeling) compare on the same event sequence?
-    \item \textbf{RQ3:} Does the performance ranking of these branches remain consistent when moving from synthetic benchmarks to a real-world production environment?
+    \item \textbf{RQ3:} Does the performance ranking of these branches remain consistent when moving from public benchmark logs to an institutional web-log environment?
 \end{itemize}
 
-The main contributions include: (1) an end-to-end pipeline of Drain3 parsing, event sequencing, and anomaly scoring with five alternative branches (PCA/SVD, Isolation Forest, DeepLog, TCN, and Transformer masked event modeling) evaluated across HDFS, BGL, and a real-world production dataset HUFLIT-Career; (2) a multi-seed evaluation (5 random seeds) on HDFS with a protocol that prevents test set leakage, along with a grouping strategy study for Block ID, fixed window, and sliding window; (3) a cross-dataset evaluation on the same pipeline; (4) an ablation study for Drain3 threshold, DeepLog top-k, and Transformer mask ratio; (5) an inference latency benchmark, expected error analysis, and qualitative explainability case study for deployment-oriented interpretation.
+The main contributions include: (1) an end-to-end pipeline of Drain3 parsing, event sequencing, and anomaly scoring with five alternative branches (PCA/SVD, Isolation Forest, DeepLog, TCN, and Transformer masked event modeling) evaluated across HDFS, BGL, and a production-style institutional web-log dataset HUFLIT-Career; (2) a multi-seed evaluation (5 random seeds) on HDFS with a protocol that prevents test set leakage, along with a grouping strategy study for Block ID, fixed window, and sliding window; (3) a cross-dataset evaluation on the same pipeline; (4) an ablation study for Drain3 threshold, DeepLog top-k, and Transformer mask ratio; (5) an inference latency benchmark, expected error analysis, and qualitative explainability case study for deployment-oriented interpretation.
 
 To justify the academic and practical merits of this work, we outline its positioning across four key pillars:
 \begin{itemize}
     \item \textbf{Necessary:} Modern systems generate gigabytes of log data per second. Traditional manual rules fail to capture contextual shifts. Unsupervised, sequence-level evaluation is necessary to automate anomaly detection in live systems.
-    \item \textbf{Novelty:} We evaluate five scoring branches (from classical to deep models) under a uniform pipeline. Our work is the first to directly compare next-event prediction (LSTM, TCN) with bidirectional masked modeling (Transformer) and frequency baselines (PCA, IF) on a production web log dataset grouped by client IP.
+    \item \textbf{Novelty:} This work provides a deployment-oriented, leakage-aware evaluation of frequency-based, isolation-based, causal sequence, and masked-event modeling branches under a unified Drain3-based pipeline across public benchmark logs and an institutional web-log dataset.
     \item \textbf{Significance:} The results show that while sequence-based deep models excel on complex logs (BGL), lightweight baselines like PCA and Isolation Forest are superior on structured logs (HDFS, HUFLIT-Career). TCN represents a highly significant alternative, achieving comparable performance to LSTM but with significantly lower CPU latency.
     \item \textbf{Applicability:} The pipeline is lightweight, uses Drain3 for online parsing, and operates on standard CPU/GPU resources, making it highly applicable to real-world security monitoring in enterprise environments.
 \end{itemize}
@@ -100,7 +108,7 @@ The proposed pipeline is designed to clearly separate three processing layers: l
 
 \begin{figure}[!t]
 \centering
-\resizebox{0.75\columnwidth}{!}{
+\resizebox{0.55\columnwidth}{!}{
 \begin{tikzpicture}[
     node distance=0.35cm and 0.35cm,
     box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.5cm, font=\scriptsize},
@@ -130,20 +138,10 @@ The proposed pipeline is designed to clearly separate three processing layers: l
 \label{fig_pipeline}
 \end{figure}
 
-The overall process consists of six steps:
-\begin{itemize}
-    \item \textbf{Step 1 -- Log Collection:} receive logs from source systems such as HDFS, BGL, or other structured system log sources.
-    \item \textbf{Step 2 -- Preprocessing:} normalize variable fields such as timestamps, IPs, user IDs, session IDs, and query parameters.
-    \item \textbf{Step 3 -- Log Parsing:} use Drain3 to map each log line to an event template and event ID.
-    \item \textbf{Step 4 -- Event Grouping:} group event IDs by Block ID or by session/time window to create event sequences.
-    \item \textbf{Step 5 -- Feature Representation:} generate bag-of-events/TF-IDF representation for baselines or keep the raw event sequence for Transformer masked event modeling.
-    \item \textbf{Step 6 -- Anomaly Detection:} compute anomaly scores using reconstruction error, Isolation Forest, or sequence learning models.
-\end{itemize}
-
-Beyond the HDFS and BGL benchmarks evaluated in this study, the pipeline architecture is designed to accommodate other structured log sources after appropriate preprocessing and anonymization. Instead of building specific rules for each log source, the system learns normal operational patterns from event sequences and flags sequences that deviate from these patterns. This generalizability requires further validation on production system logs in future work.
+The overall process consists of six steps: (1) \textbf{Log Collection}: receive logs from source systems; (2) \textbf{Preprocessing}: normalize variable fields such as timestamps and identifiers; (3) \textbf{Log Parsing}: use Drain3 to map each log line to an event template and event ID; (4) \textbf{Event Grouping}: group event IDs by Block ID or by session/time window to create event sequences; (5) \textbf{Feature Representation}: generate bag-of-events/TF-IDF representations for baselines or keep raw event sequences for deep models; (6) \textbf{Anomaly Detection}: compute anomaly scores using reconstruction error, Isolation Forest, or sequence learning models.
 
 \subsection{Preprocessing, Drain3 Parsing, and Event Grouping}
-The input is a raw log set $L=\{l_1,l_2,\ldots,l_N\}$. The process consists of: (i) normalizing variable parameters (IP, timestamp, ID); (ii) parsing raw logs into event templates using Drain3 \cite{b3}; (iii) grouping event IDs into sequences by Block ID or time windows.
+The input is a raw log set $L=\{l_1,l_2,\ldots,l_N\}$. The process starts by normalizing variable parameters (IP, timestamp, ID) and parsing raw logs into event templates using Drain3 \cite{b3}, which are then grouped into sequences.
 
 Drain3 uses a fixed-depth tree to find the corresponding event template for each log line. The similarity between two log lines $T_1, T_2$ is calculated as the ratio of matching tokens:
 \begin{equation}
@@ -187,7 +185,7 @@ where $M$ is the set of masked positions. During inference, the anomaly score of
 
 \section{Experimental Setup}
 \subsection{Datasets}
-The study uses HDFS and BGL from the LogHub benchmark \cite{b6,b12}. HDFS contains logs from a Hadoop system and is labeled by Block ID (anomalous if the block contains errors). We use the first 500k lines for verification. BGL contains logs from a supercomputer and is grouped by non-overlapping windows of $W{=}100$ lines to assign anomaly labels. The statistics of the two datasets after Drain3 parsing are described in Table~\ref{tab_dataset_stats}. While HDFS and BGL serve as representative benchmarks for large-scale system logs, we acknowledge that they may not fully capture all the dynamic properties of live enterprise or industrial networks. Further validation on proprietary production logs remains an essential area for future exploration.
+The study utilizes HDFS and BGL from the LogHub benchmark \cite{b6,b12}, alongside HUFLIT-Career, a production-style institutional web-log dataset collected from a live university web application server. HDFS contains logs from a Hadoop system and is labeled by Block ID (anomalous if the block contains errors); we evaluate on the first 500,000 log lines. BGL contains logs from a supercomputer system, where anomaly labels are assigned using non-overlapping windows of $W{=}100$ lines. HUFLIT-Career is collected from an online career service. Scanner-probe labels in HUFLIT-Career were assigned based on rule-based security signatures matching known automated scanning User-Agents (e.g., vulnerability scanners, requests/curl scripts), path traversal attempts, and anomalous HTTP status code distributions (such as concentrated 403 Forbidden and 404 Not Found responses). An event sequence is labeled anomalous if it contains at least one log line matching these security signatures. Client IP addresses are utilized strictly for sequence grouping and are not included as features for any model. The statistics of the three datasets after Drain3 parsing are described in Table~\ref{tab_dataset_stats}.
 
 \begin{table}[htbp]
 \caption{Statistics of HDFS, BGL, and HUFLIT-Career datasets used in the experiments}
@@ -213,7 +211,12 @@ Drain3 tree depth & 4 & 4 & 4 \\
 
 \textbf{Execution Environment:} The experiments were deployed on a computer configured with an Intel Core i7-13620H CPU, an RTX 4050 6GB GPU, 16GB RAM, running Ubuntu 22.04, Python 3.9, and PyTorch 2.0.
 
-\textbf{Experimental Procedure and Parameters:} The data is split into train/test sets with a 70/30 ratio (baselines) or train/val/test with a 60/20/20 ratio (Transformer). PCA and TruncatedSVD are trained on normal sequences to select the 95th percentile threshold. The number of principal components is fixed at 20. Isolation Forest is configured with 200 decision trees on TF-IDF features. For the mini Transformer, the model consists of 2 encoder layers ($d_{model}{=}64$, 4 heads, feed-forward dimension 128) trained using the AdamW algorithm \cite{b17} for 5 epochs with a mask ratio $r{=}0.15$. The DeepLog and TCN baselines use an embedding size of 64, a hidden size of 64, optimized using Adam with a learning rate of $1\times 10^{-3}$, and trained for 10 epochs. To evaluate reliability and prevent data leakage, all results are reported as the mean $\pm$ standard deviation over 5 random seeds (21, 42, 84, 123, 777).
+\subsection{Leakage-Aware Splitting and Threshold Selection}
+To prevent data leakage, all unsupervised models (PCA, SVD, Isolation Forest, DeepLog, TCN, and Transformer) are trained strictly on normal sequences. For HDFS and BGL, the data split uses a 70/30 ratio for train/test sets (classical baselines) and a 60/20/20 ratio for train/validation/test sets (neural sequence models). The anomaly scoring threshold is computed as the 95th percentile of normal reconstruction errors or negative log-likelihood (NLL) on the validation set, ensuring that test labels are never accessed during threshold determination.
+
+For the production-style HUFLIT-Career logs where sequence grouping is performed by client IP address, we adopt a sequence-level random split. Client IP addresses are used solely as keys for grouping log events into sequences and are completely excluded from model features. While some IP addresses might span both the training and testing sets through separate sequence windows (a limitation shared with sequence-level LogHub splits), using Event ID templates as the sole feature prevents direct leakage. Exploring IP-disjoint splitting remains a potential refinement for future work.
+
+Across all experiments, PCA and TruncatedSVD fix the number of principal components at 20. Isolation Forest is configured with 200 decision trees trained on TF-IDF features. For the mini Transformer, the model consists of 2 encoder layers ($d_{model}{=}64$, 4 heads, feed-forward dimension 128) trained using the AdamW algorithm \cite{b17} for 5 epochs with a mask ratio $r{=}0.15$. The DeepLog and TCN networks use an embedding size of 64, a hidden size of 64, optimized using Adam with a learning rate of $1\times 10^{-3}$, and trained for 10 epochs. To ensure experiment reliability, all results are reported as the mean $\pm$ standard deviation over 5 random seeds (21, 42, 84, 123, 777).
 
 \textbf{Evaluation Metrics:} We use Precision, Recall, and F1-score to evaluate performance:
 \begin{equation}
@@ -224,33 +227,29 @@ In actual network operations, a low Precision causes many false alarms, while a 
 
 \section{Results and Discussion}
 \subsection{Cross-Dataset Performance Comparison}
-The results in Table~\ref{tab_cross_dataset} reveal that no single model dominates across both datasets — a finding that underscores the importance of evaluating the entire pipeline rather than any individual algorithm. On HDFS, the lightweight baselines achieve competitive results: PCA obtains an F1-score of $0.5711 \pm 0.0944$, outperforming deep learning models including DeepLog LSTM and TCN (both $0.4613 \pm 0.0199$). The mini Transformer obtains a low F1-score of $0.2950 \pm 0.0693$. We note that the Transformer evaluated here is a lightweight variant optimized for low latency; a larger, more deeply tuned Transformer model might yield different classification results but at the cost of higher latency. This observation arises because HDFS is a highly structured log dataset with a small vocabulary (137 templates) and very short sequences (average length of 13.77 events). In such settings, anomalies are often manifested as distributional shifts in event frequencies, which are effectively captured by PCA reconstruction error on bag-of-events features. Conversely, deep sequence models do not benefit from their temporal modeling capacity due to sequence sparsity and the absence of complex contextual transitions.
+The results in Table~\ref{tab_cross_dataset} reveal that no single model dominates across all settings — a finding that underscores the importance of evaluating the entire pipeline rather than any individual algorithm. On HDFS, the lightweight baselines achieve competitive results: PCA obtains an F1-score of $0.5711 \pm 0.0944$, outperforming deep learning models including DeepLog LSTM and TCN (both $0.4613 \pm 0.0199$). The mini Transformer obtains a low F1-score of $0.2950 \pm 0.0693$. We note that the Transformer evaluated here is a lightweight variant optimized for low latency; a larger, more deeply tuned Transformer model might yield different classification results but at the cost of higher latency. This observation arises because HDFS is a highly structured log dataset with a small vocabulary (137 templates) and very short sequences (average length of 13.77 events). In such settings, anomalies are often manifested as distributional shifts in event frequencies, which are effectively captured by PCA reconstruction error on bag-of-events features. Conversely, deep sequence models do not benefit from their temporal modeling capacity due to sequence sparsity and the absence of complex contextual transitions.
+
 \begin{table}[htbp]
-\caption{Cross-dataset performance comparison, reported as mean $\pm$ std over 5 seeds.}
+\caption{Cross-dataset F1-score comparison (mean $\pm$ std over 5 seeds). Bold indicates best performance; underline indicates second best. Detailed Precision and Recall metrics are available in the public repository.}
 \centering
 \scriptsize
-\setlength{\tabcolsep}{2pt}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{l ccc ccc ccc}
+\begin{tabular}{lccc}
 \toprule
-& \multicolumn{3}{c}{\textbf{HDFS}} & \multicolumn{3}{c}{\textbf{BGL}} & \multicolumn{3}{c}{\textbf{HUFLIT-Career}} \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-\textbf{Method} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+\textbf{Method} & \textbf{HDFS (F1)} & \textbf{BGL (F1)} & \textbf{HUFLIT-Career (F1)} \\
 \midrule
-PCA & $0.6274 \pm 0.1944$ & $0.5450 \pm 0.0055$ & $0.5711 \pm 0.0944$ & $0.9473 \pm 0.0113$ & $0.8976 \pm 0.0144$ & $0.9217 \pm 0.0098$ & $0.4972 \pm 0.1647$ & $0.8147 \pm 0.0423$ & $0.6065 \pm 0.1426$ \\
-TruncatedSVD & $0.4298 \pm 0.2555$ & $0.5527 \pm 0.0106$ & $0.4540 \pm 0.1366$ & $0.9462 \pm 0.0051$ & $0.9255 \pm 0.0228$ & $0.9356 \pm 0.0117$ & $0.1875 \pm 0.4193$ & $0.0400 \pm 0.0894$ & $0.0659 \pm 0.1474$ \\
-Isolation Forest & $0.1726 \pm 0.0146$ & $0.1080 \pm 0.0084$ & $0.1328 \pm 0.0103$ & $0.1110 \pm 0.0171$ & $0.0248 \pm 0.0045$ & $0.0404 \pm 0.0070$ & $\mathbf{0.5144 \pm 0.0168}$ & $0.8107 \pm 0.0456$ & $\mathbf{0.6292 \pm 0.0235}$ \\
+PCA & $\mathbf{0.5711 \pm 0.0944}$ & $0.9217 \pm 0.0098$ & $\underline{0.6065 \pm 0.1426}$ \\
+TruncatedSVD & $0.4540 \pm 0.1366$ & $0.9356 \pm 0.0117$ & $0.0659 \pm 0.1474$ \\
+Isolation Forest & $0.1328 \pm 0.0103$ & $0.0404 \pm 0.0070$ & $\mathbf{0.6292 \pm 0.0235}$ \\
 \midrule
-Transformer (unsup.) & $0.2094 \pm 0.0490$ & $0.2982 \pm 0.0892$ & $0.2458 \pm 0.0639$ & $0.9422 \pm 0.0110$ & $0.9073 \pm 0.0216$ & $0.9242 \pm 0.0085$ & N/A & N/A & N/A \\
-Transformer (val-tuned) & $0.5102 \pm 0.1497$ & $0.2365 \pm 0.1156$ & $0.2950 \pm 0.0693$ & $\mathbf{0.9841 \pm 0.0017}$ & $0.8975 \pm 0.0157$ & $0.9388 \pm 0.0080$ & $0.2323 \pm 0.0163$ & $0.7280 \pm 0.0983$ & $0.3520 \pm 0.0304$ \\
-DeepLog (top-k) & $0.9862 \pm 0.0201$ & $0.3013 \pm 0.0167$ & $0.4613 \pm 0.0199$ & $0.9654 \pm 0.0083$ & $\mathbf{0.9991 \pm 0.0012}$ & $0.9820 \pm 0.0042$ & $0.4533 \pm 0.2542$ & $0.0360 \pm 0.0219$ & $0.0665 \pm 0.0401$ \\
-DeepLog (NLL) & $0.2644 \pm 0.0198$ & $0.3601 \pm 0.0256$ & $0.3046 \pm 0.0198$ & $0.9408 \pm 0.0066$ & $0.9355 \pm 0.0157$ & $0.9381 \pm 0.0075$ & $0.4642 \pm 0.0062$ & $\mathbf{0.8160 \pm 0.0270}$ & $0.5916 \pm 0.0096$ \\
+Transformer (unsup.) & $0.2458 \pm 0.0639$ & $0.9242 \pm 0.0085$ & N/A \\
+Transformer (val-tuned) & $0.2950 \pm 0.0693$ & $0.9388 \pm 0.0080$ & $0.3520 \pm 0.0304$ \\
+DeepLog (top-k) & $\underline{0.4613 \pm 0.0199}$ & $\underline{0.9820 \pm 0.0042}$ & $0.0665 \pm 0.0401$ \\
+DeepLog (NLL) & $0.3046 \pm 0.0198$ & $0.9381 \pm 0.0075$ & $0.5916 \pm 0.0096$ \\
 \midrule
-\textbf{TCN (top-k)} & $0.9862 \pm 0.0201$ & $0.3013 \pm 0.0167$ & $0.4613 \pm 0.0199$ & $0.9666 \pm 0.0039$ & $\mathbf{0.9991 \pm 0.0012}$ & $0.9826 \pm 0.0022$ & $0.4081 \pm 0.1306$ & $0.0240 \pm 0.0089$ & $0.0451 \pm 0.0167$ \\
-\textbf{TCN (NLL)} & $0.2621 \pm 0.0277$ & $0.3644 \pm 0.0291$ & $0.3042 \pm 0.0236$ & $0.9412 \pm 0.0085$ & $0.9537 \pm 0.0094$ & $0.9474 \pm 0.0035$ & $0.4642 \pm 0.0062$ & $\mathbf{0.8160 \pm 0.0270}$ & $0.5916 \pm 0.0096$ \\
+\textbf{TCN (top-k)} & $\underline{0.4613 \pm 0.0199}$ & $\mathbf{0.9826 \pm 0.0022}$ & $0.0451 \pm 0.0167$ \\
+\textbf{TCN (NLL)} & $0.3042 \pm 0.0236$ & $0.9474 \pm 0.0035$ & $0.5916 \pm 0.0096$ \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabular}
 \label{tab_cross_dataset}
 \end{table}
 
@@ -258,21 +257,21 @@ DeepLog (NLL) & $0.2644 \pm 0.0198$ & $0.3601 \pm 0.0256$ & $0.3046 \pm 0.0198$ 
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.48\textwidth]{roc_curves.png}
+\includegraphics[width=0.40\textwidth]{roc_curves.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{pr_curves.png}
+\includegraphics[width=0.40\textwidth]{pr_curves.png}
 \caption{ROC (left) and Precision-Recall (right) curves on HDFS.}
 \label{fig_curves}
 \end{figure}
 
 In contrast, on BGL, the deep sequence models show strong results under the tested configuration: TCN (top-k) achieves the highest F1-score of $0.9826 \pm 0.0022$, followed closely by DeepLog ($0.9820 \pm 0.0042$). In NLL mode, TCN ($0.9474 \pm 0.0035$) continues to outperform DeepLog ($0.9381 \pm 0.0075$) and the Transformer ($0.9388 \pm 0.0080$). Notably, the traditional baselines PCA and TruncatedSVD also perform well on BGL ($0.9217$ and $0.9356$ F1-scores, respectively), indicating that BGL sequence structures are inherently separable.
 
-On the real-world production dataset, HUFLIT-Career, traditional machine learning models outperform the deep sequence models. Isolation Forest achieves the highest overall F1-score of $0.6292 \pm 0.0235$, followed closely by PCA at $0.6065 \pm 0.1426$. Among the sequence-based models, DeepLog (NLL) and TCN (NLL) both obtain a competitive F1-score of $0.5916 \pm 0.0096$. However, the top-k mismatch mode for both DeepLog and TCN performs poorly on this dataset, yielding F1-scores of $0.0665 \pm 0.0401$ and $0.0451 \pm 0.0167$, respectively. This performance divergence reveals a critical architectural insight: because the HUFLIT-Career dataset has a highly compact vocabulary of only 6 event templates after Drain3 parsing, event transitions remain regular and predictable, rendering top-k next-event prediction mismatches ineffective. In contrast, NLL thresholding allows TCN and DeepLog to capture subtle shifts in transition likelihoods, yielding a robust F1-score of 0.5916. The high performance of Isolation Forest and PCA further indicates that anomalies on simple-vocabulary web logs are characterized more by frequency distributions than by sequential pattern deviations. This cross-dataset divergence — where lightweight baselines prevail on HDFS, sequence models excel on BGL, and frequency/likelihood scoring dominates on HUFLIT-Career — highlights that the choice of scoring branch should be guided by dataset characteristics and vocabulary complexity rather than model capacity alone.
+On the institutional web log dataset, HUFLIT-Career, traditional machine learning models outperform deep sequence models. Isolation Forest achieves the highest F1-score of $0.6292 \pm 0.0235$, followed closely by PCA at $0.6065 \pm 0.1426$. Among sequence-based models, DeepLog (NLL) and TCN (NLL) obtain a competitive F1-score of $0.5916 \pm 0.0096$, while their top-k mismatch mode performs poorly ($0.0665 \pm 0.0401$ and $0.0451 \pm 0.0167$). This divergence reveals an architectural insight: because HUFLIT-Career has a compact vocabulary of only 6 templates, event transitions remain highly regular, rendering next-event prediction mismatches ineffective. In contrast, NLL thresholding captures subtle likelihood shifts, yielding a robust 0.5916 F1-score. The high performance of Isolation Forest and PCA indicates that anomalies in simple-vocabulary logs are characterized more by frequency deviations than by sequential pattern shifts. Thus, scoring branch selection should be guided by vocabulary complexity and dataset characteristics rather than model capacity alone.
 
 \subsection{Grouping Strategy Study (RQ1)}
 To address RQ1, we evaluate the anomaly detection performance on BGL under four grouping configurations: non-overlapping fixed windows of size $W{=}50, 100, 200$, and a sliding window of size $W{=}100$ with stride $50$. Table~\ref{tab_grouping} shows the F1-score results for PCA, DeepLog (top-k), and TCN (top-k). Because this study focuses on the relative effect of grouping configurations, all results in Table~\ref{tab_grouping} are reported under a single-seed controlled setting on a 200k BGL log subset (which has a different anomaly ratio) and should not be directly compared with the multi-seed aggregate results in Table~\ref{tab_cross_dataset}.
 
-The results in Table~\ref{tab_grouping} indicate that the window size $W$ directly impacts detection performance. For PCA, F1-score remains low at $W=50$ and $W=100$, but improves substantially at $W=200$, suggesting that larger windows provide more stable frequency distributions for reconstruction-based scoring. Conversely, sequence models (DeepLog, TCN) show robust performance across all window configurations. Crucially, the sliding window configuration ($W{=}100, \text{stride}=50$) yields the highest performance (DeepLog 0.9004, TCN 0.9032) by increasing training sample density and mitigating border-crossing boundary effects.
+Table~\ref{tab_grouping} shows that window size $W$ impacts PCA performance: F1-score is low at $W=50$ and $W=100$, but improves at $W=200$ as larger windows stabilize frequency distributions. Conversely, TCN and DeepLog remain robust across all configurations. The sliding window ($W{=}100, \text{stride}=50$) yields the best performance (DeepLog 0.9004, TCN 0.9032) by increasing training sample density and mitigating boundary effects.
 
 \begin{table}[htbp]
 \caption{F1-score under different grouping configurations on BGL (seed 42)}
@@ -360,13 +359,13 @@ Transformer (GPU) & 2.916 & 4.323 & 4.889 & 343 sequences/s \\
 \end{center}
 \end{table}
 
-Three observations from Table~\ref{tab_latency}: (1) Drain3 processes $\sim$228k logs/sec, which is not a bottleneck; (2) PCA/SVD are the fastest ($<0.2$~ms); IF is 100$\times$ slower due to traversing 200 trees; (3) TCN and DeepLog benefit from GPU execution (latency drops from $\sim$1.7ms to 0.45ms), whereas the small Transformer does not benefit at batch size 1. Training times: Drain3 takes $3.49$~s, PCA $0.74$~s, and Transformer $10.75$~s — a trade-off that needs consideration in real-time monitoring.
+Three observations from Table~\ref{tab_latency}: (1) Drain3 processes $\sim$147k logs/sec, which is not a bottleneck; (2) PCA/SVD are the fastest ($<0.2$~ms); IF is 100$\times$ slower due to traversing 200 trees; (3) TCN and DeepLog benefit from GPU execution (latency drops from $\sim$1.7ms to 0.45ms), whereas the small Transformer does not benefit at batch size 1. Training times: Drain3 takes $3.49$~s, PCA $0.74$~s, and Transformer $10.75$~s — a trade-off that needs consideration in real-time monitoring.
 
 \subsection{Applications and Limitations}
 The pipeline could potentially support detection of brute-force password scanning (repeated login failures), anomalous API utilization (new templates from Drain3), or service-overload patterns (HTTP 5xx sequences) in production networks after validation on corresponding production logs. This is a proposed application analysis that requires confirmation on anonymized production data.
 
 \subsection{Qualitative Explainability Analysis}
-To enhance operational utility, we present a qualitative explainability layer based on next-event prediction mismatches. Table~\ref{tab_explainability} illustrates two concrete anomaly cases extracted from HDFS and BGL test sets using TCN. When a sequence is flagged, the system outputs the failed event position, the actual versus top-3 predicted event templates, and a severity score (NLL). For instance, in BGL sequence \texttt{W20200}, the unexpected occurrence of \texttt{E18} (data TLB error interrupt) instead of the highly probable normal transitions (\texttt{E3}, \texttt{E6}, \texttt{E4}) produces a high anomaly score ($12.68$), immediately guiding operators to a virtual memory subsystem fault.
+To enhance operational utility, we present a qualitative explainability layer based on next-event prediction mismatches. Table~\ref{tab_explainability} illustrates two anomaly cases from HDFS and BGL using TCN. When flagged, the system outputs the failed event position, the actual versus top-3 predicted templates, and a severity score (NLL). For instance, in BGL sequence \texttt{W20200}, the unexpected occurrence of \texttt{E18} (data TLB error) instead of normal transitions (\texttt{E3}, \texttt{E6}, \texttt{E4}) produces a high score ($12.68$), directing operators to a virtual memory fault.
 
 \begin{table}[htbp]
 \caption{Qualitative explainability case studies for log anomalies}
@@ -385,14 +384,15 @@ BGL & W20200 & 1 & E18: data TLB error interrupt... & E3, E6, E4 & 12.68 & kerne
 \end{center}
 \end{table}
 
-\textbf{Threats to Validity:} (i) experiments are conducted on standard HDFS/BGL datasets and have not been tested at scale in production environments; (ii) domain shift exists between lab datasets and real logs; (iii) benchmark labels may contain noise; (iv) Drain3 is sensitive to the threshold $\theta$; (v) performance depends heavily on grouping strategies and threshold percentiles; (vi) the mini Transformer is not deeply optimized; (vii) anonymization and warning validation mechanisms are required in practice.
+\textbf{Threats to Validity:} (i) experiments on public benchmarks are complemented by validation on an institutional web-log dataset, but testing at scale in real-time production environments is still required; (ii) domain shift exists between lab datasets and real logs; (iii) benchmark/institutional labels may contain noise; (iv) Drain3 is sensitive to the threshold $\theta$; (v) performance depends heavily on grouping strategies and threshold percentiles; (vi) the mini Transformer is not deeply optimized; (vii) anonymization and warning validation mechanisms are required in practice.
 
 \section{Conclusion}
-This paper has constructed and evaluated a reproducible log anomaly detection pipeline based on Drain3 and event sequence analysis, comparing lightweight baselines and sequence models (TCN, Transformer, LSTM) in parallel on HDFS and BGL across 5 random seeds. A key finding is that no single scoring branch dominates across all settings: PCA remains competitive on short-sequence datasets (HDFS), while TCN shows strong performance on BGL (F1-score of $0.9826 \pm 0.0022$) with lower inference latency than LSTM and Transformer on CPU. These results suggest that practitioners should select scoring branches based on dataset characteristics. For operational deployment, an explainability layer could report, for each anomalous sequence, the event position where prediction fails, the actual versus top-$k$ predicted templates, and the per-event anomaly score contribution, thereby reducing manual triage effort. Future directions include: (i) validating the pipeline on production system logs; (ii) incorporating semantic embeddings for log templates; (iii) developing the proposed explainability mechanism into a fully automated alert diagnosis module.
+This paper has constructed and evaluated a reproducible log anomaly detection pipeline based on Drain3 and event sequence analysis, comparing lightweight baselines and sequence models (TCN, Transformer, LSTM) in parallel on HDFS, BGL, and HUFLIT-Career across 5 random seeds. A key finding is that no single scoring branch dominates across all settings: PCA remains competitive on HDFS; TCN (top-k) achieves high F1-score ($0.9826 \pm 0.0022$) on BGL with low CPU latency; and Isolation Forest outperforms other models on HUFLIT-Career due to the template vocabulary simplicity. These results suggest that practitioners should select scoring branches based on dataset characteristics. For operational deployment, an explainability layer could report, for each anomalous sequence, the event position where prediction fails, the actual versus top-$k$ predicted templates, and the per-event anomaly score contribution, thereby reducing manual triage effort. Future directions include: (i) expanding validation to other large-scale enterprise log repositories; (ii) incorporating semantic embeddings for log templates; (iii) developing the proposed explainability mechanism into a fully automated alert diagnosis module.
 
+\vspace{-6pt}
 \begin{thebibliography}{00}
 \scriptsize
-\setlength{\itemsep}{-1pt}
+\setlength{\itemsep}{-2.5pt}
 \setlength{\parskip}{0pt}
 \bibitem{b1} M. Du, F. Li, G. Zheng, and V. Srikumar, ``DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning,'' in \textit{Proc. ACM CCS}, 2017.
 \bibitem{b2} H. Guo, S. Yuan, and X. Wu, ``LogBERT: Log Anomaly Detection via BERT,'' in \textit{Proc. IJCNN}, 2021.
