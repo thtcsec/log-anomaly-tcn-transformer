@@ -67,6 +67,7 @@ To justify the academic and practical merits of this work, we outline its positi
     \item \textbf{Significance:} The results show that while sequence-based deep models excel on complex logs (BGL), lightweight baselines like PCA and Isolation Forest are superior on structured logs (HDFS, HUFLIT-Career). TCN represents a highly significant alternative, achieving comparable performance to LSTM but with significantly lower CPU latency.
     \item \textbf{Applicability:} The pipeline is lightweight, uses Drain3 for online parsing, and operates on standard CPU/GPU resources, making it highly applicable to real-world security monitoring in enterprise environments.
 \end{itemize}
+Rather than proposing another detector, this work contributes a network-structured evaluation framework that identifies when lightweight frequency models, sequential predictors, and masked-event models are preferable under different log-network regimes.
 
 \section{Related Work}
 The earliest log anomaly detection methods typically represented log data as event count vectors or feature matrices, and then applied traditional machine learning models such as PCA, clustering, or Isolation Forest \cite{b10,b11}. PCA is used to separate normal behavior space and detect points deviating from the principal subspace. This group of methods is lightweight and easy to deploy, but usually ignores the temporal order and contextual relationships between log events. Recently, comprehensive empirical studies (e.g., \cite{b24}) have re-evaluated the trade-offs between classical machine learning and deep learning, indicating that traditional models remain highly competitive on specific structures and resource-constrained environments.
@@ -114,15 +115,15 @@ The proposed pipeline is designed to clearly separate three processing layers: l
     box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.5cm, font=\scriptsize},
     arrow/.style={-{Latex[length=1.5mm]}, thick}
 ]
-\node[box] (raw) {Raw logs\\HDFS/BGL/system logs};
-\node[box, below=of raw] (pre) {Preprocess\\mask variables};
-\node[box, below=of pre] (parse) {Drain3\\event templates};
-\node[box, below=of parse] (seq) {Group events\\Block/window};
-\node[box, below left=of seq] (vec) {Feature view\\BoE/TF-IDF};
-\node[box, below=of vec] (base) {Baselines\\PCA/SVD/IF};
-\node[box, below right=of seq] (bert) {Sequence view\\Transformer};
-\node[box, below=of bert] (seqscore) {Contextual\\score};
-\node[box, below right=1.05cm and -1.45cm of base] (score) {Anomaly score\\alert};
+\node[box] (raw) {Raw log streams\\(HDFS/BGL/HUFLIT)};
+\node[box, below=of raw] (pre) {Preprocess\\\& Mask variables};
+\node[box, below=of pre] (parse) {Drain3 parsing\\(Identify vertices $V$)};
+\node[box, below=of parse] (seq) {Group events into Walks\\on transition/interaction graphs};
+\node[box, below left=of seq] (vec) {Walk frequency view\\(BoE/TF-IDF)};
+\node[box, below=of vec] (base) {Baselines\\(PCA/SVD/IF)};
+\node[box, below right=of seq] (bert) {Walk trajectory view\\(DeepLog/TCN/Transformer)};
+\node[box, below=of bert] (seqscore) {Walk likelihood\\(NLL/top-$k$ mismatch)};
+\node[box, below right=1.05cm and -1.45cm of base] (score) {Anomaly trajectory\\detection alert};
 \draw[arrow] (raw) -- (pre);
 \draw[arrow] (pre) -- (parse);
 \draw[arrow] (parse) -- (seq);
@@ -416,9 +417,9 @@ This paper has constructed and evaluated a reproducible log anomaly detection pi
 \bibitem{b20} W. Guan, J. Cao, S. Qian, J. Gao, and C. Ouyang, ``LogLLM: Log-Based Anomaly Detection Using Large Language Models,'' \textit{arXiv preprint arXiv:2411.08561}, 2024. \url{https://doi.org/10.48550/arXiv.2411.08561}
 \bibitem{b21} X. Zhu et al., ``CoLA: Model Collaboration for Log-based Anomaly Detection,'' \textit{Proc. VLDB Endow.}, vol. 18, no. 11, pp. 3979--3987, 2025. \url{https://doi.org/10.14778/3749646.3749668}
 \bibitem{b22} C. Almodovar, F. Sabrina, S. Karimi, and S. Azad, ``LogFiT: Log Anomaly Detection Using Fine-Tuned Language Models,'' \textit{IEEE Trans. Netw. Service Manag.}, vol. 21, no. 2, pp. 1715--1723, 2024. \url{https://doi.org/10.1109/TNSM.2024.3358730}
-\bibitem{b23} X. Liu, W. Bao, Y. Zhang, Y. Li, R. Ranjan, and D. N. Jha, ``LINEADAPTER: Parameter-Efficient Fine-Tuning for Log Anomaly Detection and Root Cause Analysis,'' in \textit{Proc. IEEE ICPADS}, 2025.
+\bibitem{b23} X. Liu, W. Bao, Y. Zhang, Y. Li, R. Ranjan, and D. N. Jha, ``LINEADAPTER: Parameter-Efficient Fine-Tuning for Log Anomaly Detection and Root Cause Analysis,'' \textit{preprint}, 2025.
 \bibitem{b24} B. Yu et al., ``Deep Learning or Classical Machine Learning? An Empirical Study on Log-Based Anomaly Detection,'' in \textit{Proc. IEEE/ACM ICSE}, pp. 1--13, 2024. \url{https://doi.org/10.1145/3597503.3623308}
-\bibitem{b25} C. Duan et al., ``LogAction: Consistent Cross-system Anomaly Detection through Logs via Active Domain Adaptation,'' in \textit{Proc. IEEE/ACM ASE}, 2025. \url{https://doi.org/10.48550/arXiv.2510.03288}
+\bibitem{b25} C. Duan et al., ``LogAction: Consistent Cross-system Anomaly Detection through Logs via Active Domain Adaptation,'' \textit{arXiv preprint arXiv:2510.03288}, 2025.
 \end{thebibliography}
 
 \end{document}
