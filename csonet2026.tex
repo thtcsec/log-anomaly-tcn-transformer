@@ -390,10 +390,10 @@ BGL & W20200 & 1 & E18: data TLB error interrupt... & E3, E6, E4 & 12.68 & kerne
 \section{Conclusion}
 This paper has constructed and evaluated a reproducible log anomaly detection pipeline based on Drain3 and event sequence analysis, comparing lightweight baselines and sequence models (TCN, Transformer, LSTM) in parallel on HDFS, BGL, and HUFLIT-Career across 5 random seeds. A key finding is that no single scoring branch dominates across all settings: PCA remains competitive on HDFS; TCN (top-k) achieves high F1-score ($0.9826 \pm 0.0022$) on BGL with low CPU latency; and Isolation Forest outperforms other models on HUFLIT-Career due to the template vocabulary simplicity. These results suggest that practitioners should select scoring branches based on dataset characteristics. For operational deployment, an explainability layer could report, for each anomalous sequence, the event position where prediction fails, the actual versus top-$k$ predicted templates, and the per-event anomaly score contribution, thereby reducing manual triage effort. Future directions include: (i) expanding validation to other large-scale enterprise log repositories; (ii) incorporating semantic embeddings for log templates; (iii) developing the proposed explainability mechanism into a fully automated alert diagnosis module.
 
-\vspace{-6pt}
+\vspace{-4pt}
 \begin{thebibliography}{00}
 \scriptsize
-\setlength{\itemsep}{-2.5pt}
+\setlength{\itemsep}{1pt plus 1pt}
 \setlength{\parskip}{0pt}
 \bibitem{b1} M. Du, F. Li, G. Zheng, and V. Srikumar, ``DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning,'' in \textit{Proc. ACM CCS}, 2017.
 \bibitem{b2} H. Guo, S. Yuan, and X. Wu, ``LogBERT: Log Anomaly Detection via BERT,'' in \textit{Proc. IJCNN}, 2021.
