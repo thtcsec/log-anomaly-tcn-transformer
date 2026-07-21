@@ -195,65 +195,7 @@ L_{MLM} = -\sum_{i \in M} \log P(k_i \mid S_{masked})
 \end{equation}
 The score is averaged over masked positions. Anomaly decisions apply threshold $\tau$ selected at the 95th percentile on the validation set.
 
-\section{Experimental Setup}
-\subsection{Datasets}
-The study uses HDFS and BGL from the LogHub benchmark \cite{b6,b12}. For computationally controlled evaluation, we use the first 500,000 log lines from each dataset while preserving their original chronological order. No random line-level sampling is performed before event grouping. This choice enables identical data-volume settings across datasets and reproducible experiments under limited computational resources. However, using the earliest segment may underrepresent later operational regimes and concept drift; therefore, the reported results should not be interpreted as estimates over the complete datasets.
-
-Table~\ref{tab_dataset_stats} summarizes post-parsing statistics. Table~\ref{tab_dataset_comparison} outlines the structural properties contrasting HDFS and BGL.
-
-\begin{table}[!t]
-\caption{Statistics of HDFS and BGL datasets used in the experiments}
-\begin{center}
-\scriptsize
-\begin{tabular}{lcc}
-\toprule
-\textbf{Metric} & \textbf{HDFS} & \textbf{BGL} \\
-\midrule
-Raw log lines & 500,000 & 500,000 \\
-Grouping unit & Block ID & Window ($W{=}100$) \\
-Number of sequences/windows & 36,305 & 5,000 \\
-Number of normal sequences & 34,558 & 2,657 \\
-Number of anomalous sequences & 1,747 & 2,343 (47\%) \\
-Number of event templates (Drain3) & 137 & 198 \\
-Drain3 similarity threshold $\theta$ & 0.5 & 0.5 \\
-Drain3 tree depth & 4 & 4 \\
-\bottomrule
-\end{tabular}
-\label{tab_dataset_stats}
-\end{center}
-\end{table}
-
-\begin{table}[htbp]
-\caption{Structural differences between HDFS and BGL benchmarks}
-\begin{center}
-\scriptsize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{lll}
-\toprule
-\textbf{Property} & \textbf{HDFS} & \textbf{BGL} \\
-\midrule
-Grouping unit & Block ID & Fixed line window ($W{=}100$) \\
-Mean sequence length & 13.77 events & 100 events / window \\
-Anomaly ratio & 4.8\% (Highly imbalanced) & 47.0\% (Near-balanced) \\
-Label granularity & Block-level label & Window contains alert log \\
-Event templates & 137 templates & 198 templates \\
-Observed discriminative pattern & Event frequency shift & Temporal state transition \\
-\bottomrule
-\end{tabular}
-\label{tab_dataset_comparison}
-\end{center}
-\end{table}
-
-\textbf{Execution Environment:} Experiments were deployed on an Intel Core i7-13620H CPU, RTX 4050 6GB GPU, 16GB RAM, Ubuntu 22.04, Python 3.9, and PyTorch 2.0.
-
-\textbf{Experimental Procedure and Parameters:} Data are split into train/test sets with a 70/30 ratio (baselines) or train/val/test with a 60/20/20 ratio (Transformer). The Transformer requires a dedicated validation partition for threshold calibration, whereas the remaining branches select thresholds exclusively from normal training scores. Therefore, comparisons involving the Transformer are not strictly paired and are interpreted as indicative. Comparisons among PCA, SVD, Isolation Forest, DeepLog, and TCN use identical test partitions for each seed.
-PCA and TruncatedSVD fix 20 components. Isolation Forest uses 200 trees on TF-IDF features. Mini Transformer consists of 2 encoder layers ($d_{\text{model}}{=}64$, 4 heads, feed-forward dimension 128) trained with AdamW \cite{b17} for 5 epochs with mask ratio $r{=}0.15$. DeepLog and TCN use embedding size 64, hidden size 64, Adam ($lr{=}1\times 10^{-3}$), 10 epochs. Results are reported as mean $\pm$ standard deviation over five random seeds (21, 42, 84, 123, 777).
-
-\textbf{Evaluation Metrics:} We report Precision ($P$), Recall ($R$), and F1-score ($F1$).
-
-\section{Results and Discussion}
-\subsection{Multi-Dataset Comparative Performance}
-
+% Position large 2-column tables early in TeX so LaTeX places them naturally on Pages 3 and 4
 \begin{table*}[!t]
 \caption{Multi-dataset performance comparison, reported as mean $\pm$ standard deviation over five random seeds.}
 \centering
@@ -340,6 +282,65 @@ Transformer (GPU) & 2.916 & 4.323 & 4.889 & 343 sequences/s \\
 \end{minipage}
 \end{table*}
 
+\section{Experimental Setup}
+\subsection{Datasets}
+The study uses HDFS and BGL from the LogHub benchmark \cite{b6,b12}. For computationally controlled evaluation, we use the first 500,000 log lines from each dataset while preserving their original chronological order. No random line-level sampling is performed before event grouping. This choice enables identical data-volume settings across datasets and reproducible experiments under limited computational resources. However, using the earliest segment may underrepresent later operational regimes and concept drift; therefore, the reported results should not be interpreted as estimates over the complete datasets.
+
+Table~\ref{tab_dataset_stats} summarizes post-parsing statistics. Table~\ref{tab_dataset_comparison} outlines the structural properties contrasting HDFS and BGL.
+
+\begin{table}[!t]
+\caption{Statistics of HDFS and BGL datasets used in the experiments}
+\begin{center}
+\scriptsize
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{HDFS} & \textbf{BGL} \\
+\midrule
+Raw log lines & 500,000 & 500,000 \\
+Grouping unit & Block ID & Window ($W{=}100$) \\
+Number of sequences/windows & 36,305 & 5,000 \\
+Number of normal sequences & 34,558 & 2,657 \\
+Number of anomalous sequences & 1,747 & 2,343 (47\%) \\
+Number of event templates (Drain3) & 137 & 198 \\
+Drain3 similarity threshold $\theta$ & 0.5 & 0.5 \\
+Drain3 tree depth & 4 & 4 \\
+\bottomrule
+\end{tabular}
+\label{tab_dataset_stats}
+\end{center}
+\end{table}
+
+\begin{table}[!t]
+\caption{Structural differences between HDFS and BGL benchmarks}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{HDFS} & \textbf{BGL} \\
+\midrule
+Grouping unit & Block ID & Fixed line window ($W{=}100$) \\
+Mean sequence length & 13.77 events & 100 events / window \\
+Anomaly ratio & 4.8\% (Highly imbalanced) & 47.0\% (Near-balanced) \\
+Label granularity & Block-level label & Window contains alert log \\
+Event templates & 137 templates & 198 templates \\
+Observed discriminative pattern & Event frequency shift & Temporal state transition \\
+\bottomrule
+\end{tabular}
+\label{tab_dataset_comparison}
+\end{center}
+\end{table}
+
+\textbf{Execution Environment:} Experiments were deployed on an Intel Core i7-13620H CPU, RTX 4050 6GB GPU, 16GB RAM, Ubuntu 22.04, Python 3.9, and PyTorch 2.0.
+
+\textbf{Experimental Procedure and Parameters:} Data are split into train/test sets with a 70/30 ratio (baselines) or train/val/test with a 60/20/20 ratio (Transformer). The Transformer requires a dedicated validation partition for threshold calibration, whereas the remaining branches select thresholds exclusively from normal training scores. Therefore, comparisons involving the Transformer are not strictly paired and are interpreted as indicative. Comparisons among PCA, SVD, Isolation Forest, DeepLog, and TCN use identical test partitions for each seed.
+PCA and TruncatedSVD fix 20 components. Isolation Forest uses 200 trees on TF-IDF features. Mini Transformer consists of 2 encoder layers ($d_{\text{model}}{=}64$, 4 heads, feed-forward dimension 128) trained with AdamW \cite{b17} for 5 epochs with mask ratio $r{=}0.15$. DeepLog and TCN use embedding size 64, hidden size 64, Adam ($lr{=}1\times 10^{-3}$), 10 epochs. Results are reported as mean $\pm$ standard deviation over five random seeds (21, 42, 84, 123, 777).
+
+\textbf{Evaluation Metrics:} We report Precision ($P$), Recall ($R$), and F1-score ($F1$).
+
+\section{Results and Discussion}
+\subsection{Multi-Dataset Comparative Performance}
+
 The results in Table~\ref{tab_cross_dataset} reveal that no single model dominates across both datasets. On HDFS, lightweight baselines achieve competitive results: PCA obtains an F1-score of $0.5711 \pm 0.0944$, outperforming deep learning models including DeepLog LSTM and TCN (both $0.4613 \pm 0.0199$). As noted in Table~\ref{tab_cross_dataset}, although DeepLog and TCN have different architectures, their top-$k$ decisions on HDFS are identical under the tested configuration. One plausible explanation is the short average sequence length and small event vocabulary, which limit variation in top-$k$ membership. The models nevertheless produce different probability distributions, as reflected by their NLL-mode results. Because only five seeds are available, we avoid claiming statistical superiority when score differences are small.
 
 Visual Analysis in Fig.~\ref{fig_curves} confirms PCA/SVD separability on HDFS with AUC-ROC scores of $0.7722$ and $0.7536$.
@@ -357,7 +358,7 @@ On BGL, TCN (top-$k$) achieves the highest mean F1-score of $0.9826 \pm 0.0022$,
 
 \textbf{Grouping Strategy Study (RQ1):} We evaluate BGL under non-overlapping windows ($W{=}50, 100, 200$) and sliding window ($W{=}100, \text{stride}=50$). Table~\ref{tab_grouping} shows F1-scores under a single-seed controlled setting on a 200k subset. Sequence models (DeepLog, TCN) maintain high performance across windows, with sliding windows yielding the highest scores ($0.9004$ and $0.9032$).
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \caption{F1-score under different grouping configurations on BGL (seed 42)}
 \begin{center}
 \scriptsize
@@ -376,7 +377,18 @@ $W=100, \text{stride}=50$ (sliding) & 0.2314 & 0.9004 & 0.9032 \\
 \end{center}
 \end{table}
 
-\begin{table}[htbp]
+\subsection{Parameter Sensitivity, Latency, and Error Analysis}
+\label{sec:ablation}
+Ablation studies on HDFS 200k (seed 42) summarize hyperparameter sensitivity (Table~\ref{tab_ablation}): (A) Drain3 threshold $\theta{=}0.5$ represents the best-performing tested setting ($\theta{=}0.3$ over-merges to 25 templates; $\theta{=}0.7$ explodes to 2,455 templates); (B) DeepLog top-$k$ saturates around $K{=}5$--$9$; (C) Transformer mask ratio $r{=}0.15$ achieves optimal F1, aligning with self-supervised masking practices \cite{b20}.
+
+\textbf{Error Taxonomy and Analysis:} Four main error types are observed: (i) FP on rare sequences; (ii) FP on long sequences due to reconstruction error accumulation; (iii) FN when anomalies use common templates; (iv) template collision under loose Drain3 thresholds.
+
+\textbf{Inference Latency and Deployment Cost:} Measured per-sample batch-1 latency on an RTX 4050 Laptop GPU over 1,000 HDFS samples shows: (1) Drain3 processes approximately 147k logs/s under the reported benchmark configuration, indicating that parsing is unlikely to be the primary inference bottleneck under the tested configuration; (2) PCA/SVD are fastest ($<0.2$~ms); (3) TCN and DeepLog achieve approximately 0.45 ms GPU latency (Table~\ref{tab_latency}).
+
+\subsection{Applications and Limitations}
+\textbf{Qualitative Explainability Analysis:} Table~\ref{tab_explainability} provides qualitative case studies where next-event prediction mismatches are complemented by manual interpretations by domain experts (e.g., block write failure, kernel page fault).
+
+\begin{table}[!t]
 \caption{Qualitative explainability case studies (manual interpretations by domain experts)}
 \begin{center}
 \scriptsize
@@ -392,17 +404,6 @@ BGL & W20200 & 1 & E18: data TLB error interrupt... & E3, E6, E4 & 12.68 & Kerne
 \label{tab_explainability}
 \end{center}
 \end{table}
-
-\subsection{Parameter Sensitivity, Latency, and Error Analysis}
-\label{sec:ablation}
-Ablation studies on HDFS 200k (seed 42) summarize hyperparameter sensitivity (Table~\ref{tab_ablation}): (A) Drain3 threshold $\theta{=}0.5$ represents the best-performing tested setting ($\theta{=}0.3$ over-merges to 25 templates; $\theta{=}0.7$ explodes to 2,455 templates); (B) DeepLog top-$k$ saturates around $K{=}5$--$9$; (C) Transformer mask ratio $r{=}0.15$ achieves optimal F1, aligning with self-supervised masking practices \cite{b20}.
-
-\textbf{Error Taxonomy and Analysis:} Four main error types are observed: (i) FP on rare sequences; (ii) FP on long sequences due to reconstruction error accumulation; (iii) FN when anomalies use common templates; (iv) template collision under loose Drain3 thresholds.
-
-\textbf{Inference Latency and Deployment Cost:} Measured per-sample batch-1 latency on an RTX 4050 Laptop GPU over 1,000 HDFS samples shows: (1) Drain3 processes approximately 147k logs/s under the reported benchmark configuration, indicating that parsing is unlikely to be the primary inference bottleneck under the tested configuration; (2) PCA/SVD are fastest ($<0.2$~ms); (3) TCN and DeepLog achieve approximately 0.45 ms GPU latency.
-
-\subsection{Applications and Limitations}
-\textbf{Qualitative Explainability Analysis:} Table~\ref{tab_explainability} provides qualitative case studies where next-event prediction mismatches are complemented by manual interpretations by domain experts (e.g., block write failure, kernel page fault).
 
 \textbf{Threats to Validity:} (i) lab benchmark domain shift; (ii) Drain3 threshold sensitivity to $\theta$; (iii) grouping strategy dependence; (iv) the first-500k temporal subset may not represent later operational regimes; (v) Transformer comparisons are not strictly paired because of the different validation protocol; and (vi) the small number of random seeds limits the statistical power of formal testing.
 
