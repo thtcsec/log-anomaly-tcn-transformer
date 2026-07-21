@@ -1,11 +1,15 @@
-# Application of TCN and Transformer Networks for Large-Scale System Log Anomaly Detection
+# Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks
 
-This repository contains the implementation, experimental source code, and academic evaluation for the paper: **"Application of TCN and Transformer Networks for Large-Scale System Log Anomaly Detection"**.
+This repository contains the implementation, experimental source code, and academic evaluation for log anomaly detection using Drain3, Temporal Convolutional Networks (TCN), Transformers, and lightweight baselines.
+
+This codebase supports the following publications:
+1. **VNICT 2026 Camera-Ready Paper** (EasyChair ID #6979): *"Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks"* (`submission/vnict2026_submission.tex`, IEEEtran format).
+2. **CSoneT 2026 Paper**: *"Application of TCN and Transformer Networks for Large-Scale System Log Anomaly Detection"* (`csonet2026.tex`, Springer LNCS format).
 
 ---
 
 ## 1. Overview
-Log anomaly detection is a critical task in automated system operations (AIOps). This project implements a modular log anomaly detection pipeline consisting of:
+Log anomaly detection is a critical task in automated system operations (AIOps). This project implements a modular log anomaly detection pipeline consisting of three decoupled layers:
 1. **Log Standardization & Parsing:** Structuring raw, unstructured logs into event templates using **Drain3**.
 2. **Event Grouping:** Sequencing events based on operational sessions (Block ID for HDFS) or time windows (Fixed/Sliding Windows for BGL).
 3. **Anomaly Scoring:** Evaluating and comparing performance across five scoring branches:
@@ -17,25 +21,30 @@ Log anomaly detection is a critical task in automated system operations (AIOps).
 
 ## 2. Directory Structure
 ```text
-├── careerhub_20260604_095930/  # Real-world Career Hub server logs
-├── thuvien_20260604_094551/     # Real-world Library server logs
-├── images/                      # Evaluation charts (ROC/PR curves)
-├── csonet2026.tex               # Springer LNCS LaTeX source code
-├── csonet2026.pdf               # Compiled paper PDF
-├── multi_seed_experiment.py     # HDFS multi-seed evaluations for baselines & Transformer
-├── bgl_experiment.py            # Cross-dataset evaluations on BGL
-├── bgl_grouping_experiment.py   # Grouping strategy evaluations on BGL
-├── deeplog_experiment.py        # Baseline DeepLog LSTM replication on HDFS
-├── ablation_experiment.py       # Parameter sensitivity studies (Drain3, Mask ratio, Top-k)
-├── generate_explainability.py   # Qualitative explainability analysis generator
-├── generate_figures.py          # Script for plotting ROC/PR curves
-└── README.md                    # Project documentation
+├── submission/                      # VNICT 2026 Camera-Ready Submission Directory
+│   ├── vnict2026_submission.tex     # IEEEtran LaTeX source code (VNICT 2026)
+│   ├── vnict2026_submission.pdf     # Compiled 5-page camera-ready paper PDF
+│   └── images/                      # Pipeline diagram & evaluation charts
+├── vnict2026_submission_camera_ready.zip # Complete VNICT 2026 Camera-Ready submission zip archive
+├── csonet2026.tex                   # Springer LNCS LaTeX source code (CSoneT 2026)
+├── csonet2026.pdf                   # Compiled CSoneT paper PDF
+├── careerhub_20260604_095930/       # Real-world Career Hub server logs
+├── thuvien_20260604_094551/         # Real-world Library server logs
+├── images/                          # High-resolution ROC/PR curves
+├── multi_seed_experiment.py         # HDFS multi-seed evaluations for baselines & Transformer
+├── bgl_experiment.py                # Multi-dataset evaluations on BGL
+├── bgl_grouping_experiment.py       # Grouping strategy evaluations on BGL
+├── deeplog_experiment.py            # Baseline DeepLog LSTM replication on HDFS
+├── ablation_experiment.py           # Parameter sensitivity studies (Drain3, Mask ratio, Top-k)
+├── generate_explainability.py       # Qualitative explainability analysis generator
+├── generate_figures.py              # Script for plotting ROC/PR curves
+└── README.md                        # Project documentation
 ```
 
 ---
 
-## 3. Experimental Results
-Below is the evaluation summary (mean $\pm$ standard deviation) across 5 random seeds:
+## 3. Experimental Results Summary
+Below is the evaluation summary (mean $\pm$ standard deviation) across five random seeds (21, 42, 84, 123, 777):
 
 ### HDFS Dataset (500k lines, Block ID grouping)
 | Method | Precision | Recall | F1-Score |
@@ -44,8 +53,10 @@ Below is the evaluation summary (mean $\pm$ standard deviation) across 5 random 
 | TruncatedSVD | $0.4298 \pm 0.2555$ | $0.5527 \pm 0.0106$ | $0.4540 \pm 0.1366$ |
 | Isolation Forest | $0.1726 \pm 0.0146$ | $0.1080 \pm 0.0084$ | $0.1328 \pm 0.0103$ |
 | Transformer (val-tuned) | $0.5102 \pm 0.1497$ | $0.2365 \pm 0.1156$ | $0.2950 \pm 0.0693$ |
-| DeepLog (top-k) | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
-| **TCN (top-k)** | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
+| DeepLog (top-k)* | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
+| **TCN (top-k)**\* | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
+
+*\*Note: On HDFS top-k, DeepLog and TCN decisions are identical due to short sequence length (13.77) and small vocabulary (137 templates).*
 
 ### BGL Dataset (500k lines, Window $W=100$)
 | Method | Precision | Recall | F1-Score |
@@ -60,7 +71,7 @@ Below is the evaluation summary (mean $\pm$ standard deviation) across 5 random 
 
 ---
 
-## 4. Run Instructions
+## 4. Quick Start & Reproducibility
 
 ### Install Dependencies:
 ```bash
@@ -72,7 +83,7 @@ pip install torch numpy pandas scikit-learn datasets drain3 tqdm matplotlib
 python multi_seed_experiment.py
 ```
 
-### Run Cross-dataset Evaluations on BGL:
+### Run Multi-dataset Evaluations on BGL:
 ```bash
 python bgl_experiment.py
 ```
@@ -89,7 +100,7 @@ python ablation_experiment.py
 
 ---
 
-## 5. Contact Info
-* **First Author:** Tien-Thanh Cao (Industrial University of Ho Chi Minh City / HUFLIT) - thanhct25471@pgr.iuh.edu.vn
-* **Second & Corresponding Author:** Hoang-Tu Trinh (HUFLIT) - tht.csec2005@gmail.com
-* **Third Author:** Manh-Ha Tran (HUFLIT) - hatm@huflit.edu.vn
+## 5. Contact & Authors
+* **Hoang-Tu Trinh** — Department of Information Technology, Ho Chi Minh City University of Foreign Languages - Information Technology (HUFLIT), Ho Chi Minh City, Vietnam (`tht.csec2005@gmail.com`)
+* **Tien-Thanh Cao** — Department of Information Technology, Ho Chi Minh City University of Foreign Languages - Information Technology (HUFLIT), Ho Chi Minh City, Vietnam (`thanhct@huflit.edu.vn`)
+* **Manh-Ha Tran** — Department of Information Technology, Ho Chi Minh City University of Foreign Languages - Information Technology (HUFLIT), Ho Chi Minh City, Vietnam (`hatm@huflit.edu.vn`)
