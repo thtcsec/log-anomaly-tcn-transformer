@@ -29,11 +29,13 @@
 
 ## Relation to prior publication (disclosure)
 
-A shorter preliminary version of the **HDFS/BGL Drain3–TCN–Transformer evaluation** appeared as:
+A related HDFS/BGL Drain3–TCN–Transformer study has been **accepted** for publication at **VNICT 2026** (proceedings forthcoming):
 
-> T. T. Cao, T. H. Trinh, and H. M. Tran, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, **VNICT 2026** (EasyChair #6979).
+> T. T. Cao, T. H. Trinh, and H. M. Tran, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, VNICT 2026 (EasyChair #6979).
 
-**This CSoNet manuscript extends that work** with HUFLIT-Career, explicit event-transition graph (GraphWalk) scoring, grouping/latency/explainability analyses, and proxy-label limits. Treat VNICT as a prior short report; this paper is the extended network-aware evaluation.
+**This CSoNet manuscript extends that work** with HUFLIT-Career, explicit event-transition graph (GraphWalk) scoring, grouping/latency/explainability analyses, and proxy-label limits. Please notify CSoNet TPC chairs of the overlap before camera-ready if not already recorded.
+
+**Prefix sizes (important):** classical HDFS/BGL baselines use a **500k**-line prefix; DeepLog-style / TCN / Transformer HDFS runs use **200k** (see `scripts/deeplog_experiment.py`, `MAX_ROWS=200000`).
 
 ---
 
@@ -52,13 +54,13 @@ A shorter preliminary version of the **HDFS/BGL Drain3–TCN–Transformer evalu
 ├── assets/hcmut.png               # Conference organizer (HCMUT)
 ├── images/                        # Figures for the paper
 ├── scripts/                       # Experiment runners (public)
-├── logs/                          # Aggregated metric tables (public)
+├── logs/                          # Public metric dumps (incl. GraphWalk HDFS/BGL/HUFLIT)
 ├── data/                          # Private logs (gitignored; not published)
-├── results/                       # Local run outputs (gitignored)
+├── results/                       # Scratch / local reruns (gitignored)
 └── README.md
 ```
 
-Institutional raw logs and camera-ready zip archives stay **out of git** (`data/`, `archive/`).
+Key public artifacts under `logs/`: `graph_transition_results.json` (GraphWalk 5-seed HDFS/BGL/HUFLIT), `deeplog_results.json`, `huflit_*.json`, grouping/latency dumps. Re-run scripts under `scripts/` to regenerate.
 
 ---
 
@@ -75,6 +77,8 @@ Public benchmarks (HuggingFace LogHub):
 ```bash
 python scripts/multi_seed_experiment.py
 python scripts/bgl_experiment.py
+python scripts/graph_transition_experiment.py   # HDFS/BGL/HUFLIT GraphWalk → logs/graph_transition_results.json
+python scripts/if_percentile_hdfs_bgl.py        # unified IF 95th-pct. protocol
 python scripts/bgl_grouping_experiment.py
 ```
 
@@ -83,6 +87,7 @@ HUFLIT-Career (place anonymized export under `data/careerhub_…`, never commit)
 ```bash
 set HUFLIT_CAREER_DIR=data\careerhub_20260604_095930
 python scripts/graph_transition_huflit_experiment.py
+python scripts/huflit_graph_ablation.py
 ```
 
 Do **not** extract the multi-GB campus RAR on `D:\huflit_logs`.

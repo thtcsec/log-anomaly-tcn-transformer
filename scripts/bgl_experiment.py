@@ -145,11 +145,12 @@ def run_baselines(data, seed):
     normal_train = train_df[train_df['y'] == 0]
     X_if_train = vec_if.fit_transform(normal_train['text'])
     X_if_test = vec_if.transform(test_df['text'])
-    contamination = max(0.001, min(0.2, train_df['y'].mean()))
-    iso = IsolationForest(n_estimators=200, contamination=contamination, random_state=seed, n_jobs=-1)
+    iso = IsolationForest(n_estimators=200, contamination='auto', random_state=seed, n_jobs=-1)
     iso.fit(X_if_train)
-    pred = iso.predict(X_if_test)
-    y_pred = (pred == -1).astype(int)
+    train_scores = -iso.decision_function(X_if_train)
+    thr = np.percentile(train_scores, 95)
+    test_scores = -iso.decision_function(X_if_test)
+    y_pred = (test_scores > thr).astype(int)
     p, r, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', zero_division=0)
     out.append({'Method': 'Isolation Forest', 'Seed': seed, 'Precision': float(p), 'Recall': float(r), 'F1': float(f1)})
 
