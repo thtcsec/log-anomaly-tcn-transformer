@@ -32,7 +32,7 @@ DRAIN_DEPTH = 4
 DL_WINDOW = 10
 DL_TOP_K = 9
 DL_BATCH = 512
-DL_EPOCHS = 5
+DL_EPOCHS = 3  # multi-seed CPU budget; headline BGL table still uses the 10-epoch artifact
 DL_LR = 1e-3
 D_MODEL = 64
 N_LAYERS = 2
@@ -333,50 +333,56 @@ def run_tcn(data, seed):
 # --- Main ---
 
 def main():
-    print(f'Loading {MAX_ROWS} BGL rows...', flush=True)
+    from pathlib import Path
+    out_dir = Path(__file__).resolve().parents[1] / 'results'
+    out_dir.mkdir(exist_ok=True)
+    out_json = out_dir / 'bgl_grouping_results.json'
+    out_raw = out_dir / 'bgl_grouping_raw.json'
+
+    print(f'Loading {MAX_ROWS} BGL rows (HuggingFace only; no HUFLIT RAR)...', flush=True)
     raw_df = stream_rows(MAX_ROWS)
     print('Parsing logs with Drain3...', flush=True)
     events = drain_parse(raw_df)
-    
+
     configs = [
         {'name': 'W=50', 'window': 50, 'stride': 50},
         {'name': 'W=100', 'window': 100, 'stride': 100},
         {'name': 'W=200', 'window': 200, 'stride': 200},
         {'name': 'W=100, stride=50', 'window': 100, 'stride': 50},
     ]
-    
+
     results = {}
-    
+
     for cfg in configs:
         name = cfg['name']
         print(f'\nRunning configuration: {name}', flush=True)
         data = group_sequences(events, cfg['window'], cfg['stride'])
         print(f'  Total sequences: {len(data)} (anomaly rate: {data.y.mean():.4f})', flush=True)
-        
+
         results[name] = {
             'PCA': [],
             'DeepLog': [],
-            'TCN': []
+            'TCN': [],
+            'seeds': list(SEEDS),
         }
-        
+
         for seed in SEEDS:
             print(f'  Seed {seed}...', flush=True)
-            
-            # PCA
+
             f1_pca = run_pca(data, seed)
             results[name]['PCA'].append(f1_pca)
-            
-            # DeepLog
+
             f1_dl = run_deeplog(data, seed)
             results[name]['DeepLog'].append(f1_dl)
-            
-            # TCN
+
             f1_tcn = run_tcn(data, seed)
             results[name]['TCN'].append(f1_tcn)
-            
-            print(f'    PCA F1: {f1_pca:.4f} | DeepLog F1: {f1_dl:.4f} | TCN F1: {f1_tcn:.4f}', flush=True)
 
-    # Compile Table Results
+            print(f'    PCA F1: {f1_pca:.4f} | DeepLog F1: {f1_dl:.4f} | TCN F1: {f1_tcn:.4f}', flush=True)
+            with open(out_raw, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2)
+            print(f'    checkpoint -> {out_raw}', flush=True)
+
     print('\n=== Final Grouping Benchmark Results (F1-score) ===', flush=True)
     table_rows = []
     for name in results:
@@ -386,20 +392,30 @@ def main():
         dl_std = np.std(results[name]['DeepLog'], ddof=1) if len(results[name]['DeepLog']) > 1 else 0.0
         tcn_mean = np.mean(results[name]['TCN'])
         tcn_std = np.std(results[name]['TCN'], ddof=1) if len(results[name]['TCN']) > 1 else 0.0
-        
-        row_str = f"{name:<20} | PCA: {pca_mean:.4f} ± {pca_std:.4f} | DeepLog: {dl_mean:.4f} ± {dl_std:.4f} | TCN: {tcn_mean:.4f} ± {tcn_std:.4f}"
+
+        row_str = (
+            f"{name:<20} | PCA: {pca_mean:.4f} ± {pca_std:.4f} | "
+            f"DeepLog: {dl_mean:.4f} ± {dl_std:.4f} | TCN: {tcn_mean:.4f} ± {tcn_std:.4f}"
+        )
         print(row_str, flush=True)
-        
+
         table_rows.append({
             'Configuration': name,
             'PCA': f"{pca_mean:.4f} ± {pca_std:.4f}",
             'DeepLog': f"{dl_mean:.4f} ± {dl_std:.4f}",
-            'TCN': f"{tcn_mean:.4f} ± {tcn_std:.4f}"
+            'TCN': f"{tcn_mean:.4f} ± {tcn_std:.4f}",
+            'PCA_values': results[name]['PCA'],
+            'DeepLog_values': results[name]['DeepLog'],
+            'TCN_values': results[name]['TCN'],
+            'seeds': list(SEEDS),
+            'epochs': DL_EPOCHS,
+            'max_rows': MAX_ROWS,
         })
-        
-    with open('bgl_grouping_results.json', 'w', encoding='utf-8') as f:
+
+    with open(out_json, 'w', encoding='utf-8') as f:
         json.dump(table_rows, f, indent=2, ensure_ascii=False)
-    print('\nSaved to bgl_grouping_results.json', flush=True)
+    print(f'\nSaved to {out_json}', flush=True)
+
 
 if __name__ == '__main__':
     main()

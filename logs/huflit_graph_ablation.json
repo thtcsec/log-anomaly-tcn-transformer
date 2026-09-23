@@ -17,96 +17,96 @@
   "rows": [
     {
       "Seed": 21,
-      "GraphWalk_F1": 0.46387832699619774,
-      "GraphWalk_AUC": 0.9031074903824395,
-      "IF_TFIDF_F1": 0.4772727272727273,
-      "IF_TFIDF_AUC": 0.9068879837067211,
-      "Fusion_Graph_IF_F1": 0.47418738049713194,
-      "Fusion_Graph_IF_AUC": 0.9071323828920571,
-      "TFIDF_density": 0.17040205303678357,
-      "contamination": 0.019961218204631002,
+      "GraphWalk_F1": 0.45368620037807184,
+      "GraphWalk_AUC": 0.9017429072812322,
+      "IF_TFIDF_F1": 0.46880907372400754,
+      "IF_TFIDF_AUC": 0.9061040478017082,
+      "Fusion_Graph_IF_F1": 0.4679245283018868,
+      "Fusion_Graph_IF_AUC": 0.9060133900179858,
+      "TFIDF_density": 0.17078224503374204,
+      "contamination": 0.01984715410060454,
       "templates": 7
     },
     {
       "Seed": 42,
-      "GraphWalk_F1": 0.44776119402985076,
-      "GraphWalk_AUC": 0.8898814211360037,
-      "IF_TFIDF_F1": 0.45660377358490567,
-      "IF_TFIDF_AUC": 0.8908332201855624,
-      "Fusion_Graph_IF_F1": 0.45540796963946867,
-      "Fusion_Graph_IF_AUC": 0.8909459153654674,
+      "GraphWalk_F1": 0.44402985074626866,
+      "GraphWalk_AUC": 0.8863151392120882,
+      "IF_TFIDF_F1": 0.45454545454545453,
+      "IF_TFIDF_AUC": 0.887060446418972,
+      "Fusion_Graph_IF_F1": 0.4533333333333333,
+      "Fusion_Graph_IF_AUC": 0.8874321888889091,
       "TFIDF_density": 0.17112441783100465,
-      "contamination": 0.019961218204631002,
+      "contamination": 0.01984715410060454,
       "templates": 7
     },
     {
       "Seed": 84,
-      "GraphWalk_F1": 0.4388349514563107,
-      "GraphWalk_AUC": 0.8689431998189636,
-      "IF_TFIDF_F1": 0.44660194174757284,
-      "IF_TFIDF_AUC": 0.8693419325639287,
-      "Fusion_Graph_IF_F1": 0.4518664047151277,
-      "Fusion_Graph_IF_AUC": 0.8714935505770537,
-      "TFIDF_density": 0.20028831226436017,
-      "contamination": 0.019961218204631002,
-      "templates": 6
+      "GraphWalk_F1": 0.44485981308411215,
+      "GraphWalk_AUC": 0.8975015808166308,
+      "IF_TFIDF_F1": 0.45692883895131087,
+      "IF_TFIDF_AUC": 0.9014882454666553,
+      "Fusion_Graph_IF_F1": 0.45607476635514016,
+      "Fusion_Graph_IF_AUC": 0.9008732303509503,
+      "TFIDF_density": 0.17142857142857143,
+      "contamination": 0.01984715410060454,
+      "templates": 7
     },
     {
       "Seed": 123,
-      "GraphWalk_F1": 0.4508670520231214,
-      "GraphWalk_AUC": 0.8866114505544241,
-      "IF_TFIDF_F1": 0.46449136276391556,
-      "IF_TFIDF_AUC": 0.8910187825299842,
-      "Fusion_Graph_IF_F1": 0.46360153256704983,
-      "Fusion_Graph_IF_AUC": 0.8910450328128536,
-      "TFIDF_density": 0.1713335234293318,
-      "contamination": 0.019961218204631002,
+      "GraphWalk_F1": 0.4448818897637795,
+      "GraphWalk_AUC": 0.8680182117364929,
+      "IF_TFIDF_F1": 0.4549019607843137,
+      "IF_TFIDF_AUC": 0.871214923637901,
+      "Fusion_Graph_IF_F1": 0.4549019607843137,
+      "Fusion_Graph_IF_AUC": 0.8714253954774978,
+      "TFIDF_density": 0.1711434274308526,
+      "contamination": 0.01984715410060454,
       "templates": 7
     },
     {
       "Seed": 777,
-      "GraphWalk_F1": 0.48507462686567165,
-      "GraphWalk_AUC": 0.9311147318397828,
-      "IF_TFIDF_F1": 0.4962686567164179,
-      "IF_TFIDF_AUC": 0.9319207965603078,
-      "Fusion_Graph_IF_F1": 0.49624060150375937,
-      "Fusion_Graph_IF_AUC": 0.934326770762616,
-      "TFIDF_density": 0.1710863986313088,
-      "contamination": 0.019961218204631002,
-      "templates": 7
+      "GraphWalk_F1": 0.48598130841121495,
+      "GraphWalk_AUC": 0.9395986821364988,
+      "IF_TFIDF_F1": 0.4897959183673469,
+      "IF_TFIDF_AUC": 0.9415949756454014,
+      "Fusion_Graph_IF_F1": 0.49070631970260226,
+      "Fusion_Graph_IF_AUC": 0.9419106834047966,
+      "TFIDF_density": 0.19955644267021513,
+      "contamination": 0.01984715410060454,
+      "templates": 6
     }
   ],
   "summary": {
     "GraphWalk_F1": {
-      "mean": 0.4572832302742305,
-      "std": 0.017944585076060313
+      "mean": 0.45468781247668943,
+      "std": 0.017934770385757925
     },
     "GraphWalk_AUC": {
-      "mean": 0.8959316587463227,
-      "std": 0.023136495862192755
+      "mean": 0.8986353042365887,
+      "std": 0.02635400194390423
     },
     "IF_TFIDF_F1": {
-      "mean": 0.46824769241710784,
-      "std": 0.019266908643386423
+      "mean": 0.4649962492744867,
+      "std": 0.01504790763953514
     },
     "IF_TFIDF_AUC": {
-      "mean": 0.8980005431093009,
-      "std": 0.023189446153501516
+      "mean": 0.9014925277941275,
+      "std": 0.026241621258237095
     },
     "Fusion_Graph_IF_F1": {
-      "mean": 0.46826077778450753,
-      "std": 0.017844283865017404
+      "mean": 0.46458818169545524,
+      "std": 0.015702396867907864
     },
     "Fusion_Graph_IF_AUC": {
-      "mean": 0.8989887304820096,
-      "std": 0.02344605665732066
+      "mean": 0.9015309776280279,
+      "std": 0.02624960576592141
     },
     "TFIDF_density": {
-      "mean": 0.1768469410385578,
-      "std": 0.013108807732987296
+      "mean": 0.17680702087887717,
+      "std": 0.012719375991553374
     },
     "contamination": {
-      "mean": 0.019961218204631002,
+      "mean": 0.01984715410060454,
       "std": 0.0
     },
     "templates": {

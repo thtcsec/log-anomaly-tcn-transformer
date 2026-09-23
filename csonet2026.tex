@@ -321,23 +321,23 @@ Fusion $z$(GraphWalk)${+}z$(IF) & $0.468\pm0.018$ & $0.899\pm0.023$ \\
 Isolation Forest F1 swings from $0.13$ (HDFS) and $0.04$ (BGL) to $0.63$ (HUFLIT-Career under contamination decisions). (1)~\textbf{Outlier geometry:} Career anomalies are scanner-like in a $\sim$6-template space (TF-IDF density $\approx0.18$ on Career windows), so points isolate easily; HDFS/BGL anomalies often share frequent templates with normals. (2)~\textbf{Imbalance / contamination:} HDFS block anomaly rate $\sim$5\% with sparse high-dimensional TF-IDF yields low precision (AUROC still $0.71$ on HDFS seed 42, but AP only $0.16$). (3)~\textbf{BGL OR-window labels} mix normal and anomalous lines inside one bag, collapsing isolation cuts (F1$\approx0.04$) while sequence NLL/top-k still fire on local mismatches.
 
 \subsection{Grouping Strategy Study (RQ1)}
-To address RQ1, we evaluate BGL grouping with $W\in\{50,100,200\}$ (non-overlap) and sliding $W{=}100$, stride $50$. Table~\ref{tab_grouping} reports the controlled seed-42 reference on a 200k subset; the public script \texttt{scripts/bgl\_grouping\_experiment.py} repeats seeds $\{21,42,84,123,777\}$ for mean$\pm$std in the artifact (page limit keeps the compact reference table here).
+To address RQ1, we evaluate BGL grouping with $W\in\{50,100,200\}$ (non-overlap) and sliding $W{=}100$, stride $50$ on a 200k-line subset (different anomaly ratio than Table~\ref{tab_cross_dataset}). Table~\ref{tab_grouping} now reports mean$\pm$std F1 over seeds $\{21,42,84,123,777\}$ (3 training epochs under the CPU multi-seed budget; script: \texttt{scripts/bgl\_grouping\_experiment.py}).
 
-Table~\ref{tab_grouping} shows PCA is sensitive to $W$ (better at $W{=}200$), while DeepLog-style/TCN stay robust; sliding windows give the best seed-42 F1 (DeepLog-style $0.9004$, TCN $0.9032$).
+Table~\ref{tab_grouping} confirms PCA is sensitive to $W$ (best at $W{=}200$), while DeepLog-style/TCN remain robust; the sliding window yields the strongest sequence F1 (TCN $0.9106\pm0.0181$, DeepLog-style $0.8895\pm0.0252$).
 
 \begin{table}[htbp]
-\caption{F1-score under different grouping configurations on BGL 200k (seed 42 reference; multi-seed artifact: \texttt{bgl\_grouping\_experiment.py})}
+\caption{F1-score (mean$\pm$std over 5 seeds) under different grouping configurations on BGL 200k}
 \begin{center}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lccc}
 \toprule
-\textbf{Grouping Configuration} & \textbf{PCA} & \textbf{DeepLog (top-k)} & \textbf{TCN (top-k)} \\
+\textbf{Grouping Configuration} & \textbf{PCA} & \textbf{DeepLog-style (top-k)} & \textbf{TCN (top-k)} \\
 \midrule
-$W=50$ (non-overlap) & 0.1500 & 0.8556 & 0.8750 \\
-$W=100$ (non-overlap) & 0.1353 & 0.8571 & 0.8769 \\
-$W=200$ (non-overlap) & 0.4381 & 0.8810 & 0.8506 \\
-$W=100$, stride $50$ (sliding) & 0.2314 & 0.9004 & 0.9032 \\
+$W=50$ (non-overlap) & $0.1956\pm0.0326$ & $0.8321\pm0.0225$ & $0.8825\pm0.0269$ \\
+$W=100$ (non-overlap) & $0.1520\pm0.0414$ & $0.8569\pm0.0325$ & $0.8864\pm0.0175$ \\
+$W=200$ (non-overlap) & $0.4769\pm0.0842$ & $0.8213\pm0.0309$ & $0.8305\pm0.0307$ \\
+$W=100$, stride $50$ (sliding) & $0.1727\pm0.0339$ & $0.8895\pm0.0252$ & $\mathbf{0.9106\pm0.0181}$ \\
 \bottomrule
 \end{tabular}
 \label{tab_grouping}
