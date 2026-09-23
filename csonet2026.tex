@@ -27,7 +27,7 @@
 \titlerunning{Network-Aware Event Sequence Modeling for Log Anomaly Detection}
 
 \author{Thanh Tien Cao\inst{1,2} \and
-Tu Hoang Trinh\inst{2}\thanks{Corresponding authors: H. M. Tran (\email{hatm@huflit.edu.vn}) and T. H. Trinh (\email{tht.csec2005@gmail.com}, \email{23dh113972@st.huflit.edu.vn}). The complete source code and raw training logs to ensure experiment reproducibility are publicly available at: \protect\url{https://github.com/thtcsec/log-anomaly-tcn-transformer}.} \and
+Tu Hoang Trinh\inst{2}\thanks{Corresponding authors: H. M. Tran (\email{hatm@huflit.edu.vn}) and T. H. Trinh (\email{tht.csec2005@gmail.com}, \email{23dh113972@st.huflit.edu.vn}). Source code, parsed template sequences, transition-graph artifacts, and per-seed metric tables are publicly available at: \protect\url{https://github.com/thtcsec/log-anomaly-tcn-transformer}. Institutional raw HTTP logs are \emph{not} released.} \and
 Ha Manh Tran\inst{2}\textsuperscript{*}}
 %
 \authorrunning{T. T. Cao et al.}
@@ -41,7 +41,7 @@ Faculty of Information Technology, Ho Chi Minh City University of Foreign Langua
 \maketitle              % typeset the header of the contribution
 %
 \begin{abstract}
-We present a network-aware log anomaly detection pipeline that treats Drain3 event templates as vertices of a directed transition graph and log sequences as walks on that graph (coupled with client--service interaction structure on HUFLIT-Career). Beyond bag-of-events baselines, we score walks with transition-probability (GraphWalk) features as well as PCA/SVD, Isolation Forest, DeepLog, TCN, and a masked Transformer. Across HDFS, BGL, and HUFLIT-Career (5 seeds), no single branch dominates: PCA is strongest on short, structured HDFS sequences; sequence models are strongest on BGL, where TCN and DeepLog are nearly tied; Isolation Forest leads on the compact-vocabulary Career logs. TCN offers competitive accuracy with favorable CPU latency versus LSTM, rather than a large accuracy margin. We also study window grouping, report leakage-aware splits, and discuss proxy-label limits on HUFLIT-Career. An extended prior short report appeared at VNICT~2026; this paper adds the institutional study, explicit graph scoring, and fuller deployment analyses.
+We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) in addition to PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. On HDFS, frequency models remain competitive; on BGL, TCN and DeepLog-style LSTM achieve strong and nearly identical sequence performance; on HUFLIT-Career, compact-vocabulary outlier models remain competitive under heuristic/weak labels. An earlier VNICT~2026 report studied the HDFS/BGL backbone; this paper extends it with transition-graph scoring, HUFLIT-Career, leakage-aware splits, and deployment analyses.
 
 \keywords{Log anomaly detection \and event-transition network \and Transformer \and Drain3 \and AIOps \and distributed systems.}
 \end{abstract}
@@ -67,8 +67,8 @@ To justify the academic and practical merits of this work, we outline its positi
 \begin{itemize}
     \item \textbf{Necessary:} Modern systems generate gigabytes of log data per second. Traditional manual rules fail to capture contextual shifts. Unsupervised, sequence-level evaluation is necessary to automate anomaly detection in live systems.
     \item \textbf{Novelty:} This work provides a deployment-oriented, leakage-aware evaluation of frequency-based, isolation-based, \emph{graph-walk}, causal sequence, and masked-event modeling branches under a unified Drain3-based pipeline across public benchmarks and an institutional web-log dataset.
-    \item \textbf{Significance:} Sequence models excel on complex BGL windows, while PCA and Isolation Forest remain competitive on structured or compact-vocabulary logs (HDFS, HUFLIT-Career). TCN is a practical LSTM alternative with similar accuracy under our protocol and often lower CPU latency---not a large accuracy leap over DeepLog.
-    \item \textbf{Applicability:} The pipeline is lightweight, uses Drain3 for online parsing, and operates on standard CPU/GPU resources, making it applicable to campus and enterprise monitoring after validation beyond proxy labels.
+    \item \textbf{Significance:} Sequence models excel on complex BGL windows, while PCA and Isolation Forest remain competitive on structured or compact-vocabulary logs (HDFS, HUFLIT-Career). TCN achieves performance \emph{comparable} to the DeepLog-style LSTM under our protocol, with a modestly lower mean CPU latency (Table~\ref{tab_latency})---not a large accuracy or latency leap.
+    \item \textbf{Applicability:} The pipeline is lightweight, uses Drain3 for online parsing, and operates on standard CPU/GPU resources, making it applicable to campus and enterprise monitoring after validation beyond weak labels.
 \end{itemize}
 Rather than proposing another detector, this work contributes a network-structured evaluation framework that identifies when frequency, isolation, graph-walk, and sequential scorers are preferable under different log-network regimes.
 
@@ -104,7 +104,7 @@ LLM / Foundation & LogGPT \cite{b9}, LogPrompt \cite{b8}, LogLLM \cite{b20}, CoL
 
 From existing works, four main research gaps can be identified: (i) traditional statistical methods do not learn the order of log events; (ii) sequential LSTM models are limited with long log sequences; (iii) Transformer models depend heavily on the parsing step; (iv) mapping anomaly detection pipelines to large networks requires clarifying the grouping strategy and business scenarios. 
 
-To address these gaps, this paper builds a standardized pipeline that separates three phases (parsing, grouping, and scoring) using Drain3 as a preprocessing step to clean the token space. We evaluate in parallel the scoring branches including lightweight baselines (PCA, TruncatedSVD, Isolation Forest), sequential LSTM (DeepLog), the integrated Temporal Convolutional Network (TCN), and Transformer masked event modeling. Performance is carefully measured using Precision, Recall, and F1-score averaged over 5 different random seeds to ensure scientific reliability. To ensure experiment reproducibility and verification, the complete source code and raw training logs are publicly available at \url{https://github.com/thtcsec/log-anomaly-tcn-transformer}.
+To address these gaps, this paper builds a standardized pipeline that separates three phases (parsing, grouping, and scoring) using Drain3 as a preprocessing step to clean the token space. We evaluate in parallel bag-of-events baselines (PCA, TruncatedSVD, Isolation Forest), an explicit GraphWalk transition scorer, a DeepLog-style LSTM, TCN, and Transformer masked event modeling. Metrics are mean$\pm$std over 5 seeds. Source code, parsed sequences, and per-seed tables are public at \url{https://github.com/thtcsec/log-anomaly-tcn-transformer} (raw institutional HTTP logs are withheld).
 
 \section{Proposed Methodology}
 \subsection{Pipeline Overview}
@@ -165,7 +165,7 @@ score(S)=\frac{1}{d}\sum_{j=1}^{d}(x_j-\hat{x}_j)^2
 \label{eq_reconstruction}
 \end{equation}
 where $\hat{x}$ is the reconstructed vector after projecting onto the low-dimensional space (the number of principal components is set to 20 by default). The anomaly threshold $\tau$ is chosen as the 95th percentile on the normal training set. A sequence $S$ is labeled as anomalous if $score(S) > \tau$.
-Isolation Forest is applied to the TF-IDF feature representation of the event sequences. The model isolates sparse data points using random partitioning trees. Cross-dataset behaviour is highly non-uniform (Section~\ref{sec:if_variance}): IF thrives when anomalies form compact frequency outliers in a small vocabulary, but collapses when class imbalance and shared event multisets make isolation cuts uninformative.
+Isolation Forest is applied to TF-IDF bag-of-events vectors with $200$ trees. Unless noted, we set \texttt{contamination} to the training anomaly rate clipped to $[0.001,0.2]$ and also report a 95th-percentile threshold on $-\texttt{decision\_function}$ computed on normal training scores (same protocol family as PCA/NLL). Cross-dataset behaviour is highly non-uniform (Section~\ref{sec:if_variance}).
 
 \subsection{Event-Transition Graph Scoring}
 \label{sec:graphwalk}
@@ -173,20 +173,20 @@ To make the network framing operational---not only rhetorical---we build a direc
 \begin{equation}
 P(v\mid u)=\frac{c(u,v)+\alpha}{c(u)+\alpha|V|}.
 \end{equation}
-Each test walk $S=(E_1,\ldots,E_m)$ yields GraphWalk features: mean / worst-edge transition NLL, unseen-edge ratio, novel-node ratio, unique-event ratio, and length. We evaluate (i) GraphWalk mean-NLL with a 95th-percentile threshold on normal training walks, and (ii) PCA / Isolation Forest on the same feature vectors. This uses the transition graph as an explicit scorer rather than as a diagram-only abstraction.
+Each test walk $S=(E_1,\ldots,E_m)$ yields GraphWalk features: mean / worst-edge transition NLL, unseen-edge ratio, novel-node ratio, unique-event ratio, and length. We evaluate (i) GraphWalk mean-NLL with a 95th-percentile threshold on normal training walks, (ii) PCA / Isolation Forest on the same feature vectors, and (iii) a late-fusion ablation that averages $z$-scored GraphWalk NLL with $z$-scored TF-IDF Isolation Forest scores. This uses the transition graph as an explicit component of the anomaly score.
 
 \subsection{Deep Sequence Models and Transformer}
-\textbf{DeepLog (LSTM):} Replicated as next-event prediction using a 2-layer LSTM \cite{b1}. For each position $i$, the model predicts the probability of event $E_i$ given the context of the previous $g$ events:
+\textbf{DeepLog-style LSTM:} We implement next-event prediction with a 2-layer LSTM inspired by DeepLog~\cite{b1}, \emph{not} a bit-exact reproduction of the original Spell parser, full HDFS corpus, or top-$g$ session rule. For each position $i$, the model predicts
 \begin{equation}
-\hat{P}(E_i \mid E_{i-g}, \ldots, E_{i-1}) = \text{softmax}(W_o h_i + b_o)
+\hat{P}(E_i \mid E_{i-g}, \ldots, E_{i-1}) = \text{softmax}(W_o h_i + b_o).
 \end{equation}
-In top-k mode, a sequence is flagged as anomalous if at least one actual event lies outside the top $K$ predictions with the highest probability. In NLL threshold mode, the anomaly score of the sequence is the average negative log-likelihood (NLL) of the events.
+In top-$k$ mode, a sequence is flagged if any actual event lies outside the top $K$ predictions. In NLL mode, the score is mean negative log-likelihood with a 95th-percentile threshold on normal validation scores. Our HDFS numbers use the first $500$k LogHub lines (full HDFS\_v1 has $>11$M lines), Drain3 templates, and the unified split above; they must \emph{not} be compared directly to $\sim$0.94--0.96 F1 figures reported elsewhere on full-data / different preprocessing protocols.
 
 \textbf{Temporal Convolutional Network (TCN):} Integrated to improve parallelization and expand the receptive field. TCN utilizes dilated causal 1D convolutions \cite{b19}. The convolution operation on element $s$ of the input sequence $x$ with a filter $f$ of size $k$ and a dilation factor $d$ is defined as:
 \begin{equation}
 F(s) = (x *_d f)(s) = \sum_{j=0}^{k-1} f(j) \cdot x_{s - d \cdot j}
 \end{equation}
-A Chomp1d mechanism is used to crop the padding, ensuring causality. TCN uses the same dataset, scoring methods (top-k and NLL), and 95th percentile threshold selection as DeepLog to ensure a fair comparison.
+A Chomp1d mechanism is used to crop the padding, ensuring causality. TCN uses the same dataset, scoring methods (top-k and NLL), and 95th percentile threshold selection as the DeepLog-style LSTM for a fair head-to-head under \emph{this} protocol.
 
 \textbf{Transformer (LogBERT-inspired):} Employs a Transformer Encoder architecture combined with masked event modeling to learn bidirectional contexts \cite{b2}. A proportion of events (default 15\%) are replaced by a \texttt{[MASK]} token, and the model learns to recover them using cross-entropy loss:
 \begin{equation}
@@ -197,7 +197,7 @@ where $M$ is the set of masked positions. During inference, the anomaly score of
 
 \section{Experimental Setup}
 \subsection{Datasets}
-The study utilizes HDFS and BGL from the LogHub benchmark \cite{b6,b12}, alongside HUFLIT-Career, a production-style institutional web-log dataset collected over a one-month period in June 2026 from a live university web application server. HDFS contains logs from a Hadoop system and is labeled by Block ID (anomalous if the block contains errors); we evaluate on the first 500,000 log lines. BGL contains logs from a supercomputer system, where anomaly labels are assigned using non-overlapping windows of $W{=}100$ lines. HUFLIT-Career consists of HTTP access logs from an online university career service. To protect user privacy, all sensitive client identification data, including client IP addresses and query payloads, were fully hashed and anonymized. Client IP addresses are utilized strictly for sequence grouping and are not included as features for any model. \textbf{Proxy labels:} scanner-probe labels were assigned by fixed export rules on the field \texttt{suspicious\_signals} (rule token \texttt{scanner\_probe}, not SOC-confirmed incidents). Because the same surface cues that trigger the rule can remain visible in method/path templates, evaluating detectors against these labels risks circularity---models may rediscover the labeling heuristic rather than independent operational anomalies. We therefore treat HUFLIT-Career metrics as \emph{proxy-label} results, report an IP-disjoint ablation for split leakage, and do not claim production SOC validity without gold labels. While the raw HTTP log files cannot be publicly released due to institutional privacy policies, the parsed event template sequences, transition distributions, and complete source code of the pipeline are fully public. The statistics of the three datasets after Drain3 parsing are described in Table~\ref{tab_dataset_stats}.
+The study utilizes HDFS and BGL from the LogHub benchmark \cite{b6,b12}, alongside HUFLIT-Career, a production-style institutional web-log dataset collected over a one-month period in June 2026 from a live university web application server. HDFS contains logs from a Hadoop system and is labeled by Block ID (anomalous if the block contains errors); we evaluate on the first 500,000 log lines. BGL contains logs from a supercomputer system, where anomaly labels are assigned using non-overlapping windows of $W{=}100$ lines. HUFLIT-Career consists of HTTP access logs from an online university career service. To protect user privacy, all sensitive client identification data, including client IP addresses and query payloads, were fully hashed and anonymized. Client IP addresses are utilized strictly for sequence grouping and are not included as features for any model. \textbf{Heuristic / weak labels:} scanner-probe labels were assigned by fixed export rules on \texttt{suspicious\_signals} (token \texttt{scanner\_probe}), not independently adjudicated SOC ground truth. Surface cues that trigger the rule can remain visible in method/path templates, so detectors may rediscover the labeling heuristic. We therefore interpret HUFLIT-Career metrics as \emph{agreement with the heuristic anomaly definition} rather than an unbiased estimate of real-world detection accuracy, report an IP-disjoint ablation for split leakage, and do not claim production SOC validity without gold labels. While raw HTTP files cannot be released, parsed template sequences, transition artifacts, and code are public. Dataset statistics after Drain3 appear in Table~\ref{tab_dataset_stats}.
 
 \begin{table}[htbp]
 \caption{Statistics of HDFS, BGL, and HUFLIT-Career datasets used in the experiments}
@@ -228,7 +228,7 @@ To prevent data leakage, all unsupervised models (PCA, SVD, Isolation Forest, De
 
 For the production-style HUFLIT-Career logs where sequence grouping is performed by client IP address, we adopt a sequence-level random split. Client IP addresses are used solely as keys for grouping log events into sequences and are completely excluded from model features. While some IP addresses might span both the training and testing sets through separate sequence windows (a limitation shared with sequence-level LogHub splits), using Event ID templates as the sole feature prevents direct leakage. To empirically validate the leakage-free generalization of our pipeline on HUFLIT-Career, we perform an additional ablation study using a strict IP-disjoint split (where 70\% of client IPs are used for training and the remaining 30\% are reserved exclusively for testing, ensuring zero client overlap). Under this zero-leakage protocol, the PCA baseline achieves a Precision of 0.5081, a Recall of 0.9127, and an F1-score of 0.6528. This confirms that the event transition patterns learned from normal traffic generalize robustly to entirely unseen client sessions.
 
-Across all experiments, PCA and TruncatedSVD fix the number of principal components at 20. Isolation Forest is configured with 200 decision trees trained on TF-IDF features. For the mini Transformer, the model consists of 2 encoder layers ($d_{model}{=}64$, 4 heads, feed-forward dimension 128) trained using the AdamW algorithm \cite{b17} for 5 epochs with a mask ratio $r{=}0.15$. The DeepLog and TCN networks use an embedding size of 64, a hidden size of 64, optimized using Adam with a learning rate of $1\times 10^{-3}$, and trained for 10 epochs. To ensure experiment reliability, all results are reported as the mean $\pm$ standard deviation over 5 random seeds (21, 42, 84, 123, 777).
+Across all experiments, PCA and TruncatedSVD fix the number of principal components at 20. Isolation Forest uses 200 trees on TF-IDF with contamination $=$ clipped training anomaly rate (Section~3.3); we additionally analyze ranking via AUROC where noted. The mini Transformer uses 2 encoder layers ($d_{model}{=}64$, 4 heads, FF 128), AdamW~\cite{b17}, 5 epochs, mask ratio $r{=}0.15$. DeepLog-style LSTM and TCN use embedding/hidden size 64, Adam $10^{-3}$, 10 epochs. All headline tables report mean$\pm$std over seeds $\{21,42,84,123,777\}$ unless a caption states otherwise.
 
 \textbf{Evaluation Metrics:} We use Precision, Recall, and F1-score to evaluate performance:
 \begin{equation}
@@ -239,7 +239,7 @@ In actual network operations, a low Precision causes many false alarms, while a 
 
 \section{Results and Discussion}
 \subsection{Cross-Dataset Performance Comparison}
-The results in Table~\ref{tab_cross_dataset} reveal that no single model dominates across all settings — a finding that underscores the importance of evaluating the entire pipeline rather than any individual algorithm. On HDFS, the lightweight baselines achieve competitive results: PCA obtains an F1-score of $0.5711 \pm 0.0944$, outperforming deep learning models including DeepLog LSTM and TCN (both $0.4613 \pm 0.0199$). The mini Transformer obtains a low F1-score of $0.2950 \pm 0.0693$. We note that the Transformer evaluated here is a lightweight variant optimized for low latency; a larger, more deeply tuned Transformer model might yield different classification results but at the cost of higher latency. This observation arises because HDFS is a highly structured log dataset with a small vocabulary (137 templates) and very short sequences (average length of 13.77 events). In such settings, anomalies are often manifested as distributional shifts in event frequencies, which are effectively captured by PCA reconstruction error on bag-of-events features. Conversely, deep sequence models do not benefit from their temporal modeling capacity due to sequence sparsity and the absence of complex contextual transitions. \textbf{Identical DeepLog/TCN top-k numbers on HDFS} ($0.4613\pm0.0199$) are expected under our protocol: with short contexts and $|V|{=}137$, both next-event heads often emit the same top-$K$ sets on every position, so binary mismatch decisions coincide even though the architectures differ. This is a dataset/protocol effect, not evidence that TCN implements DeepLog. Relative to published DeepLog figures on full HDFS, our scores also differ because we use Drain3 templates, a 500k-line prefix, mean-NLL / top-$k$ thresholding at the 95th percentile of normal validation scores, and a 60/20/20 neural split---not the original Spell parser and top-$g$ session rule~\cite{b1}. We report these choices explicitly so the gap is interpretable rather than a silent under-reproduction.
+The results in Table~\ref{tab_cross_dataset} show that no single model dominates. On HDFS, PCA leads ($0.5711 \pm 0.0944$); the DeepLog-style LSTM and TCN both score $0.4613 \pm 0.0199$ under our protocol (see Table~\ref{tab_per_seed_hdfs} for per-seed identity). The mini Transformer is weaker ($0.2950 \pm 0.0693$). HDFS anomalies are largely frequency shifts on short walks (mean length $13.77$, $|V|{=}137$), which favors PCA. Our DeepLog-style scores are \emph{not} full-corpus literature reproductions: we use a 500k-line prefix, Drain3, and unified top-$k$/NLL thresholding rather than Spell + top-$g$ on $>11$M lines~\cite{b1}.
 
 \begin{table}[htbp]
 \caption{Cross-dataset F1-score comparison (mean $\pm$ std over 5 seeds). Bold indicates best performance; underline indicates second best. Detailed Precision and Recall metrics are available in the public repository.}
@@ -255,39 +255,75 @@ Isolation Forest & $0.1328 \pm 0.0103$ & $0.0404 \pm 0.0070$ & $\mathbf{0.6292 \
 \midrule
 Transformer (unsup.) & $0.2458 \pm 0.0639$ & $0.9242 \pm 0.0085$ & N/A \\
 Transformer (val-tuned) & $0.2950 \pm 0.0693$ & $0.9388 \pm 0.0080$ & $0.3520 \pm 0.0304$ \\
-DeepLog (top-k) & $\underline{0.4613 \pm 0.0199}$ & $\underline{0.9820 \pm 0.0042}$ & $0.0665 \pm 0.0401$ \\
-DeepLog (NLL) & $0.3046 \pm 0.0198$ & $0.9381 \pm 0.0075$ & $0.5916 \pm 0.0096$ \\
+DeepLog-style (top-k) & $\underline{0.4613 \pm 0.0199}$ & $\underline{0.9820 \pm 0.0042}$ & $0.0665 \pm 0.0401$ \\
+DeepLog-style (NLL) & $0.3046 \pm 0.0198$ & $0.9381 \pm 0.0075$ & $0.5916 \pm 0.0096$ \\
 \midrule
 \textbf{TCN (top-k)} & $\underline{0.4613 \pm 0.0199}$ & $\mathbf{0.9826 \pm 0.0022}$ & $0.0451 \pm 0.0167$ \\
 \textbf{TCN (NLL)} & $0.3042 \pm 0.0236$ & $0.9474 \pm 0.0035$ & $0.5916 \pm 0.0096$ \\
+GraphWalk (NLL)$^\dagger$ & --- & --- & $0.4573 \pm 0.0179$ \\
 \bottomrule
 \end{tabular}
 \label{tab_cross_dataset}
 \end{table}
+{\footnotesize $^\dagger$HUFLIT-Career only in this revision; GraphWalk AUROC $=0.896\pm0.023$ (5 seeds). Per-seed dumps: \texttt{logs/}, \texttt{results/}.}
 
-\textbf{Visual Analysis and Threshold Sensitivity:} In addition to F1-score, the baselines are analyzed through ROC and Precision-Recall (PR) curves in Fig.~\ref{fig_curves}. The results show that PCA and TruncatedSVD maintain better separability than Isolation Forest across most threshold ranges. For HDFS (which is highly imbalanced), the PR curves indicate that PCA/SVD maintain high Precision at high Recall levels, whereas Isolation Forest declines rapidly. The corresponding AUC-ROC scores for PCA, TruncatedSVD, and Isolation Forest on HDFS (with seed 42) are $0.7722$, $0.7536$, and $0.7136$, respectively, and the Average Precision (AP) scores are $0.5613$, $0.5676$, and $0.1645$, respectively.
+\textbf{Identical top-$k$ decisions on HDFS.} Under our 500k-line / Drain3 / top-$k{=}9$ protocol, DeepLog-style LSTM and TCN produce \emph{identical} binary decisions on every seed, hence identical mean$\pm$std (Table~\ref{tab_per_seed_hdfs}). This is a short-sequence / small-vocabulary effect (mean length $13.77$, $|V|{=}137$), not evidence of a shared implementation bug: NLL-mode F1 already diverges slightly across seeds. Per-seed JSON dumps are in the public repository.
+
+\begin{table}[htbp]
+\caption{Per-seed HDFS top-$k$ F1 (200k-line DeepLog/TCN artifact; identical decisions each seed)}
+\centering
+\scriptsize
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Method} & 21 & 42 & 84 & 123 & 777 \\
+\midrule
+DeepLog-style (top-k) & 0.4865 & 0.4444 & 0.4725 & 0.4382 & 0.4649 \\
+TCN (top-k) & 0.4865 & 0.4444 & 0.4725 & 0.4382 & 0.4649 \\
+\bottomrule
+\end{tabular}
+\label{tab_per_seed_hdfs}
+\end{table}
+
+\textbf{Visual Analysis and Threshold Sensitivity:} Baselines are analyzed via ROC/PR in Fig.~\ref{fig_curves}. PCA/SVD maintain better separability than Isolation Forest on imbalanced HDFS; seed-42 AUROC for PCA, TruncatedSVD, and Isolation Forest is $0.7722$, $0.7536$, and $0.7136$ (AP $0.5613$, $0.5676$, $0.1645$).
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.40\textwidth]{roc_curves.png}
+\includegraphics[width=0.48\textwidth]{roc_curves.png}
 \hfill
-\includegraphics[width=0.40\textwidth]{pr_curves.png}
-\caption{ROC (left) and Precision-Recall (right) curves on HDFS.}
+\includegraphics[width=0.48\textwidth]{pr_curves.png}
+\caption{ROC (left) and Precision--Recall (right) on HDFS (seed 42). Prefer vector PDF exports in the camera-ready bundle; enlarge on screen for curve detail.}
 \label{fig_curves}
 \end{figure}
 
-In contrast, on BGL, the deep sequence models show strong results under the tested configuration: TCN (top-k) achieves an F1-score of $0.9826 \pm 0.0022$, statistically and numerically almost identical to DeepLog ($0.9820 \pm 0.0042$). In NLL mode, TCN ($0.9474 \pm 0.0035$) is only modestly ahead of DeepLog ($0.9381 \pm 0.0075$) and the Transformer ($0.9388 \pm 0.0080$). We therefore describe TCN as \emph{competitive} with DeepLog on BGL---not clearly superior. Traditional baselines PCA and TruncatedSVD also perform well ($0.9217$ and $0.9356$), indicating that BGL windows are inherently separable under this labeling.
+On BGL, TCN (top-k) achieves $0.9826 \pm 0.0022$, comparable to the DeepLog-style LSTM ($0.9820 \pm 0.0042$; $\Delta$F1 $=0.0006$). In NLL mode, TCN ($0.9474 \pm 0.0035$) is only marginally ahead of DeepLog-style ($0.9381 \pm 0.0075$). We therefore report TCN as achieving performance \emph{comparable} to DeepLog-style LSTM under the tested configuration---not clearly superior. PCA/SVD also remain strong ($0.9217$ / $0.9356$).
 
-On the institutional web log dataset, HUFLIT-Career, traditional machine learning models outperform deep sequence models under proxy labels. Isolation Forest achieves the highest F1-score of $0.6292 \pm 0.0235$, followed closely by PCA at $0.6065 \pm 0.1426$. Among sequence-based models, DeepLog (NLL) and TCN (NLL) obtain $0.5916 \pm 0.0096$, while top-k mismatch performs poorly. With only six templates, transitions are highly regular, so next-event mismatch is weak; NLL captures subtler likelihood shifts. GraphWalk mean-NLL on the Career transition graph (5 seeds) yields $0.457\pm0.018$ F1---useful as an explicit network score but below TF-IDF Isolation Forest on this compact vocabulary---confirming that frequency isolation remains strong when $|V|$ is tiny.
+On HUFLIT-Career (heuristic labels), Isolation Forest leads F1 ($0.6292 \pm 0.0235$), then PCA ($0.6065 \pm 0.1426$). DeepLog-style and TCN NLL tie at $0.5916 \pm 0.0096$ per seed (same NLL decisions). GraphWalk mean-NLL yields $0.457\pm0.018$ F1 but strong ranking (AUROC $0.896\pm0.023$). Late fusion of $z$-scored GraphWalk NLL with $z$-scored TF-IDF IF scores reaches AUROC $0.899\pm0.023$ (Table~\ref{tab_graph_ablation}), showing the transition graph contributes measurable signal even when bag-of-events IF dominates F1 at a fixed percentile threshold.
+
+\begin{table}[htbp]
+\caption{HUFLIT-Career graph ablation (5 seeds): transition score vs.\ TF-IDF IF vs.\ late fusion}
+\centering
+\scriptsize
+\begin{tabular}{lcc}
+\toprule
+\textbf{Scorer} & \textbf{F1 (95th pct.)} & \textbf{AUROC} \\
+\midrule
+GraphWalk NLL (transition only) & $0.457\pm0.018$ & $0.896\pm0.023$ \\
+IF on TF-IDF (frequency) & $0.468\pm0.019^\ast$ & $0.898\pm0.023$ \\
+Fusion $z$(GraphWalk)${+}z$(IF) & $0.468\pm0.018$ & $0.899\pm0.023$ \\
+\bottomrule
+\end{tabular}
+\label{tab_graph_ablation}
+\end{table}
+{\footnotesize $^\ast$95th-percentile on $-\texttt{decision\_function}$; headline Table~\ref{tab_cross_dataset} IF uses contamination-based \texttt{predict}, hence higher F1.}
 
 \subsection{Why Isolation Forest Varies Across Datasets}
 \label{sec:if_variance}
-Isolation Forest F1 swings from $0.13$ (HDFS) and $0.04$ (BGL) to $0.63$ (HUFLIT-Career). Three mechanisms explain this without treating IF as ``unstable at random.'' (1)~\textbf{Vocabulary and outlier geometry:} Career anomalies are scanner-like walks in a 6-template space, so TF-IDF points are easy to isolate; HDFS/BGL anomalies often share frequent templates with normal sequences, so random partitions rarely separate them. (2)~\textbf{Class imbalance and contamination:} HDFS anomaly rate is $\sim$5\% at block level; IF's contamination prior and sparse high-dimensional TF-IDF yield low precision (Table~\ref{tab_cross_dataset}). (3)~\textbf{Window OR-labeling on BGL:} a window is positive if any line is anomalous, producing mixed bags whose TF-IDF vectors overlap normals---isolation cuts then fail (F1$\approx0.04$), while sequence NLL/top-k still fire on local mismatches. Thus IF should be preferred mainly for compact-vocabulary frequency outliers, not as a universal log detector.
+Isolation Forest F1 swings from $0.13$ (HDFS) and $0.04$ (BGL) to $0.63$ (HUFLIT-Career under contamination decisions). (1)~\textbf{Outlier geometry:} Career anomalies are scanner-like in a $\sim$6-template space (TF-IDF density $\approx0.18$ on Career windows), so points isolate easily; HDFS/BGL anomalies often share frequent templates with normals. (2)~\textbf{Imbalance / contamination:} HDFS block anomaly rate $\sim$5\% with sparse high-dimensional TF-IDF yields low precision (AUROC still $0.71$ on HDFS seed 42, but AP only $0.16$). (3)~\textbf{BGL OR-window labels} mix normal and anomalous lines inside one bag, collapsing isolation cuts (F1$\approx0.04$) while sequence NLL/top-k still fire on local mismatches.
 
 \subsection{Grouping Strategy Study (RQ1)}
-To address RQ1, we evaluate anomaly detection on BGL under four grouping configurations: non-overlapping fixed windows $W{=}50,100,200$ and a sliding window $W{=}100$ with stride $50$. Table~\ref{tab_grouping} reports seed-42 F1 on a 200k BGL subset (different anomaly ratio than Table~\ref{tab_cross_dataset}). The companion script \texttt{bgl\_grouping\_experiment.py} repeats the same protocol over seeds $\{21,42,84,123,777\}$ for mean$\pm$std in the reproducibility artifact.
+To address RQ1, we evaluate BGL grouping with $W\in\{50,100,200\}$ (non-overlap) and sliding $W{=}100$, stride $50$. Table~\ref{tab_grouping} reports the controlled seed-42 reference on a 200k subset; the public script \texttt{scripts/bgl\_grouping\_experiment.py} repeats seeds $\{21,42,84,123,777\}$ for mean$\pm$std in the artifact (page limit keeps the compact reference table here).
 
-Table~\ref{tab_grouping} shows that window size $W$ impacts PCA performance: F1-score is low at $W=50$ and $W=100$, but improves at $W=200$ as larger windows stabilize frequency distributions. Conversely, TCN and DeepLog remain robust across all configurations. The sliding window ($W{=}100, \text{stride}=50$) yields the best performance (DeepLog 0.9004, TCN 0.9032) by increasing training sample density and mitigating boundary effects.
+Table~\ref{tab_grouping} shows PCA is sensitive to $W$ (better at $W{=}200$), while DeepLog-style/TCN stay robust; sliding windows give the best seed-42 F1 (DeepLog-style $0.9004$, TCN $0.9032$).
 
 \begin{table}[htbp]
 \caption{F1-score under different grouping configurations on BGL 200k (seed 42 reference; multi-seed artifact: \texttt{bgl\_grouping\_experiment.py})}
@@ -375,7 +411,7 @@ Transformer (GPU) & 2.916 & 4.323 & 4.889 & 343 sequences/s \\
 \end{center}
 \end{table}
 
-Three observations from Table~\ref{tab_latency}: (1) Drain3 processes $\sim$147k logs/sec, which is not a bottleneck; (2) PCA/SVD are the fastest ($<0.2$~ms); IF is 100$\times$ slower due to traversing 200 trees; (3) TCN and DeepLog benefit from GPU execution (latency drops from $\sim$1.7ms to 0.45ms), whereas the small Transformer does not benefit at batch size 1. Training times: Drain3 takes $3.49$~s, PCA $0.74$~s, and Transformer $10.75$~s — a trade-off that needs consideration in real-time monitoring.
+Three observations from Table~\ref{tab_latency}: (1) Drain3 is not the bottleneck; (2) PCA/SVD are fastest; IF is much slower (200 trees); (3) TCN mean CPU latency ($1.648$~ms) is only modestly lower than DeepLog-style LSTM ($1.743$~ms, $\approx$5.5\%), while p95 is essentially tied ($2.096$ vs.\ $2.086$~ms)---we therefore do \emph{not} claim significantly lower latency without a formal significance test. Both benefit from GPU ($\sim$0.45~ms).
 
 \subsection{Applications and Limitations}
 The pipeline could potentially support detection of brute-force password scanning (repeated login failures), anomalous API utilization (new templates from Drain3), or service-overload patterns (HTTP 5xx sequences) in production networks after validation on corresponding production logs. This is a proposed application analysis that requires confirmation on anonymized production data.
@@ -400,10 +436,10 @@ BGL & W20200 & 1 & E18: data TLB error interrupt... & E3, E6, E4 & 12.68 & kerne
 \end{center}
 \end{table}
 
-\textbf{Threats to Validity:} (i) public benchmarks plus an institutional web log still omit full production SOC triage; (ii) domain shift between lab and campus logs; (iii)~\textbf{HUFLIT-Career proxy labels are rule-derived} (\texttt{scanner\_probe}) and may circularly reward detectors that rediscover the rule; (iv) Drain3 is sensitive to $\theta$; (v) grouping and percentile thresholds dominate F1; (vi) the mini Transformer is not deeply optimized; (vii) DeepLog/PCA numbers are protocol-matched reimplementations, not guaranteed bit-reproductions of every published LogHub figure; (viii) a shorter VNICT~2026 report~\cite{b26} overlaps the HDFS/BGL backbone---we disclose it and position this paper as the extended network-aware study.
+\textbf{Threats to Validity:} (i) lab + campus logs still omit full SOC triage; (ii) domain shift; (iii)~\textbf{HUFLIT-Career labels are heuristic/weak}, so metrics measure agreement with the rule rather than unbiased detection accuracy; (iv) Drain3 $\theta$; (v) grouping and percentiles dominate F1; (vi) mini Transformer under-tuned; (vii) DeepLog-style/PCA numbers are protocol-matched reimplementations on a 500k-line prefix, not full-corpus literature reproductions; (viii) VNICT~2026~\cite{b26} overlaps the HDFS/BGL backbone---disclosed as a shorter prior report.
 
 \section{Conclusion}
-This paper evaluated a Drain3-based, transition-graph-aware log anomaly pipeline on HDFS, BGL, and HUFLIT-Career across 5 seeds. No scoring branch dominates: PCA remains competitive on HDFS; TCN and DeepLog are nearly tied on BGL with TCN often cheaper on CPU; Isolation Forest leads under Career proxy labels thanks to a tiny vocabulary; GraphWalk makes the network view measurable. Practitioners should choose branches from vocabulary size, walk length, and label semantics---not model capacity alone. Future work: gold SOC labels, richer graph embeddings/GNNs, and broader enterprise corpora.
+This paper evaluated a Drain3-based pipeline that \emph{uses} an event-transition graph (GraphWalk) alongside classical and deep scorers on HDFS, BGL, and HUFLIT-Career. No branch dominates: PCA remains competitive on HDFS; TCN and DeepLog-style LSTM are nearly tied on BGL; Isolation Forest leads under Career weak labels; GraphWalk adds measurable ranking signal. Choose scorers from vocabulary size, walk length, and label semantics. Future work: gold SOC labels, GNN/graph embeddings, and fuller HDFS protocols for literature-aligned baselines.
 
 \vspace{-4pt}
 \begin{thebibliography}{00}
