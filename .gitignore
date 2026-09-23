@@ -1,11 +1,13 @@
-# Python Build and Cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 .ipynb_checkpoints/
 *.ipynb
+.venv/
+venv/
 
-# LaTeX Intermediate Files
+# LaTeX intermediates (keep sources + cls)
 *.aux
 *.log
 *.synctex.gz
@@ -20,37 +22,26 @@ __pycache__/
 *.fdb_latexmk
 *.auxlock
 
-# Ignore PDF at root but allow inside images/
-*.pdf
+# PDFs at root only (figures under images/ OK)
+/*.pdf
 !images/**/*.pdf
-!images/*.pdf
 
-# Experimental Results
+# Local experiment dumps
+results/
 *.csv
 *.json
 !logs/*.json
 !logs/*.csv
 
-# Notes and Documentation
-PRESENTATION_QA.md
-EXPERIMENT_STEPS.md
+# Private / bulky (never publish)
+data/
+archive/
+submission/
+overleaf-upload/
+*.zip
 
-# IDE and System Files
+# IDE / OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-# Archive and Backups
-*.zip
-archive/
-submission/
-overleaf-upload/
-*.log
-!logs/*.log
-
-# Sensitive and Private logs
-careerhub_20260604_095930/
-thuvien_20260604_094551/
-
-

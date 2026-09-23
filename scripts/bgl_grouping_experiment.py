@@ -24,7 +24,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import train_test_split
 
-SEEDS = [42]
+SEEDS = [21, 42, 84, 123, 777]
 MAX_ROWS = 200000
 DRAIN_SIM_TH = 0.5
 DRAIN_DEPTH = 4

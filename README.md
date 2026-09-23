@@ -1,106 +1,98 @@
-# Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks
+<p align="center">
+  <img src="assets/hcmut.png" height="64" alt="HCMUT — CSoNet 2026 Organizer" />
+</p>
 
-This repository contains the implementation, experimental source code, and academic evaluation for log anomaly detection using Drain3, Temporal Convolutional Networks (TCN), Transformers, and lightweight baselines.
+<h1 align="center">CSoNet 2026 — Network-Aware Event Sequence Modeling for Log Anomaly Detection</h1>
 
-This codebase supports the following publications:
-1. **VNICT 2026 Camera-Ready Paper** (EasyChair ID #6979): *"Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks"* (`submission/vnict2026_submission.tex`, IEEEtran format).
-2. **CSoneT 2026 Paper**: *"Application of TCN and Transformer Networks for Large-Scale System Log Anomaly Detection"* (`csonet2026.tex`, Springer LNCS format).
-
----
-
-## 1. Overview
-Log anomaly detection is a critical task in automated system operations (AIOps). This project implements a modular log anomaly detection pipeline consisting of three decoupled layers:
-1. **Log Standardization & Parsing:** Structuring raw, unstructured logs into event templates using **Drain3**.
-2. **Event Grouping:** Sequencing events based on operational sessions (Block ID for HDFS) or time windows (Fixed/Sliding Windows for BGL).
-3. **Anomaly Scoring:** Evaluating and comparing performance across five scoring branches:
-   - **Temporal Convolutional Network (TCN):** Learning sequential patterns through Dilated Causal 1D Convolutions.
-   - **Transformer:** Learning bidirectional context via Masked Event Modeling (LogBERT-inspired).
-   - **Lightweight Baselines:** PCA, TruncatedSVD, Isolation Forest, and DeepLog (LSTM next-event prediction).
+<p align="center">
+  <a href="https://csonet-conf.github.io/csonet26/"><img src="https://img.shields.io/badge/Conference-CSoNet%202026-0B5FFF.svg" alt="Conference" /></a>
+  <a href="https://csonet-conf.github.io/csonet26/"><img src="https://img.shields.io/badge/Organizer-HCMUT%20%7C%20Bach%20Khoa-CC0000.svg" alt="Organizer" /></a>
+  <a href="https://link.springer.com/conference/csonet"><img src="https://img.shields.io/badge/Proceedings-Springer%20LNCS-FF6600.svg" alt="Proceedings" /></a>
+  <img src="https://img.shields.io/badge/Indexing-ISI%20%7C%20EI%20%7C%20Scopus-6A0DAD.svg" alt="Indexing" />
+  <img src="https://img.shields.io/badge/Status-Camera--ready%20revision-orange.svg" alt="Status" />
+</p>
 
 ---
 
-## 2. Directory Structure
+## Paper metadata
+
+| Field | Info |
+|---|---|
+| **Title** | *Network-Aware Event Sequence Modeling for User-Behavior and System Log Anomaly Detection* |
+| **Venue** | CSoNet 2026 — Ho Chi Minh City, 16–18 Nov 2026 (organized at **HCMUT**) |
+| **Authors** | Thanh Tien Cao, Tu Hoang Trinh, Ha Manh Tran |
+| **Affiliation** | IUH & HUFLIT |
+| **LaTeX** | `csonet2026.tex` (Springer LNCS) |
+| **Code** | https://github.com/thtcsec/log-anomaly-tcn-transformer |
+
+---
+
+## Relation to prior publication (disclosure)
+
+A shorter preliminary version of the **HDFS/BGL Drain3–TCN–Transformer evaluation** appeared as:
+
+> T. T. Cao, T. H. Trinh, and H. M. Tran, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, **VNICT 2026** (EasyChair #6979).
+
+**This CSoNet manuscript extends that work** with HUFLIT-Career, explicit event-transition graph (GraphWalk) scoring, grouping/latency/explainability analyses, and proxy-label limits. Treat VNICT as a prior short report; this paper is the extended network-aware evaluation.
+
+---
+
+## Overview
+
+1. **Parsing** — Drain3 templates as graph vertices  
+2. **Grouping** — Block ID / time window / client-IP walks  
+3. **Scoring** — PCA, TruncatedSVD, Isolation Forest, DeepLog, TCN, Transformer, GraphWalk  
+
+---
+
+## Repository layout
+
 ```text
-├── submission/                      # VNICT 2026 Camera-Ready Submission Directory
-│   ├── vnict2026_submission.tex     # IEEEtran LaTeX source code (VNICT 2026)
-│   ├── vnict2026_submission.pdf     # Compiled 5-page camera-ready paper PDF
-│   └── images/                      # Pipeline diagram & evaluation charts
-├── vnict2026_submission_camera_ready.zip # Complete VNICT 2026 Camera-Ready submission zip archive
-├── csonet2026.tex                   # Springer LNCS LaTeX source code (CSoneT 2026)
-├── csonet2026.pdf                   # Compiled CSoneT paper PDF
-├── careerhub_20260604_095930/       # Real-world Career Hub server logs
-├── thuvien_20260604_094551/         # Real-world Library server logs
-├── images/                          # High-resolution ROC/PR curves
-├── multi_seed_experiment.py         # HDFS multi-seed evaluations for baselines & Transformer
-├── bgl_experiment.py                # Multi-dataset evaluations on BGL
-├── bgl_grouping_experiment.py       # Grouping strategy evaluations on BGL
-├── deeplog_experiment.py            # Baseline DeepLog LSTM replication on HDFS
-├── ablation_experiment.py           # Parameter sensitivity studies (Drain3, Mask ratio, Top-k)
-├── generate_explainability.py       # Qualitative explainability analysis generator
-├── generate_figures.py              # Script for plotting ROC/PR curves
-└── README.md                        # Project documentation
+├── csonet2026.tex / llncs.cls     # LNCS manuscript
+├── assets/hcmut.png               # Conference organizer (HCMUT)
+├── images/                        # Figures for the paper
+├── scripts/                       # Experiment runners (public)
+├── logs/                          # Aggregated metric tables (public)
+├── data/                          # Private logs (gitignored; not published)
+├── results/                       # Local run outputs (gitignored)
+└── README.md
 ```
 
----
-
-## 3. Experimental Results Summary
-Below is the evaluation summary (mean $\pm$ standard deviation) across five random seeds (21, 42, 84, 123, 777):
-
-### HDFS Dataset (500k lines, Block ID grouping)
-| Method | Precision | Recall | F1-Score |
-| :--- | :---: | :---: | :---: |
-| PCA | $0.6274 \pm 0.1944$ | $0.5450 \pm 0.0055$ | $0.5711 \pm 0.0944$ |
-| TruncatedSVD | $0.4298 \pm 0.2555$ | $0.5527 \pm 0.0106$ | $0.4540 \pm 0.1366$ |
-| Isolation Forest | $0.1726 \pm 0.0146$ | $0.1080 \pm 0.0084$ | $0.1328 \pm 0.0103$ |
-| Transformer (val-tuned) | $0.5102 \pm 0.1497$ | $0.2365 \pm 0.1156$ | $0.2950 \pm 0.0693$ |
-| DeepLog (top-k)* | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
-| **TCN (top-k)**\* | $0.9862 \pm 0.0201$ | $0.3013 \pm 0.0167$ | $0.4613 \pm 0.0199$ |
-
-*\*Note: On HDFS top-k, DeepLog and TCN decisions are identical due to short sequence length (13.77) and small vocabulary (137 templates).*
-
-### BGL Dataset (500k lines, Window $W=100$)
-| Method | Precision | Recall | F1-Score |
-| :--- | :---: | :---: | :---: |
-| PCA | $0.9473 \pm 0.0113$ | $0.8976 \pm 0.0144$ | $0.9217 \pm 0.0098$ |
-| TruncatedSVD | $0.9462 \pm 0.0051$ | $0.9255 \pm 0.0228$ | $0.9356 \pm 0.0117$ |
-| Isolation Forest | $0.1110 \pm 0.0171$ | $0.0248 \pm 0.0045$ | $0.0404 \pm 0.0070$ |
-| Transformer (val-tuned) | $0.9841 \pm 0.0017$ | $0.8975 \pm 0.0157$ | $0.9388 \pm 0.0080$ |
-| DeepLog (top-k) | $0.9654 \pm 0.0083$ | $0.9991 \pm 0.0012$ | $0.9820 \pm 0.0042$ |
-| **TCN (top-k)** | $\mathbf{0.9666 \pm 0.0039}$ | $\mathbf{0.9991 \pm 0.0012}$ | $\mathbf{0.9826 \pm 0.0022}$ |
-| **TCN (NLL)** | $0.9412 \pm 0.0085$ | $0.9537 \pm 0.0094$ | $\mathbf{0.9474 \pm 0.0035}$ |
+Institutional raw logs and camera-ready zip archives stay **out of git** (`data/`, `archive/`).
 
 ---
 
-## 4. Quick Start & Reproducibility
+## Quick start
 
-### Install Dependencies:
 ```bash
+python -m venv .venv
+.\.venv\Scripts\activate          # Windows
 pip install torch numpy pandas scikit-learn datasets drain3 tqdm matplotlib
 ```
 
-### Run Multi-seed Evaluations on HDFS:
+Public benchmarks (HuggingFace LogHub):
+
 ```bash
-python multi_seed_experiment.py
+python scripts/multi_seed_experiment.py
+python scripts/bgl_experiment.py
+python scripts/bgl_grouping_experiment.py
 ```
 
-### Run Multi-dataset Evaluations on BGL:
+HUFLIT-Career (place anonymized export under `data/careerhub_…`, never commit):
+
 ```bash
-python bgl_experiment.py
+set HUFLIT_CAREER_DIR=data\careerhub_20260604_095930
+python scripts/graph_transition_huflit_experiment.py
 ```
 
-### Run Grouping Configuration Study:
-```bash
-python bgl_grouping_experiment.py
-```
-
-### Run Parameter Sensitivity Studies:
-```bash
-python ablation_experiment.py
-```
+Do **not** extract the multi-GB campus RAR on `D:\huflit_logs`.
 
 ---
 
-## 5. Contact & Authors
-* **Hoang-Tu Trinh** — Department of Information Technology, Ho Chi Minh City University of Foreign Languages - Information Technology (HUFLIT), Ho Chi Minh City, Vietnam (`tht.csec2005@gmail.com`)
-* **Tien-Thanh Cao** — Department of Information Technology, Ho Chi Minh City University of Foreign Languages - Information Technology (HUFLIT), Ho Chi Minh City, Vietnam (`thanhct@huflit.edu.vn`)
-* **Manh-Ha Tran** — Department of Information Technology, Ho Chi Minh City University of Foreign Languages - Information Technology (HUFLIT), Ho Chi Minh City, Vietnam (`hatm@huflit.edu.vn`)
+## Contact
+
+- **Tu Hoang Trinh** — `tht.csec2005@gmail.com` / `23dh113972@st.huflit.edu.vn`
+- **Tien Thanh Cao** — `thanhct@huflit.edu.vn`
+- **Ha Manh Tran** — `hatm@huflit.edu.vn`
+
+Faculty of Information Technology, HUFLIT · Ho Chi Minh City, Vietnam

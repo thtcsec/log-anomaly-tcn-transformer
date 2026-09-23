@@ -55,8 +55,17 @@ print('Device:', DEVICE, flush=True)
 
 
 def load_huflit_data():
-    df = pd.read_csv('careerhub_20260604_095930/access.csv')
-    print('Loaded HUFLIT careerhub logs. Rows:', len(df), '| Anomalies:', (df['suspicious_signals'] != '-').sum(), flush=True)
+    import os
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    default = root / "data" / "careerhub_20260604_095930" / "access.csv"
+    csv_path = Path(os.environ.get("HUFLIT_CAREER_CSV", default))
+    if not csv_path.exists():
+        # backward-compatible local layout
+        alt = root / "careerhub_20260604_095930" / "access.csv"
+        csv_path = alt if alt.exists() else csv_path
+    df = pd.read_csv(csv_path)
+    print('Loaded HUFLIT careerhub logs from', csv_path, '| Rows:', len(df), '| Anomalies:', (df['suspicious_signals'] != '-').sum(), flush=True)
     return df
 
 
