@@ -96,11 +96,11 @@ def group_by_ip_sequences(parsed_df, window=WINDOW_SIZE, step=STEP_SIZE):
         anomalies = group['LineAnomaly'].tolist()
         
         if len(events) < window:
-            padded_events = events + [0] * (window - len(events))
+            # Variable-length walk; do not inject pad token 0 as a fake Drain3 event.
             rows.append({
                 'GroupKey': ip,
-                'EventId': padded_events,
-                'SeqLen': len(padded_events),
+                'EventId': events,
+                'SeqLen': len(events),
                 'y': int(any(anomalies))
             })
         else:
@@ -114,7 +114,9 @@ def group_by_ip_sequences(parsed_df, window=WINDOW_SIZE, step=STEP_SIZE):
                     'y': int(any(chunk_anoms))
                 })
     out = pd.DataFrame(rows)
-    out['text'] = out['EventId'].apply(lambda xs: ' '.join([f'E{x}' for x in xs]))
+    out['text'] = out['EventId'].apply(
+        lambda xs: ' '.join([f'E{x}' for x in xs if int(x) != 0])
+    )
     return out
 
 

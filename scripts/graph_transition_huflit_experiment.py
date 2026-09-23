@@ -64,7 +64,7 @@ def load_huflit():
         eids = group["EventId"].tolist()
         anoms = group["LineAnomaly"].tolist()
         if len(eids) < window:
-            seqs.append({"EventId": eids + [0] * (window - len(eids)), "y": int(any(anoms))})
+            seqs.append({"EventId": eids, "y": int(any(anoms))})
             continue
         for i in range(0, len(eids) - window + 1, step):
             seqs.append(
@@ -74,7 +74,9 @@ def load_huflit():
                 }
             )
     data = pd.DataFrame(seqs)
-    data["text"] = data["EventId"].apply(lambda xs: " ".join(f"E{x}" for x in xs))
+    data["text"] = data["EventId"].apply(
+        lambda xs: " ".join(f"E{x}" for x in xs if int(x) != 0)
+    )
     return data, events
 
 

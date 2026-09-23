@@ -24,7 +24,7 @@ sys.path.insert(0, str(_SCRIPTS))
 from graph_transition_experiment import FEATURE_NAMES, SEEDS, TransitionGraph
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "results" / "huflit_graph_ablation.json"
+OUT = ROOT / "logs" / "huflit_graph_ablation.json"
 
 
 def load_sequences():
@@ -55,7 +55,7 @@ def load_sequences():
         g = g.sort_values("timestamp")
         eids, ys = g["EventId"].tolist(), g["y_line"].tolist()
         if len(eids) < window:
-            seqs.append({"EventId": eids + [0] * (window - len(eids)), "y": int(any(ys))})
+            seqs.append({"EventId": eids, "y": int(any(ys))})
             continue
         for i in range(0, len(eids) - window + 1, step):
             seqs.append(
@@ -65,7 +65,9 @@ def load_sequences():
                 }
             )
     data = pd.DataFrame(seqs)
-    data["text"] = data["EventId"].apply(lambda xs: " ".join(f"E{x}" for x in xs))
+    data["text"] = data["EventId"].apply(
+        lambda xs: " ".join(f"E{x}" for x in xs if int(x) != 0)
+    )
     return data
 
 

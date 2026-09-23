@@ -24,7 +24,7 @@ from sklearn.preprocessing import StandardScaler
 from tqdm.auto import tqdm
 
 SEEDS = [21, 42, 84, 123, 777]
-OUT = Path("graph_transition_results.json")
+OUT = Path(__file__).resolve().parents[1] / "logs" / "graph_transition_results.json"
 
 
 def _load_dataset(*args, **kwargs):
@@ -119,7 +119,8 @@ def load_huflit():
         eids = group["EventId"].tolist()
         anoms = group["LineAnomaly"].tolist()
         if len(eids) < window:
-            rows.append({"EventId": eids + [0] * (window - len(eids)), "y": int(any(anoms))})
+            # Variable-length walk; do NOT pad with 0 (pad is not a Drain3 template).
+            rows.append({"EventId": eids, "y": int(any(anoms))})
             continue
         for i in range(0, len(eids) - window + 1, step):
             chunk_e = eids[i : i + window]
@@ -131,16 +132,23 @@ def load_huflit():
 class TransitionGraph:
     """Directed first-order Markov transition graph over event templates."""
 
-    def __init__(self, alpha: float = 1.0):
+    def __init__(self, alpha: float = 1.0, pad_id: int = 0):
         self.alpha = alpha
+        self.pad_id = pad_id
         self.edge_counts = defaultdict(Counter)
         self.node_out = Counter()
         self.node_visit = Counter()
         self.vocab = set()
 
+    @staticmethod
+    def clean_seq(seq, pad_id: int = 0):
+        """Drop padding tokens; GraphWalk vertices are Drain3 event IDs only."""
+        return [int(e) for e in seq if int(e) != pad_id]
+
     def fit(self, sequences):
         for seq in sequences:
-            if not seq:
+            seq = self.clean_seq(seq, self.pad_id)
+            if len(seq) < 1:
                 continue
             self.node_visit[seq[0]] += 1
             self.vocab.add(seq[0])
@@ -160,6 +168,7 @@ class TransitionGraph:
         return (self.edge_counts[a][b] + self.alpha) / (self.node_out[a] + self.alpha * v)
 
     def sequence_features(self, seq):
+        seq = self.clean_seq(seq, self.pad_id)
         if len(seq) < 2:
             return np.array([0.0, 0.0, 1.0, 0.0, 0.0, float(len(seq))], dtype=np.float64)
         logps = []
