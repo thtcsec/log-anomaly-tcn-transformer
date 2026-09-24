@@ -120,9 +120,27 @@ def group_by_ip_sequences(parsed_df, window=WINDOW_SIZE, step=STEP_SIZE):
     return out
 
 
-def run_baselines(data, seed):
+def split_clients_then_window(parsed_df, seed, test_size=0.3, window=WINDOW_SIZE, step=STEP_SIZE):
+    """Client-IP disjoint split before windowing (no shared raw requests across partitions)."""
+    ip_y = parsed_df.groupby('ip')['LineAnomaly'].max().reset_index()
+    ip_ids = ip_y['ip'].astype(str).to_numpy()
+    labels = ip_y['LineAnomaly'].astype(int).to_numpy()
+    train_ips, test_ips = train_test_split(
+        ip_ids,
+        test_size=test_size,
+        random_state=seed,
+        stratify=labels,
+    )
+    train_set, test_set = set(train_ips), set(test_ips)
+    train_df = group_by_ip_sequences(parsed_df[parsed_df['ip'].astype(str).isin(train_set)], window, step)
+    test_df = group_by_ip_sequences(parsed_df[parsed_df['ip'].astype(str).isin(test_set)], window, step)
+    return train_df, test_df
+
+
+def run_baselines(data, seed, train_df=None, test_df=None):
     np.random.seed(seed)
-    train_df, test_df = train_test_split(data, test_size=0.3, random_state=seed, stratify=data['y'])
+    if train_df is None or test_df is None:
+        train_df, test_df = train_test_split(data, test_size=0.3, random_state=seed, stratify=data['y'])
     y_test = test_df['y'].values
     out = []
 

@@ -14,14 +14,19 @@
     "unique_ratio",
     "seq_len"
   ],
+  "protocol_notes": {
+    "HUFLIT": "client-IP disjoint split before windowing (W=10, stride=5); short walks retained",
+    "GraphWalk": "Laplace over V\u222a{UNK}; novel destinations map to UNK",
+    "HDFS_BGL": "sequence-level split (Block ID / non-overlapping W=100); no sliding overlap"
+  },
   "rows": [
     {
       "Dataset": "HDFS",
       "Method": "GraphWalk-NLL",
       "Seed": 21,
-      "Precision": 0.2727272727272727,
+      "Precision": 0.2745762711864407,
       "Recall": 0.3875598086124402,
-      "F1": 0.3201581027667984,
+      "F1": 0.32142857142857145,
       "Nodes": 15,
       "Edges": 56
     },
@@ -29,9 +34,9 @@
       "Dataset": "HDFS",
       "Method": "PCA+TransFeat",
       "Seed": 21,
-      "Precision": 0.33003300330033003,
-      "Recall": 0.4784688995215311,
-      "F1": 0.390625,
+      "Precision": 0.32441471571906355,
+      "Recall": 0.46411483253588515,
+      "F1": 0.38188976377952755,
       "Nodes": 15,
       "Edges": 56
     },
@@ -59,9 +64,9 @@
       "Dataset": "HDFS",
       "Method": "PCA+TransFeat",
       "Seed": 42,
-      "Precision": 0.3181818181818182,
-      "Recall": 0.5023923444976076,
-      "F1": 0.38961038961038963,
+      "Precision": 0.3202416918429003,
+      "Recall": 0.507177033492823,
+      "F1": 0.3925925925925926,
       "Nodes": 13,
       "Edges": 52
     },
@@ -119,9 +124,9 @@
       "Dataset": "HDFS",
       "Method": "PCA+TransFeat",
       "Seed": 123,
-      "Precision": 0.28615384615384615,
-      "Recall": 0.4449760765550239,
-      "F1": 0.34831460674157305,
+      "Precision": 0.2883435582822086,
+      "Recall": 0.44976076555023925,
+      "F1": 0.3514018691588785,
       "Nodes": 16,
       "Edges": 61
     },
@@ -139,9 +144,9 @@
       "Dataset": "HDFS",
       "Method": "GraphWalk-NLL",
       "Seed": 777,
-      "Precision": 0.2862190812720848,
+      "Precision": 0.28421052631578947,
       "Recall": 0.3875598086124402,
-      "F1": 0.32926829268292684,
+      "F1": 0.32793522267206476,
       "Nodes": 12,
       "Edges": 34
     },
@@ -179,9 +184,9 @@
       "Dataset": "BGL",
       "Method": "PCA+TransFeat",
       "Seed": 21,
-      "Precision": 0.6746031746031746,
+      "Precision": 0.6538461538461539,
       "Recall": 1.0,
-      "F1": 0.8056872037914692,
+      "F1": 0.7906976744186046,
       "Nodes": 61,
       "Edges": 222
     },
@@ -209,9 +214,9 @@
       "Dataset": "BGL",
       "Method": "PCA+TransFeat",
       "Seed": 42,
-      "Precision": 0.6746031746031746,
+      "Precision": 0.648854961832061,
       "Recall": 1.0,
-      "F1": 0.8056872037914692,
+      "F1": 0.7870370370370371,
       "Nodes": 52,
       "Edges": 202
     },
@@ -219,9 +224,9 @@
       "Dataset": "BGL",
       "Method": "IF+TransFeat",
       "Seed": 42,
-      "Precision": 0.7024793388429752,
+      "Precision": 0.6967213114754098,
       "Recall": 1.0,
-      "F1": 0.8252427184466019,
+      "F1": 0.821256038647343,
       "Nodes": 52,
       "Edges": 202
     },
@@ -239,9 +244,9 @@
       "Dataset": "BGL",
       "Method": "PCA+TransFeat",
       "Seed": 84,
-      "Precision": 0.8095238095238095,
+      "Precision": 0.794392523364486,
       "Recall": 1.0,
-      "F1": 0.8947368421052632,
+      "F1": 0.8854166666666666,
       "Nodes": 62,
       "Edges": 223
     },
@@ -249,9 +254,9 @@
       "Dataset": "BGL",
       "Method": "IF+TransFeat",
       "Seed": 84,
-      "Precision": 0.7706422018348624,
+      "Precision": 0.7777777777777778,
       "Recall": 0.9882352941176471,
-      "F1": 0.865979381443299,
+      "F1": 0.8704663212435233,
       "Nodes": 62,
       "Edges": 223
     },
@@ -269,9 +274,9 @@
       "Dataset": "BGL",
       "Method": "PCA+TransFeat",
       "Seed": 123,
-      "Precision": 0.7522123893805309,
+      "Precision": 0.7264957264957265,
       "Recall": 1.0,
-      "F1": 0.8585858585858586,
+      "F1": 0.8415841584158416,
       "Nodes": 53,
       "Edges": 216
     },
@@ -299,9 +304,9 @@
       "Dataset": "BGL",
       "Method": "PCA+TransFeat",
       "Seed": 777,
-      "Precision": 0.8095238095238095,
+      "Precision": 0.8018867924528302,
       "Recall": 1.0,
-      "F1": 0.8947368421052632,
+      "F1": 0.8900523560209425,
       "Nodes": 54,
       "Edges": 220
     },
@@ -309,9 +314,9 @@
       "Dataset": "BGL",
       "Method": "IF+TransFeat",
       "Seed": 777,
-      "Precision": 0.8252427184466019,
-      "Recall": 1.0,
-      "F1": 0.9042553191489362,
+      "Precision": 0.8217821782178217,
+      "Recall": 0.9764705882352941,
+      "F1": 0.8924731182795699,
       "Nodes": 54,
       "Edges": 220
     },
@@ -319,151 +324,151 @@
       "Dataset": "HUFLIT-Career",
       "Method": "GraphWalk-NLL",
       "Seed": 21,
-      "Precision": 0.4583333333333333,
-      "Recall": 0.8120805369127517,
-      "F1": 0.585956416464891,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.11971830985915492,
+      "Recall": 0.5483870967741935,
+      "F1": 0.19653179190751446,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "PCA+TransFeat",
       "Seed": 21,
-      "Precision": 0.07027027027027027,
-      "Recall": 0.174496644295302,
-      "F1": 0.1001926782273603,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.02313624678663239,
+      "Recall": 0.2903225806451613,
+      "F1": 0.04285714285714286,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "IF+TransFeat",
       "Seed": 21,
-      "Precision": 0.3372093023255814,
-      "Recall": 0.7785234899328859,
-      "F1": 0.47058823529411764,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.06521739130434782,
+      "Recall": 0.5806451612903226,
+      "F1": 0.11726384364820847,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "GraphWalk-NLL",
       "Seed": 42,
-      "Precision": 0.502127659574468,
-      "Recall": 0.7919463087248322,
-      "F1": 0.6145833333333334,
-      "Nodes": 6,
-      "Edges": 14
+      "Precision": 0.6419437340153452,
+      "Recall": 0.9061371841155235,
+      "F1": 0.7514970059880239,
+      "Nodes": 5,
+      "Edges": 9
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "PCA+TransFeat",
       "Seed": 42,
-      "Precision": 0.08944954128440367,
-      "Recall": 0.26174496644295303,
-      "F1": 0.13333333333333333,
-      "Nodes": 6,
-      "Edges": 14
+      "Precision": 0.20481927710843373,
+      "Recall": 0.36823104693140796,
+      "F1": 0.2632258064516129,
+      "Nodes": 5,
+      "Edges": 9
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "IF+TransFeat",
       "Seed": 42,
-      "Precision": 0.34055727554179566,
-      "Recall": 0.738255033557047,
-      "F1": 0.4661016949152542,
-      "Nodes": 6,
-      "Edges": 14
+      "Precision": 0.47835497835497837,
+      "Recall": 0.7978339350180506,
+      "F1": 0.5981055480378891,
+      "Nodes": 5,
+      "Edges": 9
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "GraphWalk-NLL",
       "Seed": 84,
-      "Precision": 0.6197916666666666,
-      "Recall": 0.7986577181208053,
-      "F1": 0.6979472140762464,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.5458515283842795,
+      "Recall": 0.8223684210526315,
+      "F1": 0.6561679790026247,
+      "Nodes": 4,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "PCA+TransFeat",
       "Seed": 84,
-      "Precision": 0.09523809523809523,
-      "Recall": 0.28187919463087246,
-      "F1": 0.1423728813559322,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.012376237623762377,
+      "Recall": 0.03289473684210526,
+      "F1": 0.017985611510791366,
+      "Nodes": 4,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "IF+TransFeat",
       "Seed": 84,
-      "Precision": 0.2540415704387991,
-      "Recall": 0.738255033557047,
-      "F1": 0.37800687285223367,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.33421750663129973,
+      "Recall": 0.8289473684210527,
+      "F1": 0.4763705103969754,
+      "Nodes": 4,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "GraphWalk-NLL",
       "Seed": 123,
-      "Precision": 0.4811715481171548,
-      "Recall": 0.7718120805369127,
-      "F1": 0.5927835051546392,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.532608695652174,
+      "Recall": 0.8909090909090909,
+      "F1": 0.6666666666666666,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "PCA+TransFeat",
       "Seed": 123,
-      "Precision": 0.09069767441860466,
-      "Recall": 0.26174496644295303,
-      "F1": 0.13471502590673576,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.06716417910447761,
+      "Recall": 0.16363636363636364,
+      "F1": 0.09523809523809523,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "IF+TransFeat",
       "Seed": 123,
-      "Precision": 0.3488372093023256,
-      "Recall": 0.7046979865771812,
-      "F1": 0.4666666666666667,
-      "Nodes": 6,
-      "Edges": 13
+      "Precision": 0.2989010989010989,
+      "Recall": 0.8242424242424242,
+      "F1": 0.43870967741935485,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "GraphWalk-NLL",
       "Seed": 777,
-      "Precision": 0.645320197044335,
-      "Recall": 0.8791946308724832,
-      "F1": 0.7443181818181818,
-      "Nodes": 5,
-      "Edges": 13
+      "Precision": 0.1553398058252427,
+      "Recall": 0.32653061224489793,
+      "F1": 0.21052631578947367,
+      "Nodes": 4,
+      "Edges": 11
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "PCA+TransFeat",
       "Seed": 777,
-      "Precision": 0.09684684684684684,
-      "Recall": 0.28859060402684567,
-      "F1": 0.14502529510961215,
-      "Nodes": 5,
-      "Edges": 13
+      "Precision": 0.02997275204359673,
+      "Recall": 0.22448979591836735,
+      "F1": 0.052884615384615384,
+      "Nodes": 4,
+      "Edges": 11
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "IF+TransFeat",
       "Seed": 777,
-      "Precision": 0.2749445676274945,
-      "Recall": 0.8322147651006712,
-      "F1": 0.41333333333333333,
-      "Nodes": 5,
-      "Edges": 13
+      "Precision": 0.038461538461538464,
+      "Recall": 0.2653061224489796,
+      "F1": 0.06718346253229975,
+      "Nodes": 4,
+      "Edges": 11
     }
   ],
   "summary": [
@@ -480,19 +485,19 @@
     {
       "Dataset": "BGL",
       "Method": "IF+TransFeat",
-      "F1_mean": 0.8445139772314422,
-      "F1_std": 0.041224308232910276,
-      "P_mean": 0.7427803495665319,
-      "R_mean": 0.9811764705882353,
+      "F1_mean": 0.8422575890577619,
+      "F1_std": 0.03835909301886609,
+      "P_mean": 0.7423637512358459,
+      "R_mean": 0.9764705882352942,
       "Nodes": 61,
       "Edges": 222
     },
     {
       "Dataset": "BGL",
       "Method": "PCA+TransFeat",
-      "F1_mean": 0.8518867900758647,
-      "F1_std": 0.04468202933631292,
-      "P_mean": 0.7440932715269,
+      "F1_mean": 0.8389575785118184,
+      "F1_std": 0.049499452151008067,
+      "P_mean": 0.7250952315982515,
       "R_mean": 1.0,
       "Nodes": 61,
       "Edges": 222
@@ -500,9 +505,9 @@
     {
       "Dataset": "HDFS",
       "Method": "GraphWalk-NLL",
-      "F1_mean": 0.30823810560066633,
-      "F1_std": 0.027768187014723594,
-      "P_mean": 0.2656361836445575,
+      "F1_mean": 0.30822558533084854,
+      "F1_std": 0.027667208772655893,
+      "P_mean": 0.265604272345132,
       "R_mean": 0.36746411483253594,
       "Nodes": 15,
       "Edges": 56
@@ -520,43 +525,43 @@
     {
       "Dataset": "HDFS",
       "Method": "PCA+TransFeat",
-      "F1_mean": 0.3618256414073797,
-      "F1_std": 0.036254988540661864,
-      "P_mean": 0.3024797090410706,
-      "R_mean": 0.45071770334928224,
+      "F1_mean": 0.3612924872431869,
+      "F1_std": 0.03510755432743396,
+      "P_mean": 0.3022059686827062,
+      "R_mean": 0.44976076555023925,
       "Nodes": 15,
       "Edges": 56
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "GraphWalk-NLL",
-      "F1_mean": 0.6471177301694583,
-      "F1_std": 0.07032596518083878,
-      "P_mean": 0.5413488809471916,
-      "R_mean": 0.810738255033557,
-      "Nodes": 6,
-      "Edges": 13
+      "F1_mean": 0.4962779518708606,
+      "F1_std": 0.26983127062406226,
+      "P_mean": 0.3990924147472392,
+      "R_mean": 0.6988664810192675,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "IF+TransFeat",
-      "F1_mean": 0.43893936061232103,
-      "F1_std": 0.04146288663396815,
-      "P_mean": 0.31111798504719923,
-      "R_mean": 0.7583892617449666,
-      "Nodes": 6,
-      "Edges": 13
+      "F1_mean": 0.3395266084069455,
+      "F1_std": 0.23398617930036844,
+      "P_mean": 0.2430305027306527,
+      "R_mean": 0.6593950022841659,
+      "Nodes": 5,
+      "Edges": 12
     },
     {
       "Dataset": "HUFLIT-Career",
       "Method": "PCA+TransFeat",
-      "F1_mean": 0.13112784278659476,
-      "F1_std": 0.01798823609399016,
-      "P_mean": 0.08850048561164414,
-      "R_mean": 0.2536912751677852,
-      "Nodes": 6,
-      "Edges": 13
+      "F1_mean": 0.09443825428845155,
+      "F1_std": 0.09838978613289169,
+      "P_mean": 0.06749373853338056,
+      "R_mean": 0.21591490479468112,
+      "Nodes": 5,
+      "Edges": 12
     }
   ],
-  "elapsed_sec": 50.87208279990591
+  "elapsed_sec": 127.08735569997225
 }

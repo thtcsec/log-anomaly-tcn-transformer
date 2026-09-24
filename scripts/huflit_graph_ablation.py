@@ -1,6 +1,6 @@
 """HUFLIT ablation: Transition-only vs frequency IF vs late-fusion (z-score avg).
 
-Lightweight (no deep nets): validates that transition-graph scores enter the detector.
+Client-IP disjoint split before W=10/stride=5 windowing; GraphWalk uses V∪{UNK}.
 """
 from __future__ import annotations
 
@@ -16,18 +16,17 @@ from drain3.template_miner_config import TemplateMinerConfig
 from sklearn.ensemble import IsolationForest
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
-from sklearn.model_selection import train_test_split
 from tqdm.auto import tqdm
 
 _SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SCRIPTS))
-from graph_transition_experiment import FEATURE_NAMES, SEEDS, TransitionGraph
+from graph_transition_experiment import FEATURE_NAMES, SEEDS, TransitionGraph, split_huflit_by_client
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "logs" / "huflit_graph_ablation.json"
 
 
-def load_sequences():
+def load_events():
     default = ROOT / "data" / "careerhub_20260604_095930" / "access.csv"
     csv_path = Path(os.environ.get("HUFLIT_CAREER_CSV", default))
     df = pd.read_csv(csv_path)
@@ -45,30 +44,10 @@ def load_sequences():
                 "ip": row.ip,
                 "timestamp": row.timestamp,
                 "EventId": int(result["cluster_id"]),
-                "y_line": int(row.suspicious_signals != "-"),
+                "LineAnomaly": int(row.suspicious_signals != "-"),
             }
         )
-    events = pd.DataFrame(rows)
-    seqs = []
-    window, step = 10, 5
-    for ip, g in events.groupby("ip"):
-        g = g.sort_values("timestamp")
-        eids, ys = g["EventId"].tolist(), g["y_line"].tolist()
-        if len(eids) < window:
-            seqs.append({"EventId": eids, "y": int(any(ys))})
-            continue
-        for i in range(0, len(eids) - window + 1, step):
-            seqs.append(
-                {
-                    "EventId": eids[i : i + window],
-                    "y": int(any(ys[i : i + window])),
-                }
-            )
-    data = pd.DataFrame(seqs)
-    data["text"] = data["EventId"].apply(
-        lambda xs: " ".join(f"E{x}" for x in xs if int(x) != 0)
-    )
-    return data
+    return pd.DataFrame(rows)
 
 
 def zscore(train_scores, test_scores):
@@ -76,10 +55,8 @@ def zscore(train_scores, test_scores):
     return (test_scores - mu) / sd, (train_scores - mu) / sd
 
 
-def eval_seed(data, seed):
-    train_df, test_df = train_test_split(
-        data, test_size=0.3, random_state=seed, stratify=data["y"]
-    )
+def eval_seed(events, seed):
+    train_df, test_df = split_huflit_by_client(events, seed)
     y_test = test_df["y"].values
     normal_train = train_df[train_df["y"] == 0]
     graph = TransitionGraph().fit(normal_train["EventId"].tolist())
@@ -98,7 +75,6 @@ def eval_seed(data, seed):
         n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
     )
     iso.fit(Xtr)
-    # higher anomaly score = more anomalous
     te_if = -iso.decision_function(Xte)
     tr_if = -iso.decision_function(vec.transform(train_df["text"]))
     thr_if = np.percentile(tr_if[train_df["y"].values == 0], 95)
@@ -108,12 +84,9 @@ def eval_seed(data, seed):
     )
     auc_i = roc_auc_score(y_test, te_if)
 
-    # Late fusion: z-score average of GraphWalk NLL and IF score (proxy for TCN+graph when DL unavailable)
-    te_gz, tr_gz = zscore(tr_nll[train_df["y"].values == 0], te_nll)
-    # recompute z using normal-only train refs for IF
+    te_gz, _ = zscore(tr_nll[train_df["y"].values == 0], te_nll)
     te_iz, _ = zscore(tr_if[train_df["y"].values == 0], te_if)
     te_fuse = 0.5 * te_gz + 0.5 * te_iz
-    # approximate fuse threshold on normal train: rebuild
     tr_n_nll = tr_nll[train_df["y"].values == 0]
     tr_n_if = tr_if[train_df["y"].values == 0]
     tr_fuse = 0.5 * ((tr_n_nll - tr_n_nll.mean()) / (tr_n_nll.std() + 1e-8)) + 0.5 * (
@@ -126,7 +99,6 @@ def eval_seed(data, seed):
     )
     auc_f = roc_auc_score(y_test, te_fuse)
 
-    # sparsity diagnostic
     nnz = Xte.nnz / max(Xte.shape[0] * Xte.shape[1], 1)
 
     return {
@@ -140,19 +112,26 @@ def eval_seed(data, seed):
         "TFIDF_density": float(nnz),
         "contamination": "auto",
         "templates": int(len(graph.vocab)),
+        "split": "client-IP disjoint before windowing",
     }
 
 
 def main():
-    data = load_sequences()
-    rows = [eval_seed(data, s) for s in SEEDS]
+    events = load_events()
+    rows = [eval_seed(events, s) for s in SEEDS]
     df = pd.DataFrame(rows)
     summary = {
         c: {"mean": float(df[c].mean()), "std": float(df[c].std(ddof=1))}
         for c in df.columns
-        if c not in ("Seed", "contamination") and pd.api.types.is_numeric_dtype(df[c])
+        if c not in ("Seed", "contamination", "split") and pd.api.types.is_numeric_dtype(df[c])
     }
-    payload = {"seeds": SEEDS, "feature_names": FEATURE_NAMES, "rows": rows, "summary": summary}
+    payload = {
+        "seeds": SEEDS,
+        "feature_names": FEATURE_NAMES,
+        "protocol": "client-IP disjoint; W=10/stride=5; GraphWalk V∪{UNK}; IF 95th-pct",
+        "rows": rows,
+        "summary": summary,
+    }
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))

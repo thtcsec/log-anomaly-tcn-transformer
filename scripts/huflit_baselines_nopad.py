@@ -1,21 +1,21 @@
-"""Quick HUFLIT classical baselines only (no deep nets) after no-PAD fix."""
+"""Quick HUFLIT classical baselines only (no deep nets) after no-PAD fix.
+
+Uses client-IP disjoint split before W=10/stride=5 windowing.
+"""
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from sklearn.metrics import precision_recall_fscore_support
 
 from huflit_experiment import (
     SEEDS,
     drain_parse,
-    group_by_ip_sequences,
     load_huflit_data,
     run_baselines,
+    split_clients_then_window,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,15 +26,20 @@ def main():
     t0 = time.perf_counter()
     raw = load_huflit_data()
     events = drain_parse(raw)
-    data = group_by_ip_sequences(events)
     print(
-        f"sequences={len(data)} anom_rate={data['y'].mean():.4f} "
-        f"mean_len={data['SeqLen'].mean():.2f}",
+        f"lines={len(events)} clients={events['ip'].nunique()} "
+        f"anom_line_rate={events['LineAnomaly'].mean():.4f}",
         flush=True,
     )
     rows = []
     for seed in SEEDS:
-        part = run_baselines(data, seed)
+        train_df, test_df = split_clients_then_window(events, seed)
+        print(
+            f"seed={seed} train_seq={len(train_df)} test_seq={len(test_df)} "
+            f"test_anom={test_df['y'].mean():.4f}",
+            flush=True,
+        )
+        part = run_baselines(None, seed, train_df=train_df, test_df=test_df)
         for r in part:
             print(f"seed={seed} {r['Method']} F1={r['F1']:.4f}", flush=True)
         rows.extend(part)
@@ -48,7 +53,10 @@ def main():
             "Recall_mean": float(g["Recall"].mean()),
         }
     payload = {
-        "protocol": "no_PAD_in_EventId; IF=95th_pct(-decision_function)",
+        "protocol": (
+            "no_PAD_in_EventId; IF=95th_pct(-decision_function); "
+            "client-IP disjoint split before W=10/stride=5 windowing; short walks retained"
+        ),
         "seeds": SEEDS,
         "rows": rows,
         "aggregated": agg,

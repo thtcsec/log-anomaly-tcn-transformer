@@ -97,7 +97,32 @@ def load_bgl(max_rows=200_000, window=100):
     return pd.DataFrame(seqs), "BGL"
 
 
-def load_huflit():
+def window_huflit_events(events: pd.DataFrame, window: int = 10, step: int = 5) -> pd.DataFrame:
+    """Build W/stride walks per client IP (short clients kept as variable-length walks)."""
+    rows = []
+    for ip, group in events.groupby("ip"):
+        group = group.sort_values("timestamp")
+        eids = group["EventId"].tolist()
+        anoms = group["LineAnomaly"].tolist()
+        if len(eids) < window:
+            rows.append({"EventId": eids, "y": int(any(anoms)), "ip": ip})
+            continue
+        for i in range(0, len(eids) - window + 1, step):
+            rows.append(
+                {
+                    "EventId": eids[i : i + window],
+                    "y": int(any(anoms[i : i + window])),
+                    "ip": ip,
+                }
+            )
+    data = pd.DataFrame(rows)
+    data["text"] = data["EventId"].apply(
+        lambda xs: " ".join(f"E{x}" for x in xs if int(x) != 0)
+    )
+    return data
+
+
+def load_huflit_events():
     import os
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
@@ -112,21 +137,30 @@ def load_huflit():
     events = drain_parse_contents(contents, labels)
     events["ip"] = df["ip"].values
     events["timestamp"] = df["timestamp"].values
-    window, step = 10, 5
-    rows = []
-    for ip, group in events.groupby("ip"):
-        group = group.sort_values("timestamp")
-        eids = group["EventId"].tolist()
-        anoms = group["LineAnomaly"].tolist()
-        if len(eids) < window:
-            # Variable-length walk; do NOT pad with 0 (pad is not a Drain3 template).
-            rows.append({"EventId": eids, "y": int(any(anoms))})
-            continue
-        for i in range(0, len(eids) - window + 1, step):
-            chunk_e = eids[i : i + window]
-            chunk_a = anoms[i : i + window]
-            rows.append({"EventId": chunk_e, "y": int(any(chunk_a))})
-    return pd.DataFrame(rows), "HUFLIT-Career"
+    return events, "HUFLIT-Career"
+
+
+def split_huflit_by_client(events: pd.DataFrame, seed: int, test_size: float = 0.3):
+    """Split clients first, then window — no raw-request overlap across partitions."""
+    ip_y = events.groupby("ip")["LineAnomaly"].max().reset_index()
+    ip_ids = ip_y["ip"].astype(str).to_numpy()
+    labels = ip_y["LineAnomaly"].astype(int).to_numpy()
+    train_ips, test_ips = train_test_split(
+        ip_ids,
+        test_size=test_size,
+        random_state=seed,
+        stratify=labels,
+    )
+    train_set, test_set = set(train_ips), set(test_ips)
+    train_df = window_huflit_events(events[events["ip"].astype(str).isin(train_set)])
+    test_df = window_huflit_events(events[events["ip"].astype(str).isin(test_set)])
+    return train_df, test_df
+
+
+def load_huflit():
+    """Legacy helper: window all clients (prefer client-disjoint eval_huflit path)."""
+    events, name = load_huflit_events()
+    return window_huflit_events(events), name
 
 
 class TransitionGraph:
@@ -160,12 +194,20 @@ class TransitionGraph:
                 self.vocab.add(b)
         return self
 
+    def _support_size(self) -> int:
+        # Observed training nodes V plus one UNK bucket for novel destinations.
+        return max(len(self.vocab), 1) + 1
+
     def transition_prob(self, a, b):
-        # Laplace-smoothed P(b|a); unseen source uses uniform over observed vocab.
-        v = max(len(self.vocab), 1)
-        if self.node_out[a] == 0:
-            return 1.0 / v
-        return (self.edge_counts[a][b] + self.alpha) / (self.node_out[a] + self.alpha * v)
+        """Laplace-smoothed P(b|a) over V ∪ {UNK}.
+
+        Novel destinations b∉V map to UNK (count 0). Unseen sources use uniform 1/(|V|+1).
+        """
+        v_unk = self._support_size()
+        if a not in self.vocab or self.node_out[a] == 0:
+            return 1.0 / v_unk
+        count_ab = 0 if b not in self.vocab else self.edge_counts[a][b]
+        return (count_ab + self.alpha) / (self.node_out[a] + self.alpha * v_unk)
 
     def sequence_features(self, seq):
         seq = self.clean_seq(seq, self.pad_id)
@@ -175,7 +217,7 @@ class TransitionGraph:
         unseen = 0
         novel_nodes = 0
         for a, b in zip(seq[:-1], seq[1:]):
-            if self.node_out[a] == 0 or self.edge_counts[a][b] == 0:
+            if a not in self.vocab or b not in self.vocab or self.edge_counts[a][b] == 0:
                 unseen += 1
             if a not in self.vocab:
                 novel_nodes += 1
@@ -306,6 +348,97 @@ def eval_dataset(data: pd.DataFrame, name: str):
     return rows
 
 
+def eval_huflit_client_split(events: pd.DataFrame, name: str = "HUFLIT-Career"):
+    """Per-seed client-disjoint split, then GraphWalk / transition-feature baselines."""
+    rows = []
+    for seed in SEEDS:
+        train_df, test_df = split_huflit_by_client(events, seed)
+        # Reuse the same scoring block as eval_dataset via a temporary frame API:
+        # inline to keep seed-specific train/test (not a global window pool).
+        normal_train = train_df[train_df["y"] == 0]["EventId"].tolist()
+        graph = TransitionGraph(alpha=1.0).fit(normal_train)
+        X_train = np.vstack([graph.sequence_features(s) for s in train_df["EventId"]])
+        X_test = np.vstack([graph.sequence_features(s) for s in test_df["EventId"]])
+        y_train = train_df["y"].values
+        y_test = test_df["y"].values
+        normal_mask = y_train == 0
+
+        thr = np.percentile(X_train[normal_mask, 0], 95)
+        y_pred = (X_test[:, 0] > thr).astype(int)
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, y_pred, average="binary", zero_division=0
+        )
+        nodes = len(graph.vocab)
+        edges = int(sum(len(c) for c in graph.edge_counts.values()))
+        rows.append(
+            {
+                "Dataset": name,
+                "Method": "GraphWalk-NLL",
+                "Seed": seed,
+                "Precision": float(p),
+                "Recall": float(r),
+                "F1": float(f1),
+                "Nodes": nodes,
+                "Edges": edges,
+            }
+        )
+
+        scaler = StandardScaler()
+        Xn = scaler.fit_transform(X_train[normal_mask])
+        Xt = scaler.transform(X_test)
+        n_comp = max(1, min(4, Xn.shape[1], Xn.shape[0] - 1))
+        pca = PCA(n_components=n_comp, random_state=seed).fit(Xn)
+        train_err = np.mean((Xn - pca.inverse_transform(pca.transform(Xn))) ** 2, axis=1)
+        thr = np.percentile(train_err, 95)
+        test_err = np.mean((Xt - pca.inverse_transform(pca.transform(Xt))) ** 2, axis=1)
+        y_pred = (test_err > thr).astype(int)
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, y_pred, average="binary", zero_division=0
+        )
+        rows.append(
+            {
+                "Dataset": name,
+                "Method": "PCA+TransFeat",
+                "Seed": seed,
+                "Precision": float(p),
+                "Recall": float(r),
+                "F1": float(f1),
+                "Nodes": nodes,
+                "Edges": edges,
+            }
+        )
+
+        iso = IsolationForest(
+            n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
+        )
+        iso.fit(X_train[normal_mask])
+        train_scores = -iso.decision_function(X_train[normal_mask])
+        thr = np.percentile(train_scores, 95)
+        scores = -iso.decision_function(X_test)
+        y_pred = (scores > thr).astype(int)
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, y_pred, average="binary", zero_division=0
+        )
+        rows.append(
+            {
+                "Dataset": name,
+                "Method": "IF+TransFeat",
+                "Seed": seed,
+                "Precision": float(p),
+                "Recall": float(r),
+                "F1": float(f1),
+                "Nodes": nodes,
+                "Edges": edges,
+            }
+        )
+        print(
+            f"[{name} seed={seed}] GraphWalk={rows[-3]['F1']:.4f} "
+            f"PCA+TF={rows[-2]['F1']:.4f} IF+TF={rows[-1]['F1']:.4f}",
+            flush=True,
+        )
+    return rows
+
+
 def summarize(rows):
     df = pd.DataFrame(rows)
     summary = []
@@ -328,14 +461,26 @@ def summarize(rows):
 def main():
     t0 = time.perf_counter()
     all_rows = []
-    for loader in (load_hdfs, load_bgl, load_huflit):
+    for loader in (load_hdfs, load_bgl):
         data, name = loader()
         print(f"\n=== {name}: {len(data)} sequences, anomaly rate={data.y.mean():.4f} ===", flush=True)
         all_rows.extend(eval_dataset(data, name))
+    events, name = load_huflit_events()
+    print(
+        f"\n=== {name}: client-disjoint split then W=10/stride=5 "
+        f"({events.ip.nunique()} clients) ===",
+        flush=True,
+    )
+    all_rows.extend(eval_huflit_client_split(events, name))
     summary = summarize(all_rows)
     payload = {
         "seeds": SEEDS,
         "feature_names": FEATURE_NAMES,
+        "protocol_notes": {
+            "HUFLIT": "client-IP disjoint split before windowing (W=10, stride=5); short walks retained",
+            "GraphWalk": "Laplace over V∪{UNK}; novel destinations map to UNK",
+            "HDFS_BGL": "sequence-level split (Block ID / non-overlapping W=100); no sliding overlap",
+        },
         "rows": all_rows,
         "summary": summary,
         "elapsed_sec": time.perf_counter() - t0,

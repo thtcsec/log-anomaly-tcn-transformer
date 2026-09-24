@@ -14,100 +14,106 @@
     "unique_ratio",
     "seq_len"
   ],
+  "protocol": "client-IP disjoint; W=10/stride=5; GraphWalk V\u222a{UNK}; IF 95th-pct",
   "rows": [
     {
       "Seed": 21,
-      "GraphWalk_F1": 0.585956416464891,
-      "GraphWalk_AUC": 0.9019602126221145,
-      "IF_TFIDF_F1": 0.6951566951566952,
-      "IF_TFIDF_AUC": 0.9045901994835696,
-      "Fusion_Graph_IF_F1": 0.6951566951566952,
-      "Fusion_Graph_IF_AUC": 0.9088921163262369,
-      "TFIDF_density": 0.1711465956974939,
+      "GraphWalk_F1": 0.19653179190751446,
+      "GraphWalk_AUC": 0.7495978941170951,
+      "IF_TFIDF_F1": 0.22666666666666666,
+      "IF_TFIDF_AUC": 0.7699655703503974,
+      "Fusion_Graph_IF_F1": 0.2236842105263158,
+      "Fusion_Graph_IF_AUC": 0.7488107478529467,
+      "TFIDF_density": 0.20308219178082193,
       "contamination": "auto",
-      "templates": 6
+      "templates": 5,
+      "split": "client-IP disjoint before windowing"
     },
     {
       "Seed": 42,
-      "GraphWalk_F1": 0.6145833333333334,
-      "GraphWalk_AUC": 0.9000527546299248,
-      "IF_TFIDF_F1": 0.686046511627907,
-      "IF_TFIDF_AUC": 0.8915199893579606,
-      "Fusion_Graph_IF_F1": 0.686046511627907,
-      "Fusion_Graph_IF_AUC": 0.9007784724664566,
-      "TFIDF_density": 0.17088046129962298,
+      "GraphWalk_F1": 0.7514970059880239,
+      "GraphWalk_AUC": 0.9487877414982762,
+      "IF_TFIDF_F1": 0.8210180623973727,
+      "IF_TFIDF_AUC": 0.9473210453925479,
+      "Fusion_Graph_IF_F1": 0.8169934640522876,
+      "Fusion_Graph_IF_AUC": 0.9476211708908852,
+      "TFIDF_density": 0.20773847529051206,
       "contamination": "auto",
-      "templates": 6
+      "templates": 5,
+      "split": "client-IP disjoint before windowing"
     },
     {
       "Seed": 84,
-      "GraphWalk_F1": 0.6979472140762464,
-      "GraphWalk_AUC": 0.8968373644916695,
-      "IF_TFIDF_F1": 0.695906432748538,
-      "IF_TFIDF_AUC": 0.8949891301772884,
-      "Fusion_Graph_IF_F1": 0.695906432748538,
-      "Fusion_Graph_IF_AUC": 0.8970223245931332,
-      "TFIDF_density": 0.17090263916611223,
+      "GraphWalk_F1": 0.6561679790026247,
+      "GraphWalk_AUC": 0.911623206363985,
+      "IF_TFIDF_F1": 0.6756756756756757,
+      "IF_TFIDF_AUC": 0.9040875390218521,
+      "Fusion_Graph_IF_F1": 0.6720430107526881,
+      "Fusion_Graph_IF_AUC": 0.9119518114354564,
+      "TFIDF_density": 0.2567283163265306,
       "contamination": "auto",
-      "templates": 6
+      "templates": 4,
+      "split": "client-IP disjoint before windowing"
     },
     {
       "Seed": 123,
-      "GraphWalk_F1": 0.5927835051546392,
-      "GraphWalk_AUC": 0.8890549176608652,
-      "IF_TFIDF_F1": 0.6906906906906907,
-      "IF_TFIDF_AUC": 0.8819125421171463,
-      "Fusion_Graph_IF_F1": 0.6906906906906907,
-      "Fusion_Graph_IF_AUC": 0.8895332627508579,
-      "TFIDF_density": 0.1706365047682413,
+      "GraphWalk_F1": 0.6666666666666666,
+      "GraphWalk_AUC": 0.9380754037567516,
+      "IF_TFIDF_F1": 0.7648578811369509,
+      "IF_TFIDF_AUC": 0.9427090891176022,
+      "Fusion_Graph_IF_F1": 0.7609254498714653,
+      "Fusion_Graph_IF_AUC": 0.9443276991015683,
+      "TFIDF_density": 0.20603087577550136,
       "contamination": "auto",
-      "templates": 6
+      "templates": 5,
+      "split": "client-IP disjoint before windowing"
     },
     {
       "Seed": 777,
-      "GraphWalk_F1": 0.7443181818181818,
-      "GraphWalk_AUC": 0.9328959285088207,
-      "IF_TFIDF_F1": 0.7422096317280453,
-      "IF_TFIDF_AUC": 0.9355090594004376,
-      "Fusion_Graph_IF_F1": 0.7422096317280453,
-      "Fusion_Graph_IF_AUC": 0.9328558386346119,
-      "TFIDF_density": 0.20534930139720559,
+      "GraphWalk_F1": 0.21052631578947367,
+      "GraphWalk_AUC": 0.6737295149809635,
+      "IF_TFIDF_F1": 0.20915032679738563,
+      "IF_TFIDF_AUC": 0.6583731406815333,
+      "Fusion_Graph_IF_F1": 0.2064516129032258,
+      "Fusion_Graph_IF_AUC": 0.6733674060585997,
+      "TFIDF_density": 0.25363152596001726,
       "contamination": "auto",
-      "templates": 5
+      "templates": 4,
+      "split": "client-IP disjoint before windowing"
     }
   ],
   "summary": {
     "GraphWalk_F1": {
-      "mean": 0.6471177301694583,
-      "std": 0.07032596518083878
+      "mean": 0.4962779518708606,
+      "std": 0.26983127062406226
     },
     "GraphWalk_AUC": {
-      "mean": 0.904160235582679,
-      "std": 0.0168021324486237
+      "mean": 0.8443627521434142,
+      "std": 0.12480653840785833
     },
     "IF_TFIDF_F1": {
-      "mean": 0.7020019923903752,
-      "std": 0.022820994255156584
+      "mean": 0.5394737225348104,
+      "std": 0.2981518095992487
     },
     "IF_TFIDF_AUC": {
-      "mean": 0.9017041841072804,
-      "std": 0.020564639207742617
+      "mean": 0.8444912769127866,
+      "std": 0.1264579534371928
     },
     "Fusion_Graph_IF_F1": {
-      "mean": 0.7020019923903752,
-      "std": 0.022820994255156584
+      "mean": 0.5360195496211965,
+      "std": 0.29757342602135983
     },
     "Fusion_Graph_IF_AUC": {
-      "mean": 0.9058164029542592,
-      "std": 0.01664668365894293
+      "mean": 0.8452157670678913,
+      "std": 0.12608482098655052
     },
     "TFIDF_density": {
-      "mean": 0.17778310046573523,
-      "std": 0.015411032043228662
+      "mean": 0.22544227702667669,
+      "std": 0.027219710308649933
     },
     "templates": {
-      "mean": 5.8,
-      "std": 0.4472135954999579
+      "mean": 4.6,
+      "std": 0.5477225575051661
     }
   }
 }

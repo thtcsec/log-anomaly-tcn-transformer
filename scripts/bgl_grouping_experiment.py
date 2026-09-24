@@ -79,6 +79,27 @@ def group_sequences(events, window, stride):
     out['text'] = out['EventId'].apply(lambda xs: ' '.join([f'E{x}' for x in xs]))
     return out
 
+
+def chronological_raw_splits(events, seed, test_size=0.3, val_size=0.2):
+    """Split raw lines chronologically, then callers window within each partition.
+
+    For classical 70/30: set val_size=0 (train_pool, test).
+    For neural ~60/20/20: val_size=0.2 of the non-test portion.
+    seed is accepted for API symmetry but chronological cuts are deterministic.
+    """
+    del seed  # chronological protocol is seed-invariant at the raw-line cut
+    n = len(events)
+    test_cut = int(round(n * (1.0 - test_size)))
+    train_pool = events.iloc[:test_cut].reset_index(drop=True)
+    test_ev = events.iloc[test_cut:].reset_index(drop=True)
+    if val_size <= 0:
+        return train_pool, None, test_ev
+    val_cut = int(round(len(train_pool) * (1.0 - val_size)))
+    train_ev = train_pool.iloc[:val_cut].reset_index(drop=True)
+    val_ev = train_pool.iloc[val_cut:].reset_index(drop=True)
+    return train_ev, val_ev, test_ev
+
+
 # --- Models & Datasets ---
 
 class WindowDataset(Dataset):
@@ -185,9 +206,8 @@ class TCNModel(nn.Module):
 
 # --- Experiment Runners ---
 
-def run_pca(data, seed):
+def run_pca(train_df, test_df, seed):
     np.random.seed(seed)
-    train_df, test_df = train_test_split(data, test_size=0.3, random_state=seed, stratify=data['y'])
     y_test = test_df['y'].values
 
     vec = CountVectorizer()
@@ -214,20 +234,19 @@ def run_pca(data, seed):
     p, r, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', zero_division=0)
     return float(f1)
 
-def run_deeplog(data, seed):
+def run_deeplog(train_df, val_df, test_df, seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    all_event_ids = sorted({e for seq in data['EventId'] for e in seq})
+    # Vocabulary from train partition only (no test leakage into tokens).
+    all_event_ids = sorted({e for seq in train_df['EventId'] for e in seq})
     event_to_token = {eid: i + 1 for i, eid in enumerate(all_event_ids)}
     pad_id = 0
     vocab_size = len(event_to_token) + 1
 
-    train_df, temp_df = train_test_split(data, test_size=0.4, random_state=seed, stratify=data['y'])
-    val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=seed, stratify=temp_df['y'])
     normal_train_df = train_df[train_df['y'] == 0]
 
     train_ds = WindowDataset(normal_train_df['EventId'].tolist(), event_to_token, pad_id)
@@ -272,25 +291,23 @@ def run_deeplog(data, seed):
     _, _, f1, _ = precision_recall_fscore_support(test_labels, test_binary, average='binary', zero_division=0)
     return float(f1)
 
-def run_tcn(data, seed):
+def run_tcn(train_df, val_df, test_df, seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    all_event_ids = sorted({e for seq in data['EventId'] for e in seq})
+    all_event_ids = sorted({e for seq in train_df["EventId"] for e in seq})
     event_to_token = {eid: i + 1 for i, eid in enumerate(all_event_ids)}
     pad_id = 0
     vocab_size = len(event_to_token) + 1
 
-    train_df, temp_df = train_test_split(data, test_size=0.4, random_state=seed, stratify=data['y'])
-    val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=seed, stratify=temp_df['y'])
-    normal_train_df = train_df[train_df['y'] == 0]
+    normal_train_df = train_df[train_df["y"] == 0]
 
-    train_ds = WindowDataset(normal_train_df['EventId'].tolist(), event_to_token, pad_id)
-    test_ds = WindowDataset(test_df['EventId'].tolist(), event_to_token, pad_id)
-    test_labels = test_df['y'].astype(int).values
+    train_ds = WindowDataset(normal_train_df["EventId"].tolist(), event_to_token, pad_id)
+    test_ds = WindowDataset(test_df["EventId"].tolist(), event_to_token, pad_id)
+    test_labels = test_df["y"].astype(int).values
 
     train_loader = DataLoader(train_ds, batch_size=DL_BATCH, shuffle=True, num_workers=0)
     model = TCNModel(vocab_size=vocab_size, pad_id=pad_id).to(DEVICE)
@@ -300,8 +317,8 @@ def run_tcn(data, seed):
     model.train()
     for epoch in range(1, DL_EPOCHS + 1):
         for batch in train_loader:
-            windows = batch['window'].to(DEVICE)
-            targets = batch['target'].to(DEVICE)
+            windows = batch["window"].to(DEVICE)
+            targets = batch["target"].to(DEVICE)
             optimizer.zero_grad(set_to_none=True)
             logits = model(windows)
             loss = criterion(logits, targets)
@@ -316,9 +333,9 @@ def run_tcn(data, seed):
         seq_mismatch = np.zeros(int(n_seq), dtype=np.int64)
         loader = DataLoader(ds, batch_size=DL_BATCH, shuffle=False, num_workers=0)
         for batch in loader:
-            windows = batch['window'].to(DEVICE)
-            targets = batch['target'].to(DEVICE)
-            sidx = batch['seq_idx'].numpy()
+            windows = batch["window"].to(DEVICE)
+            targets = batch["target"].to(DEVICE)
+            sidx = batch["seq_idx"].numpy()
             logits = model(windows)
             topk = logits.topk(min(DL_TOP_K, vocab_size), dim=-1).indices
             mismatch = (topk != targets.unsqueeze(1)).all(dim=-1).cpu().numpy()
@@ -327,95 +344,132 @@ def run_tcn(data, seed):
         return (seq_mismatch > 0).astype(int)
 
     test_binary = score(test_ds)
-    _, _, f1, _ = precision_recall_fscore_support(test_labels, test_binary, average='binary', zero_division=0)
+    _, _, f1, _ = precision_recall_fscore_support(
+        test_labels, test_binary, average="binary", zero_division=0
+    )
     return float(f1)
+
 
 # --- Main ---
 
+
 def main():
     from pathlib import Path
-    out_dir = Path(__file__).resolve().parents[1] / 'results'
-    out_dir.mkdir(exist_ok=True)
-    out_json = out_dir / 'bgl_grouping_results.json'
-    out_raw = out_dir / 'bgl_grouping_raw.json'
 
-    print(f'Loading {MAX_ROWS} BGL rows (HuggingFace only; no HUFLIT RAR)...', flush=True)
+    out_dir = Path(__file__).resolve().parents[1] / "logs"
+    out_dir.mkdir(exist_ok=True)
+    out_json = out_dir / "bgl_grouping_results.json"
+    out_raw = out_dir / "bgl_grouping_raw.json"
+
+    print(f"Loading {MAX_ROWS} BGL rows (HuggingFace only; no HUFLIT RAR)...", flush=True)
     raw_df = stream_rows(MAX_ROWS)
-    print('Parsing logs with Drain3...', flush=True)
+    print("Parsing logs with Drain3...", flush=True)
     events = drain_parse(raw_df)
 
     configs = [
-        {'name': 'W=50', 'window': 50, 'stride': 50},
-        {'name': 'W=100', 'window': 100, 'stride': 100},
-        {'name': 'W=200', 'window': 200, 'stride': 200},
-        {'name': 'W=100, stride=50', 'window': 100, 'stride': 50},
+        {"name": "W=50", "window": 50, "stride": 50},
+        {"name": "W=100", "window": 100, "stride": 100},
+        {"name": "W=200", "window": 200, "stride": 200},
+        {"name": "W=100, stride=50", "window": 100, "stride": 50},
     ]
 
-    results = {}
+    results = {
+        "_protocol": (
+            "chronological raw-line split before windowing; "
+            "PCA 70/30; neural ~60/20/20 on raw lines; train-only vocab; "
+            "no train/test sliding overlap"
+        )
+    }
 
     for cfg in configs:
-        name = cfg['name']
-        print(f'\nRunning configuration: {name}', flush=True)
-        data = group_sequences(events, cfg['window'], cfg['stride'])
-        print(f'  Total sequences: {len(data)} (anomaly rate: {data.y.mean():.4f})', flush=True)
+        name = cfg["name"]
+        print(f"\nRunning configuration: {name}", flush=True)
 
         results[name] = {
-            'PCA': [],
-            'DeepLog': [],
-            'TCN': [],
-            'seeds': list(SEEDS),
+            "PCA": [],
+            "DeepLog": [],
+            "TCN": [],
+            "seeds": list(SEEDS),
         }
 
         for seed in SEEDS:
-            print(f'  Seed {seed}...', flush=True)
+            print(f"  Seed {seed}...", flush=True)
 
-            f1_pca = run_pca(data, seed)
-            results[name]['PCA'].append(f1_pca)
+            train_ev, _, test_ev = chronological_raw_splits(
+                events, seed, test_size=0.3, val_size=0.0
+            )
+            train_pca = group_sequences(train_ev, cfg["window"], cfg["stride"])
+            test_pca = group_sequences(test_ev, cfg["window"], cfg["stride"])
+            f1_pca = run_pca(train_pca, test_pca, seed)
+            results[name]["PCA"].append(f1_pca)
 
-            f1_dl = run_deeplog(data, seed)
-            results[name]['DeepLog'].append(f1_dl)
+            train_ev, val_ev, test_ev = chronological_raw_splits(
+                events, seed, test_size=0.3, val_size=0.2 / 0.7
+            )
+            train_n = group_sequences(train_ev, cfg["window"], cfg["stride"])
+            val_n = group_sequences(val_ev, cfg["window"], cfg["stride"])
+            test_n = group_sequences(test_ev, cfg["window"], cfg["stride"])
+            print(
+                f"    seq train/val/test={len(train_n)}/{len(val_n)}/{len(test_n)}",
+                flush=True,
+            )
 
-            f1_tcn = run_tcn(data, seed)
-            results[name]['TCN'].append(f1_tcn)
+            f1_dl = run_deeplog(train_n, val_n, test_n, seed)
+            results[name]["DeepLog"].append(f1_dl)
 
-            print(f'    PCA F1: {f1_pca:.4f} | DeepLog F1: {f1_dl:.4f} | TCN F1: {f1_tcn:.4f}', flush=True)
-            with open(out_raw, 'w', encoding='utf-8') as f:
+            f1_tcn = run_tcn(train_n, val_n, test_n, seed)
+            results[name]["TCN"].append(f1_tcn)
+
+            print(
+                f"    PCA F1: {f1_pca:.4f} | DeepLog F1: {f1_dl:.4f} | TCN F1: {f1_tcn:.4f}",
+                flush=True,
+            )
+            with open(out_raw, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2)
-            print(f'    checkpoint -> {out_raw}', flush=True)
+            print(f"    checkpoint -> {out_raw}", flush=True)
 
-    print('\n=== Final Grouping Benchmark Results (F1-score) ===', flush=True)
+    print("\n=== Final Grouping Benchmark Results (F1-score) ===", flush=True)
     table_rows = []
-    for name in results:
-        pca_mean = np.mean(results[name]['PCA'])
-        pca_std = np.std(results[name]['PCA'], ddof=1) if len(results[name]['PCA']) > 1 else 0.0
-        dl_mean = np.mean(results[name]['DeepLog'])
-        dl_std = np.std(results[name]['DeepLog'], ddof=1) if len(results[name]['DeepLog']) > 1 else 0.0
-        tcn_mean = np.mean(results[name]['TCN'])
-        tcn_std = np.std(results[name]['TCN'], ddof=1) if len(results[name]['TCN']) > 1 else 0.0
+    for cfg in configs:
+        name = cfg["name"]
+        pca_mean = float(np.mean(results[name]["PCA"]))
+        pca_std = float(np.std(results[name]["PCA"], ddof=1))
+        dl_mean = float(np.mean(results[name]["DeepLog"]))
+        dl_std = float(np.std(results[name]["DeepLog"], ddof=1))
+        tcn_mean = float(np.mean(results[name]["TCN"]))
+        tcn_std = float(np.std(results[name]["TCN"], ddof=1))
 
         row_str = (
             f"{name:<20} | PCA: {pca_mean:.4f} ± {pca_std:.4f} | "
-            f"DeepLog: {dl_mean:.4f} ± {dl_std:.4f} | TCN: {tcn_mean:.4f} ± {tcn_std:.4f}"
+            f"DeepLog: {dl_mean:.4f} ± {dl_std:.4f} | "
+            f"TCN: {tcn_mean:.4f} ± {tcn_std:.4f}"
         )
         print(row_str, flush=True)
 
-        table_rows.append({
-            'Configuration': name,
-            'PCA': f"{pca_mean:.4f} ± {pca_std:.4f}",
-            'DeepLog': f"{dl_mean:.4f} ± {dl_std:.4f}",
-            'TCN': f"{tcn_mean:.4f} ± {tcn_std:.4f}",
-            'PCA_values': results[name]['PCA'],
-            'DeepLog_values': results[name]['DeepLog'],
-            'TCN_values': results[name]['TCN'],
-            'seeds': list(SEEDS),
-            'epochs': DL_EPOCHS,
-            'max_rows': MAX_ROWS,
-        })
+        table_rows.append(
+            {
+                "Configuration": name,
+                "PCA": f"{pca_mean:.4f} ± {pca_std:.4f}",
+                "DeepLog": f"{dl_mean:.4f} ± {dl_std:.4f}",
+                "TCN": f"{tcn_mean:.4f} ± {tcn_std:.4f}",
+                "PCA_values": results[name]["PCA"],
+                "DeepLog_values": results[name]["DeepLog"],
+                "TCN_values": results[name]["TCN"],
+            }
+        )
 
-    with open(out_json, 'w', encoding='utf-8') as f:
-        json.dump(table_rows, f, indent=2, ensure_ascii=False)
-    print(f'\nSaved to {out_json}', flush=True)
+    payload = {
+        "protocol": results.get("_protocol"),
+        "seeds": SEEDS,
+        "max_rows": MAX_ROWS,
+        "epochs": DL_EPOCHS,
+        "table": table_rows,
+        "raw": {k: v for k, v in results.items() if k != "_protocol"},
+    }
+    with open(out_json, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    print(f"\nSaved {out_json}", flush=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
