@@ -27,15 +27,13 @@
 
 ---
 
-## Relation to prior publication (disclosure)
+## Relation to prior manuscript (disclosure)
 
-A related HDFS/BGL Drain3–TCN–Transformer study has been **accepted** for publication at **VNICT 2026** (proceedings forthcoming):
+A related HDFS/BGL Drain3–TCN–Transformer manuscript was **accepted at VNICT 2026 but subsequently withdrawn before publication**:
 
-> H.-T. Trinh and T.-T. Cao, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, accepted for publication in Proc. VNICT 2026 (forthcoming).
+> H.-T. Trinh and T.-T. Cao, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, unpublished manuscript (accepted at VNICT 2026; withdrawn before publication).
 
-**Author list must match the accepted VNICT manuscript** (two authors in `submission/vnict2026_submission.tex`). Confirm ID/order against the EasyChair acceptance email before final camera-ready; do not invent EasyChair IDs in the bibliography.
-
-**This CSoNet manuscript extends that work** with HUFLIT-Career, explicit event-transition graph (GraphWalk) scoring, grouping/latency/explainability analyses, and proxy-label limits. **Email CSoNet TPC chairs** about the overlap before camera-ready submission and keep their written confirmation.
+**This CSoNet manuscript extends that work** with HUFLIT-Career, explicit event-transition graph (GraphWalk) scoring, grouping/latency/explainability analyses, and proxy-label limits. **Email CSoNet TPC chairs** about the overlap (and the withdrawal) before camera-ready if not already on record.
 
 **Prefix sizes (artifact-matched):** HDFS classical 500k / deep+GraphWalk 200k; BGL classical+deep 500k / GraphWalk+grouping 200k. See `logs/`.
 

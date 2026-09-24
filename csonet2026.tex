@@ -39,7 +39,7 @@ Faculty of Information Technology, Ho Chi Minh City University of Foreign Langua
 \maketitle
 %
 \begin{abstract}
-We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. Classical frequency models remain competitive on HDFS; TCN and DeepLog-style LSTM are nearly tied on BGL; on HUFLIT-Career, compact-vocabulary outlier models remain competitive under heuristic/weak labels. A related HDFS/BGL study has been accepted at VNICT~2026; this paper extends it with GraphWalk scoring, HUFLIT-Career, leakage-aware splits, and deployment analyses.
+We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. Classical frequency models remain competitive on HDFS; TCN and DeepLog-style LSTM are nearly tied on BGL; on HUFLIT-Career, compact-vocabulary outlier models remain competitive under heuristic/weak labels. This paper adds GraphWalk scoring, HUFLIT-Career, leakage-aware splits, and deployment analyses beyond a prior HDFS/BGL study.
 
 \keywords{Log anomaly detection \and event-transition network \and Transformer \and Drain3 \and AIOps.}
 \end{abstract}
@@ -51,15 +51,15 @@ This is an applied evaluation study, not a new detector. The template sequence a
 
 \textbf{Contributions:} (1)~a leakage-aware pipeline that structures logs as walks on directed event-transition graphs; (2)~\emph{operational} GraphWalk scoring via Laplace-smoothed $P(v\mid u)$, alongside classical and deep branches; (3)~evaluation on HDFS, BGL, and HUFLIT-Career; (4)~deployment trade-offs (F1, latency, explainability) and explicit proxy-label limits.
 
-\paragraph{Relation to prior publication.}
-A related HDFS/BGL Drain3--TCN--Transformer study has been accepted for publication at VNICT~2026~\cite{b26}; proceedings are forthcoming. This CSoNet paper extends that report with HUFLIT-Career, explicit transition-graph scoring, grouping/latency/explainability analyses, and clearer label/reproduction limits.
+\paragraph{Relation to prior manuscript.}
+A related HDFS/BGL Drain3--TCN--Transformer manuscript was accepted at VNICT~2026 but subsequently withdrawn before publication~\cite{b26}. This CSoNet paper extends that manuscript with HUFLIT-Career, explicit transition-graph scoring, grouping/latency/explainability analyses, and clearer label/reproduction limits.
 
 \section{Related Work}
-Early statistical approaches include PCA and Isolation Forest~\cite{b10,b11}, while recent empirical work~\cite{b24} shows that classical models can remain competitive under particular log structures. Sequential models such as DeepLog~\cite{b1}, LogAnomaly~\cite{b13}, and LogRobust~\cite{b14} predict or score event trajectories with LSTM/RNN variants; PLELog~\cite{b15} reduces label cost via probabilistic estimation. Drain/Drain3~\cite{b3} provide fast online parsing; LogPPT~\cite{b7} improves few-shot parsing. Transformer approaches (LogBERT~\cite{b2}, surveys~\cite{b16}) build on self-attention~\cite{b4} for masked event modeling. LLM and language-model approaches such as LogPrompt~\cite{b8}, LogGPT~\cite{b9}, LogLLM~\cite{b20}, CoLA~\cite{b21}, LogFiT~\cite{b22}, and LINEADAPTER~\cite{b23} explore semantic modeling and parameter-efficient adaptation. Separately, LogAction~\cite{b25} addresses cross-system transfer through active domain adaptation.
+Early statistical approaches include PCA and Isolation Forest~\cite{b10,b11}; recent empirical work~\cite{b24} shows classical models can remain competitive under particular log structures. Sequential models such as DeepLog~\cite{b1}, LogAnomaly~\cite{b13}, and LogRobust~\cite{b14} score event trajectories; PLELog~\cite{b15} reduces label cost. Drain/Drain3~\cite{b3} and LogPPT~\cite{b7} address parsing. Transformer approaches (LogBERT~\cite{b2}, surveys~\cite{b16}) build on self-attention~\cite{b4}. LLM/language-model methods include LogPrompt~\cite{b8}, LogGPT~\cite{b9}, LogLLM~\cite{b20}, CoLA~\cite{b21}, LogFiT~\cite{b22}, and LINEADAPTER~\cite{b23}; separately, LogAction~\cite{b25} targets cross-system transfer via active domain adaptation.
 
-\textbf{Graph-based log anomaly detection.} LogGD~\cite{b27} converts sequences into graphs and applies GNNs. Logs2Graphs~\cite{b28} builds attributed directed weighted graphs for unsupervised detection. Our GraphWalk branch is intentionally lighter: a first-order Markov transition graph with NLL and fusion features, not a learned GNN embedding.
+\textbf{Graph-based log anomaly detection.} LogGD~\cite{b27} and Logs2Graphs~\cite{b28} use GNN stacks over log graphs. Our GraphWalk branch is lighter: a first-order Markov transition graph with NLL and fusion features.
 
-Gaps we target: missing order in classical methods; sequential bottlenecks; parser coupling; and under-specified grouping for network-style walks. We standardize parse$\rightarrow$group$\rightarrow$score with Drain3 and evaluate BoE baselines, GraphWalk, DeepLog-style LSTM, TCN, and Transformer (mean$\pm$std over 5 seeds). Code/dumps: \url{https://github.com/thtcsec/log-anomaly-tcn-transformer}.
+Gaps we target: missing order in classical methods; sequential bottlenecks; parser coupling; and under-specified grouping. We standardize parse$\rightarrow$group$\rightarrow$score with Drain3 and evaluate BoE baselines, GraphWalk, DeepLog-style LSTM, TCN, and Transformer (5 seeds). Code/dumps: \url{https://github.com/thtcsec/log-anomaly-tcn-transformer}.
 
 \section{Proposed Methodology}
 \subsection{Pipeline Overview}
@@ -74,21 +74,21 @@ Input: raw logs $L=\{l_1,\ldots,l_N\}$. Output: anomaly score $a(S)$ per walk $S
     arrow/.style={-{Latex[length=1.5mm]}, thick}
 ]
 \node[box] (raw) at (0,0) {Raw logs};
-\node[box] (pre) at (0,-0.85) {Preprocess};
-\node[box] (parse) at (0,-1.70) {Drain3 ($V$)};
-\node[box] (seq) at (0,-2.55) {Group walks};
+\node[box] (pre) at (0,-0.72) {Preprocess};
+\node[box] (parse) at (0,-1.44) {Drain3 ($V$)};
+\node[box] (seq) at (0,-2.16) {Group walks};
 
 % center-to-center 4.6cm; half-width 1.2cm => ~2.2cm clear gap between boxes
-\node[box] (vec) at (-4.6,-3.65) {BoE / TF-IDF};
-\node[box] (base) at (-4.6,-4.50) {PCA / SVD / IF};
+\node[box] (vec) at (-4.6,-3.10) {BoE / TF-IDF};
+\node[box] (base) at (-4.6,-3.82) {PCA / SVD / IF};
 
-\node[box] (gfeat) at (0,-3.65) {Transition graph};
-\node[box] (gw) at (0,-4.50) {GraphWalk};
+\node[box] (gfeat) at (0,-3.10) {Transition graph};
+\node[box] (gw) at (0,-3.82) {GraphWalk};
 
-\node[box] (bert) at (4.6,-3.65) {Event sequences};
-\node[box] (seqscore) at (4.6,-4.50) {DeepLog / TCN / Trans.};
+\node[box] (bert) at (4.6,-3.10) {Event sequences};
+\node[box] (seqscore) at (4.6,-3.82) {DeepLog / TCN / Trans.};
 
-\node[box] (score) at (0,-5.55) {Anomaly alert};
+\node[box] (score) at (0,-4.70) {Anomaly alert};
 
 \draw[arrow] (raw) -- (pre);
 \draw[arrow] (pre) -- (parse);
@@ -122,7 +122,7 @@ Vertices are Drain3 event IDs only; padding tokens are excluded from graph const
 \subsection{Deep Sequence Models}
 \textbf{DeepLog-style LSTM:} next-event prediction with a 2-layer LSTM inspired by DeepLog~\cite{b1}, not a bit-exact Spell/full-corpus reproduction. Top-$k$ flags a sequence if any event falls outside the top $K$; NLL uses a 95th-percentile threshold on normal validation. \textbf{TCN:} dilated causal convolutions~\cite{b19} with the same split/scoring protocol. \textbf{Transformer:} masked event modeling~\cite{b2,b4} (mask ratio $0.15$), score $=$ mean MLM loss. Optimizer: AdamW~\cite{b17}.
 
-\textbf{Prefix sizes (artifact-matched).} Classical HDFS/BGL baselines use a 500k-line LogHub prefix. On HDFS, DeepLog-style LSTM, TCN, Transformer, GraphWalk, and ablations use a 200k-line prefix. On BGL, PCA/SVD/IF/Transformer/DeepLog/TCN use 500k lines (\texttt{logs/bgl\_results.json}), whereas GraphWalk and the grouping study use a 200k-line subset. Neither setting is the full HDFS\_v1 corpus ($>11$M lines).
+\textbf{Prefix sizes (artifact-matched).} Classical HDFS/BGL baselines use a 500k-line LogHub prefix. On HDFS, DeepLog-style LSTM, TCN, Transformer, GraphWalk, and ablations use a 200k-line prefix. On BGL, PCA/SVD/IF/Transformer/DeepLog/TCN use 500k lines (\texttt{logs/bgl\_results.json}), whereas GraphWalk and the grouping study use a 200k-line subset. Neither setting is the full HDFS\_v1 corpus ($>11$M lines), so these values are not bit-exact reproductions of published HDFS results (different parsers, corpus sizes, sequence construction, or splits).
 
 \section{Experimental Setup}
 \subsection{Datasets}
@@ -150,10 +150,10 @@ Templates & 137 & 198 & 6 \\
 
 \section{Results and Discussion}
 \subsection{Cross-Dataset Comparison}
-Table~\ref{tab_cross_dataset}: no single winner across protocols. On HDFS, PCA achieves $0.5711\pm0.0944$ under the 500k classical protocol, whereas DeepLog-style and TCN both obtain $0.4613\pm0.0199$ under the 200k deep-model protocol (identical per-seed top-$k$ decisions). Because the prefix sizes differ, these HDFS values should \emph{not} be interpreted as a direct head-to-head ranking. On BGL, all neural and classical rows in Table~\ref{tab_cross_dataset} except GraphWalk use the 500k protocol; TCN top-$k$ ($0.9826\pm0.0022$) is comparable to DeepLog-style ($0.9820\pm0.0042$). On HUFLIT-Career (no fake pad-event in walks), Isolation Forest obtains the highest mean F1 among classical/graph scorers ($0.702\pm0.023$), with GraphWalk at $0.647\pm0.070$ and PCA at $0.592\pm0.137$ (substantial PCA variance). DeepLog/TCN NLL remain competitive ($0.592\pm0.010$) under the historical HUFLIT deep-model dump. Contamination-based IF ($\approx$0.63 under the old protocol) is archived as label-informed prevalence, not the unsupervised headline.
+Table~\ref{tab_cross_dataset}: no single winner across protocols. On HDFS, PCA achieves $0.5711\pm0.0944$ (500k classical), while DeepLog-style and TCN both obtain $0.4613\pm0.0199$ (200k deep; identical per-seed top-$k$). This equality follows from the coarse sequence-level top-$K$ rule rather than identical model outputs: at $K{=}9$, both yield the same binary any-mismatch flags on evaluated HDFS sequences, while NLL scores differ. Prefix sizes also differ, so classical vs.\ deep HDFS F1 is not a head-to-head ranking. On BGL (500k except GraphWalk), TCN top-$k$ ($0.9826\pm0.0022$) is comparable to DeepLog-style ($0.9820\pm0.0042$). On HUFLIT-Career, Isolation Forest leads classical/graph scorers ($0.702\pm0.023$), with GraphWalk $0.647\pm0.070$ and PCA $0.592\pm0.137$; DeepLog/TCN NLL remain $0.592\pm0.010$ under the historical deep dump.
 
 \begin{table}[htbp]
-\caption{Cross-dataset F1 (mean$\pm$std, 5 seeds). HDFS: classical baselines 500k, neural/GraphWalk 200k. BGL: all methods 500k except GraphWalk 200k. HUFLIT: full; classical/GraphWalk regenerated without pad-event~$0$. Bold/underline mark best/second within BGL only. No direct ranking is made between regenerated no-PAD classical/GraphWalk results and the historical HUFLIT deep-model rows because their walk preprocessing differs. GraphWalk BGL is a separate diagnostic, not matched-prefix ranking.}
+\caption{Cross-dataset F1 (mean$\pm$std, 5 seeds). HDFS: classical 500k, neural/GraphWalk 200k. BGL: 500k except GraphWalk 200k. HUFLIT: full; classical/GraphWalk no pad-event~$0$. Bold/underline: BGL only. No ranking between no-PAD classical/GraphWalk and historical HUFLIT deep rows (different walk preprocessing).}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -250,7 +250,7 @@ Transformer (CPU) & 2.395 & 2.966 & 3.267 & 418/s \\
 \label{tab_latency}
 \end{table}
 
-\textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping; HDFS deep models use 200k prefix; Drain3/vocabulary on evaluated prefix before split (transductive, unlabeled); VNICT~\cite{b26} overlaps HDFS/BGL backbone.
+\textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping; HDFS deep models use 200k prefix; Drain3/vocabulary on evaluated prefix before split (transductive, unlabeled); withdrawn VNICT manuscript~\cite{b26} overlaps the HDFS/BGL backbone.
 
 \section{Conclusion}
 We evaluated a Drain3 pipeline that uses an event-transition graph (GraphWalk) alongside classical and deep scorers. No branch dominates: PCA remains competitive under the classical HDFS protocol; TCN and DeepLog-style are nearly tied on BGL; under Career weak labels, percentile IF obtains the highest mean F1 among regenerated unsupervised scorers, with GraphWalk providing complementary transition signal without material AUROC gain in fusion. Choose scorers by vocabulary size, walk length, and label semantics. Future work: gold SOC labels, GNN embeddings, train-only parser/vocabulary construction, regenerated HUFLIT deep dumps under the no-PAD walk construction, and matched-prefix HDFS protocols.
@@ -282,7 +282,7 @@ We evaluated a Drain3 pipeline that uses an event-transition graph (GraphWalk) a
 \bibitem{b23} X. Liu et al., ``LINEADAPTER: Parameter-Efficient Fine-Tuning for Log Anomaly Detection and Root Cause Analysis,'' in \textit{Proc. IEEE ICPADS}, 2025, doi: 10.1109/ICPADS67057.2025.11322907.
 \bibitem{b24} B. Yu et al., ``Deep Learning or Classical Machine Learning? An Empirical Study on Log-Based Anomaly Detection,'' in \textit{Proc. ICSE}, 2024.
 \bibitem{b25} C. Duan et al., ``LogAction: Consistent Cross-system Anomaly Detection through Logs via Active Domain Adaptation,'' in \textit{Proc. ASE}, pp.~700--712, 2025, doi: 10.1109/ASE63991.2025.00064.
-\bibitem{b26} H.-T. Trinh and T.-T. Cao, ``Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks,'' accepted for publication in \textit{Proc. VNICT}, 2026 (forthcoming).
+\bibitem{b26} H.-T. Trinh and T.-T. Cao, ``Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks,'' unpublished manuscript, accepted at VNICT~2026 and subsequently withdrawn before publication, 2026.
 \bibitem{b27} Y. Xie, H. Zhang, and M. A. Babar, ``LogGD: Detecting Anomalies from System Logs with Graph Neural Networks,'' in \textit{Proc. IEEE QRS}, pp.~299--310, 2022, doi: 10.1109/QRS57517.2022.00039.
 \bibitem{b28} Z. Li, J. Shi, and M. van Leeuwen, ``Graph Neural Networks based Log Anomaly Detection and Explanation,'' \textit{Data Min. Knowl. Disc.}, vol.~40, art.~66, 2026, doi: 10.1007/s10618-026-01235-6.
 \end{thebibliography}
