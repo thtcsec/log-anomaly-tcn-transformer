@@ -33,7 +33,7 @@ A related HDFS/BGL Drain3–TCN–Transformer manuscript was **accepted at VNICT
 
 > H.-T. Trinh and T.-T. Cao, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, unpublished manuscript (accepted at VNICT 2026; withdrawn before publication).
 
-**This CSoNet manuscript extends that work** with HUFLIT-Career, explicit event-transition graph (GraphWalk) scoring, grouping/latency/explainability analyses, and proxy-label limits. **Email CSoNet TPC chairs** about the overlap (and the withdrawal) before camera-ready if not already on record.
+**This CSoNet manuscript extends that work** by introducing explicit event-transition graph modeling and GraphWalk scoring, broadening evaluation to institutional user-behavior logs, and adding grouping, latency, explainability, and clearer label/reproduction analyses. **Email CSoNet TPC chairs** about the overlap (and the withdrawal) before camera-ready if not already on record.
 
 **Prefix sizes (artifact-matched):** HDFS classical 500k / deep+GraphWalk 200k; BGL classical+deep 500k / GraphWalk+grouping 200k. See `logs/`.
 
