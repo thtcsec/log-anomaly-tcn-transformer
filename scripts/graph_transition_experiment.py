@@ -272,10 +272,9 @@ def eval_dataset(data: pd.DataFrame, name: str):
             }
         )
 
-        # Isolation Forest on transition features
-        contamination = max(0.001, min(0.2, float(y_train.mean())))
+        # Isolation Forest on transition features (95th-pct protocol; no label-informed contamination)
         iso = IsolationForest(
-            n_estimators=200, contamination=contamination, random_state=seed, n_jobs=-1
+            n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
         )
         iso.fit(X_train[normal_mask])
         # decision_function: higher = more normal; use negative as anomaly score

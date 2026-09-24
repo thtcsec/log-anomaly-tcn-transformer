@@ -24,7 +24,7 @@
       "Fusion_Graph_IF_F1": 0.6951566951566952,
       "Fusion_Graph_IF_AUC": 0.9088921163262369,
       "TFIDF_density": 0.1711465956974939,
-      "contamination": 0.01984715410060454,
+      "contamination": "auto",
       "templates": 6
     },
     {
@@ -33,10 +33,10 @@
       "GraphWalk_AUC": 0.9000527546299248,
       "IF_TFIDF_F1": 0.686046511627907,
       "IF_TFIDF_AUC": 0.8915199893579606,
-      "Fusion_Graph_IF_F1": 0.612987012987013,
-      "Fusion_Graph_IF_AUC": 0.9002181253610365,
+      "Fusion_Graph_IF_F1": 0.686046511627907,
+      "Fusion_Graph_IF_AUC": 0.9007784724664566,
       "TFIDF_density": 0.17088046129962298,
-      "contamination": 0.01984715410060454,
+      "contamination": "auto",
       "templates": 6
     },
     {
@@ -48,7 +48,7 @@
       "Fusion_Graph_IF_F1": 0.695906432748538,
       "Fusion_Graph_IF_AUC": 0.8970223245931332,
       "TFIDF_density": 0.17090263916611223,
-      "contamination": 0.01984715410060454,
+      "contamination": "auto",
       "templates": 6
     },
     {
@@ -60,7 +60,7 @@
       "Fusion_Graph_IF_F1": 0.6906906906906907,
       "Fusion_Graph_IF_AUC": 0.8895332627508579,
       "TFIDF_density": 0.1706365047682413,
-      "contamination": 0.01984715410060454,
+      "contamination": "auto",
       "templates": 6
     },
     {
@@ -72,7 +72,7 @@
       "Fusion_Graph_IF_F1": 0.7422096317280453,
       "Fusion_Graph_IF_AUC": 0.9328558386346119,
       "TFIDF_density": 0.20534930139720559,
-      "contamination": 0.01984715410060454,
+      "contamination": "auto",
       "templates": 5
     }
   ],
@@ -94,20 +94,16 @@
       "std": 0.020564639207742617
     },
     "Fusion_Graph_IF_F1": {
-      "mean": 0.6873900926621965,
-      "std": 0.04659598222664513
+      "mean": 0.7020019923903752,
+      "std": 0.022820994255156584
     },
     "Fusion_Graph_IF_AUC": {
-      "mean": 0.9057043335331751,
-      "std": 0.01669090679081583
+      "mean": 0.9058164029542592,
+      "std": 0.01664668365894293
     },
     "TFIDF_density": {
       "mean": 0.17778310046573523,
       "std": 0.015411032043228662
-    },
-    "contamination": {
-      "mean": 0.01984715410060454,
-      "std": 0.0
     },
     "templates": {
       "mean": 5.8,

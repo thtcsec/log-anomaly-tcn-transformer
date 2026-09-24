@@ -89,14 +89,17 @@ def eval_methods(data: pd.DataFrame):
         y_test = test_df["y"].values
         normal_train = train_df[train_df["y"] == 0]
 
-        # Classic IF on TF-IDF (bag-of-events) — reproduces paper baseline behaviour
+        # Classic IF on TF-IDF: fit normals; threshold -decision_function at 95th pct
         vec = TfidfVectorizer()
         Xtr = vec.fit_transform(normal_train["text"])
         Xte = vec.transform(test_df["text"])
-        cont = max(0.001, min(0.2, float(train_df["y"].mean())))
-        iso = IsolationForest(n_estimators=200, contamination=cont, random_state=seed, n_jobs=-1)
+        iso = IsolationForest(
+            n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
+        )
         iso.fit(Xtr)
-        pred = (iso.predict(Xte) == -1).astype(int)
+        tr_scores = -iso.decision_function(Xtr)
+        thr = np.percentile(tr_scores, 95)
+        pred = (-iso.decision_function(Xte) > thr).astype(int)
         p, r, f1, _ = precision_recall_fscore_support(y_test, pred, average="binary", zero_division=0)
         rows.append({"Method": "IF-TFIDF", "Seed": seed, "Precision": float(p), "Recall": float(r), "F1": float(f1)})
 
@@ -133,7 +136,9 @@ def eval_methods(data: pd.DataFrame):
         p, r, f1, _ = precision_recall_fscore_support(y_test, pred, average="binary", zero_division=0)
         rows.append({"Method": "PCA+TransFeat", "Seed": seed, "Precision": float(p), "Recall": float(r), "F1": float(f1)})
 
-        iso2 = IsolationForest(n_estimators=200, contamination=cont, random_state=seed, n_jobs=-1)
+        iso2 = IsolationForest(
+            n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
+        )
         iso2.fit(X_train[normal_mask])
         train_scores = -iso2.decision_function(X_train[normal_mask])
         thr = np.percentile(train_scores, 95)

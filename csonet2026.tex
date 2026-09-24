@@ -49,7 +49,7 @@ Modern infrastructures generate diverse logs that capture operational state and 
 
 This is an applied evaluation study, not a new detector. The template sequence after Drain3 is an intermediate layer: compact for lightweight baselines, structured for sequence models, and mappable to operational units. We ask: (RQ1)~how does post-Drain3 grouping affect the signal; (RQ2)~how do reconstruction, isolation, graph-walk NLL, next-event prediction, TCN, and masked modeling compare on the same walks; (RQ3)~does the ranking hold from LogHub benchmarks to an institutional web log.
 
-\textbf{Contributions:} (1)~a leakage-aware pipeline that structures logs as walks on directed event-transition graphs; (2)~\emph{operational} GraphWalk scoring via Laplace-smoothed $P(v\mid u)$, alongside classical and deep branches; (3)~evaluation on HDFS, BGL, and HUFLIT-Career with an IP-disjoint ablation; (4)~deployment trade-offs (F1, latency, explainability) and explicit proxy-label limits.
+\textbf{Contributions:} (1)~a leakage-aware pipeline that structures logs as walks on directed event-transition graphs; (2)~\emph{operational} GraphWalk scoring via Laplace-smoothed $P(v\mid u)$, alongside classical and deep branches; (3)~evaluation on HDFS, BGL, and HUFLIT-Career; (4)~deployment trade-offs (F1, latency, explainability) and explicit proxy-label limits.
 
 \paragraph{Relation to prior publication.}
 A related HDFS/BGL Drain3--TCN--Transformer study has been accepted for publication at VNICT~2026~\cite{b26}; proceedings are forthcoming. This CSoNet paper extends that report with HUFLIT-Career, explicit transition-graph scoring, grouping/latency/explainability analyses, and clearer label/reproduction limits.
@@ -67,23 +67,29 @@ Input: raw logs $L=\{l_1,\ldots,l_N\}$. Output: anomaly score $a(S)$ per walk $S
 
 \begin{figure}[!t]
 \centering
-\resizebox{0.62\columnwidth}{!}{
+\resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}[
-    node distance=0.32cm and 0.22cm,
-    box/.style={rectangle, draw, rounded corners, align=center, minimum width=2.0cm, minimum height=0.42cm, font=\scriptsize},
+    box/.style={rectangle, draw, rounded corners, align=center,
+                text width=2.4cm, minimum height=0.55cm, font=\small, inner sep=2.5pt},
     arrow/.style={-{Latex[length=1.5mm]}, thick}
 ]
-\node[box] (raw) {Raw logs};
-\node[box, below=of raw] (pre) {Preprocess};
-\node[box, below=of pre] (parse) {Drain3 ($V$)};
-\node[box, below=of parse] (seq) {Group walks};
-\node[box, below left=0.45cm and 0.05cm of seq] (vec) {BoE / TF-IDF};
-\node[box, below=of vec] (base) {PCA / SVD / IF};
-\node[box, below=0.45cm of seq] (gfeat) {Transition graph};
-\node[box, below=of gfeat] (gw) {GraphWalk};
-\node[box, below right=0.45cm and 0.05cm of seq] (bert) {Event sequences};
-\node[box, below=of bert] (seqscore) {DeepLog / TCN / Trans.};
-\node[box, below=1.15cm of gw] (score) {Anomaly alert};
+\node[box] (raw) at (0,0) {Raw logs};
+\node[box] (pre) at (0,-0.85) {Preprocess};
+\node[box] (parse) at (0,-1.70) {Drain3 ($V$)};
+\node[box] (seq) at (0,-2.55) {Group walks};
+
+% center-to-center 4.6cm; half-width 1.2cm => ~2.2cm clear gap between boxes
+\node[box] (vec) at (-4.6,-3.65) {BoE / TF-IDF};
+\node[box] (base) at (-4.6,-4.50) {PCA / SVD / IF};
+
+\node[box] (gfeat) at (0,-3.65) {Transition graph};
+\node[box] (gw) at (0,-4.50) {GraphWalk};
+
+\node[box] (bert) at (4.6,-3.65) {Event sequences};
+\node[box] (seqscore) at (4.6,-4.50) {DeepLog / TCN / Trans.};
+
+\node[box] (score) at (0,-5.55) {Anomaly alert};
+
 \draw[arrow] (raw) -- (pre);
 \draw[arrow] (pre) -- (parse);
 \draw[arrow] (parse) -- (seq);
@@ -96,7 +102,7 @@ Input: raw logs $L=\{l_1,\ldots,l_N\}$. Output: anomaly score $a(S)$ per walk $S
 \draw[arrow] (base) -- (score);
 \draw[arrow] (gw) -- (score);
 \draw[arrow] (seqscore) -- (score);
-\end{tikzpicture}
+\end{tikzpicture}%
 }
 \caption{Three scoring branches after grouping: frequency (BoE/TF-IDF), transition-graph GraphWalk, and sequence models.}
 \label{fig_pipeline}
@@ -120,7 +126,7 @@ Vertices are Drain3 event IDs only; padding tokens are excluded from graph const
 
 \section{Experimental Setup}
 \subsection{Datasets}
-HDFS and BGL are from LogHub~\cite{b6,b12}. HUFLIT-Career is a one-month (June 2026) institutional HTTP log; IPs and payloads are hashed. Client IPs are grouping keys only, never features. \textbf{Heuristic/weak labels:} scanner-probe labels come from fixed export rules on \texttt{suspicious\_signals}, not adjudicated SOC ground truth; metrics measure agreement with the heuristic. An IP-disjoint ablation yields PCA F1 $0.6528$ (P~$0.5081$, R~$0.9127$). Dataset statistics (500k prefix counts for HDFS/BGL in Table~\ref{tab_dataset_stats}).
+HDFS and BGL are from LogHub~\cite{b6,b12}. HUFLIT-Career is a one-month (June 2026) institutional HTTP log; IPs and payloads are hashed. Client IPs are grouping keys only, never features. \textbf{Heuristic/weak labels:} scanner-probe labels come from fixed export rules on \texttt{suspicious\_signals}, not adjudicated SOC ground truth; metrics measure agreement with the heuristic. Dataset statistics (500k prefix counts for HDFS/BGL in Table~\ref{tab_dataset_stats}).
 
 \begin{table}[htbp]
 \caption{Dataset statistics after Drain3 (HDFS/BGL: 500k-line prefix)}
@@ -147,7 +153,7 @@ Templates & 137 & 198 & 6 \\
 Table~\ref{tab_cross_dataset}: no single winner across protocols. On HDFS, PCA achieves $0.5711\pm0.0944$ under the 500k classical protocol, whereas DeepLog-style and TCN both obtain $0.4613\pm0.0199$ under the 200k deep-model protocol (identical per-seed top-$k$ decisions). Because the prefix sizes differ, these HDFS values should \emph{not} be interpreted as a direct head-to-head ranking. On BGL, all neural and classical rows in Table~\ref{tab_cross_dataset} except GraphWalk use the 500k protocol; TCN top-$k$ ($0.9826\pm0.0022$) is comparable to DeepLog-style ($0.9820\pm0.0042$). On HUFLIT-Career (no fake pad-event in walks), Isolation Forest obtains the highest mean F1 among classical/graph scorers ($0.702\pm0.023$), with GraphWalk at $0.647\pm0.070$ and PCA at $0.592\pm0.137$ (substantial PCA variance). DeepLog/TCN NLL remain competitive ($0.592\pm0.010$) under the historical HUFLIT deep-model dump. Contamination-based IF ($\approx$0.63 under the old protocol) is archived as label-informed prevalence, not the unsupervised headline.
 
 \begin{table}[htbp]
-\caption{Cross-dataset F1 (mean$\pm$std, 5 seeds). HDFS: classical baselines 500k, neural/GraphWalk 200k. BGL: all methods 500k except GraphWalk 200k. HUFLIT: full; classical/GraphWalk regenerated without pad-event~$0$. Bold/underline mark best/second within BGL and HUFLIT only---not across HDFS prefix protocols. GraphWalk BGL is a separate diagnostic, not matched-prefix ranking.}
+\caption{Cross-dataset F1 (mean$\pm$std, 5 seeds). HDFS: classical baselines 500k, neural/GraphWalk 200k. BGL: all methods 500k except GraphWalk 200k. HUFLIT: full; classical/GraphWalk regenerated without pad-event~$0$. Bold/underline mark best/second within BGL only. No direct ranking is made between regenerated no-PAD classical/GraphWalk results and the historical HUFLIT deep-model rows because their walk preprocessing differs. GraphWalk BGL is a separate diagnostic, not matched-prefix ranking.}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -157,13 +163,13 @@ Table~\ref{tab_cross_dataset}: no single winner across protocols. On HDFS, PCA a
 \midrule
 PCA & $0.5711\pm0.0944$ & $0.9217\pm0.0098$ & $0.5921\pm0.1373$ \\
 TruncatedSVD & $0.4540\pm0.1366$ & $0.9356\pm0.0117$ & $0.2027\pm0.1859$ \\
-Isolation Forest$^\ddagger$ & $0.0381\pm0.0174$ & $0.0172\pm0.0063$ & $\mathbf{0.7020\pm0.0228}$ \\
+Isolation Forest$^\ddagger$ & $0.0381\pm0.0174$ & $0.0172\pm0.0063$ & $0.7020\pm0.0228$ \\
 Transformer (val)$^\ast$ & $0.2950\pm0.0693$ & $0.9381\pm0.0089$ & $0.3520\pm0.0304$ \\
 DeepLog-style (top-k) & $0.4613\pm0.0199$ & $\underline{0.9820\pm0.0042}$ & $0.0665\pm0.0401$ \\
 DeepLog-style (NLL) & $0.3046\pm0.0198$ & $0.9381\pm0.0075$ & $0.5916\pm0.0096$ \\
 TCN (top-k) & $0.4613\pm0.0199$ & $\mathbf{0.9826\pm0.0022}$ & $0.0451\pm0.0167$ \\
 TCN (NLL) & $0.3042\pm0.0236$ & $0.9474\pm0.0035$ & $0.5916\pm0.0096$ \\
-GraphWalk (NLL)$^{\S}$ & $0.3082\pm0.0278$ & $0.2328\pm0.0474$ & $\underline{0.6471\pm0.0703}$ \\
+GraphWalk (NLL)$^{\S}$ & $0.3082\pm0.0278$ & $0.2328\pm0.0474$ & $0.6471\pm0.0703$ \\
 \bottomrule
 \end{tabular}
 \label{tab_cross_dataset}
@@ -190,7 +196,7 @@ Fig.~\ref{fig_curves}: PCA/SVD separate better than IF on imbalanced HDFS (seed-
 \midrule
 GraphWalk NLL & $0.647\pm0.070$ & $0.904\pm0.017$ \\
 IF TF-IDF (95th pct.) & $0.702\pm0.023$ & $0.902\pm0.021$ \\
-Fusion $z$(GW)${+}z$(IF) & $0.687\pm0.047$ & $0.906\pm0.017$ \\
+Fusion $z$(GW)${+}z$(IF) & $0.702\pm0.023$ & $0.906\pm0.017$ \\
 \bottomrule
 \end{tabular}
 \label{tab_graph_ablation}
@@ -244,7 +250,7 @@ Transformer (CPU) & 2.395 & 2.966 & 3.267 & 418/s \\
 \label{tab_latency}
 \end{table}
 
-\textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping dominate F1; DeepLog-style HDFS is 200k-prefix only; Drain3/vocabulary built on the evaluated prefix before split (transductive preprocessing, no labels); VNICT~2026~\cite{b26} overlaps the HDFS/BGL backbone (accepted; forthcoming).
+\textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping; HDFS deep models use 200k prefix; Drain3/vocabulary on evaluated prefix before split (transductive, unlabeled); VNICT~\cite{b26} overlaps HDFS/BGL backbone.
 
 \section{Conclusion}
 We evaluated a Drain3 pipeline that uses an event-transition graph (GraphWalk) alongside classical and deep scorers. No branch dominates: PCA remains competitive under the classical HDFS protocol; TCN and DeepLog-style are nearly tied on BGL; under Career weak labels, percentile IF obtains the highest mean F1 among regenerated unsupervised scorers, with GraphWalk providing complementary transition signal without material AUROC gain in fusion. Choose scorers by vocabulary size, walk length, and label semantics. Future work: gold SOC labels, GNN embeddings, train-only parser/vocabulary construction, regenerated HUFLIT deep dumps under the no-PAD walk construction, and matched-prefix HDFS protocols.

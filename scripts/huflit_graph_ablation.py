@@ -94,8 +94,9 @@ def eval_seed(data, seed):
     vec = TfidfVectorizer()
     Xtr = vec.fit_transform(normal_train["text"])
     Xte = vec.transform(test_df["text"])
-    cont = max(0.001, min(0.2, float(train_df["y"].mean())))
-    iso = IsolationForest(n_estimators=200, contamination=cont, random_state=seed, n_jobs=-1)
+    iso = IsolationForest(
+        n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
+    )
     iso.fit(Xtr)
     # higher anomaly score = more anomalous
     te_if = -iso.decision_function(Xte)
@@ -112,7 +113,6 @@ def eval_seed(data, seed):
     # recompute z using normal-only train refs for IF
     te_iz, _ = zscore(tr_if[train_df["y"].values == 0], te_if)
     te_fuse = 0.5 * te_gz + 0.5 * te_iz
-    tr_fuse_normal = 0.5 * ((tr_nll[train_df["y"].values == 0] - np.mean(tr_nll[train_df["y"].values == 0])) / (np.std(tr_nll[train_df["y"].values == 0]) + 1e-8))
     # approximate fuse threshold on normal train: rebuild
     tr_n_nll = tr_nll[train_df["y"].values == 0]
     tr_n_if = tr_if[train_df["y"].values == 0]
@@ -138,7 +138,7 @@ def eval_seed(data, seed):
         "Fusion_Graph_IF_F1": float(f1_f),
         "Fusion_Graph_IF_AUC": float(auc_f),
         "TFIDF_density": float(nnz),
-        "contamination": float(cont),
+        "contamination": "auto",
         "templates": int(len(graph.vocab)),
     }
 
@@ -150,7 +150,7 @@ def main():
     summary = {
         c: {"mean": float(df[c].mean()), "std": float(df[c].std(ddof=1))}
         for c in df.columns
-        if c != "Seed"
+        if c not in ("Seed", "contamination") and pd.api.types.is_numeric_dtype(df[c])
     }
     payload = {"seeds": SEEDS, "feature_names": FEATURE_NAMES, "rows": rows, "summary": summary}
     OUT.parent.mkdir(exist_ok=True)
