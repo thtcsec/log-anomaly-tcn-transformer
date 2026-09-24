@@ -1,4 +1,9 @@
-"""HUFLIT-only transition-graph experiment (no HuggingFace dependency)."""
+"""HUFLIT-only GraphWalk / transition-feature experiment (no HuggingFace).
+
+Protocol matches the paper headline: client-IP disjoint split *before*
+W=10/stride=5 windowing; GraphWalk Laplace over V∪{UNK}.
+For the full HDFS/BGL/HUFLIT dump prefer scripts/graph_transition_experiment.py.
+"""
 
 from __future__ import annotations
 
@@ -13,83 +18,30 @@ if str(_SCRIPTS) not in sys.path:
 
 import numpy as np
 import pandas as pd
-from drain3 import TemplateMiner
-from drain3.template_miner_config import TemplateMinerConfig
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import precision_recall_fscore_support
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from tqdm.auto import tqdm
 
-from graph_transition_experiment import TransitionGraph, SEEDS, FEATURE_NAMES
+from graph_transition_experiment import (
+    FEATURE_NAMES,
+    SEEDS,
+    TransitionGraph,
+    load_huflit_events,
+    split_huflit_by_client,
+)
 
-OUT = Path(__file__).resolve().parents[1] / "results" / "graph_transition_huflit_results.json"
-
-
-def load_huflit():
-    import os
-    from pathlib import Path
-    root = Path(__file__).resolve().parents[1]
-    default = root / "data" / "careerhub_20260604_095930" / "access.csv"
-    csv_path = Path(os.environ.get("HUFLIT_CAREER_CSV", default))
-    if not csv_path.exists():
-        alt = root / "careerhub_20260604_095930" / "access.csv"
-        csv_path = alt if alt.exists() else csv_path
-    df = pd.read_csv(csv_path)
-    config = TemplateMinerConfig()
-    config.profiling_enabled = False
-    config.drain_sim_th = 0.5
-    config.drain_depth = 4
-    miner = TemplateMiner(config=config)
-    rows = []
-    for row in tqdm(df.itertuples(index=False), total=len(df), desc="drain3-huflit"):
-        msg = f"{row.method} {row.path}"
-        result = miner.add_log_message(msg)
-        rows.append(
-            {
-                "ip": row.ip,
-                "timestamp": row.timestamp,
-                "EventId": int(result["cluster_id"]),
-                "LineAnomaly": int(row.suspicious_signals != "-"),
-                "suspicious": str(row.suspicious_signals),
-            }
-        )
-    events = pd.DataFrame(rows)
-    window, step = 10, 5
-    seqs = []
-    for ip, group in events.groupby("ip"):
-        group = group.sort_values("timestamp")
-        eids = group["EventId"].tolist()
-        anoms = group["LineAnomaly"].tolist()
-        if len(eids) < window:
-            seqs.append({"EventId": eids, "y": int(any(anoms))})
-            continue
-        for i in range(0, len(eids) - window + 1, step):
-            seqs.append(
-                {
-                    "EventId": eids[i : i + window],
-                    "y": int(any(anoms[i : i + window])),
-                }
-            )
-    data = pd.DataFrame(seqs)
-    data["text"] = data["EventId"].apply(
-        lambda xs: " ".join(f"E{x}" for x in xs if int(x) != 0)
-    )
-    return data, events
+OUT = Path(__file__).resolve().parents[1] / "logs" / "graph_transition_huflit_results.json"
 
 
-def eval_methods(data: pd.DataFrame):
+def eval_methods(events: pd.DataFrame):
     rows = []
     for seed in SEEDS:
-        train_df, test_df = train_test_split(
-            data, test_size=0.3, random_state=seed, stratify=data["y"]
-        )
+        train_df, test_df = split_huflit_by_client(events, seed)
         y_test = test_df["y"].values
         normal_train = train_df[train_df["y"] == 0]
 
-        # Classic IF on TF-IDF: fit normals; threshold -decision_function at 95th pct
         vec = TfidfVectorizer()
         Xtr = vec.fit_transform(normal_train["text"])
         Xte = vec.transform(test_df["text"])
@@ -100,18 +52,32 @@ def eval_methods(data: pd.DataFrame):
         tr_scores = -iso.decision_function(Xtr)
         thr = np.percentile(tr_scores, 95)
         pred = (-iso.decision_function(Xte) > thr).astype(int)
-        p, r, f1, _ = precision_recall_fscore_support(y_test, pred, average="binary", zero_division=0)
-        rows.append({"Method": "IF-TFIDF", "Seed": seed, "Precision": float(p), "Recall": float(r), "F1": float(f1)})
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, pred, average="binary", zero_division=0
+        )
+        rows.append(
+            {
+                "Method": "IF-TFIDF",
+                "Seed": seed,
+                "Precision": float(p),
+                "Recall": float(r),
+                "F1": float(f1),
+            }
+        )
 
         graph = TransitionGraph().fit(normal_train["EventId"].tolist())
         X_train = np.vstack([graph.sequence_features(s) for s in train_df["EventId"]])
         X_test = np.vstack([graph.sequence_features(s) for s in test_df["EventId"]])
         y_train = train_df["y"].values
         normal_mask = y_train == 0
+        nodes = len(graph.vocab)
+        edges = int(sum(len(c) for c in graph.edge_counts.values()))
 
         thr = np.percentile(X_train[normal_mask, 0], 95)
         pred = (X_test[:, 0] > thr).astype(int)
-        p, r, f1, _ = precision_recall_fscore_support(y_test, pred, average="binary", zero_division=0)
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, pred, average="binary", zero_division=0
+        )
         rows.append(
             {
                 "Method": "GraphWalk-NLL",
@@ -119,8 +85,8 @@ def eval_methods(data: pd.DataFrame):
                 "Precision": float(p),
                 "Recall": float(r),
                 "F1": float(f1),
-                "Nodes": len(graph.vocab),
-                "Edges": int(sum(len(c) for c in graph.edge_counts.values())),
+                "Nodes": nodes,
+                "Edges": edges,
             }
         )
 
@@ -133,8 +99,20 @@ def eval_methods(data: pd.DataFrame):
         thr = np.percentile(train_err, 95)
         test_err = np.mean((Xt - pca.inverse_transform(pca.transform(Xt))) ** 2, axis=1)
         pred = (test_err > thr).astype(int)
-        p, r, f1, _ = precision_recall_fscore_support(y_test, pred, average="binary", zero_division=0)
-        rows.append({"Method": "PCA+TransFeat", "Seed": seed, "Precision": float(p), "Recall": float(r), "F1": float(f1)})
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, pred, average="binary", zero_division=0
+        )
+        rows.append(
+            {
+                "Method": "PCA+TransFeat",
+                "Seed": seed,
+                "Precision": float(p),
+                "Recall": float(r),
+                "F1": float(f1),
+                "Nodes": nodes,
+                "Edges": edges,
+            }
+        )
 
         iso2 = IsolationForest(
             n_estimators=200, contamination="auto", random_state=seed, n_jobs=-1
@@ -144,8 +122,20 @@ def eval_methods(data: pd.DataFrame):
         thr = np.percentile(train_scores, 95)
         scores = -iso2.decision_function(X_test)
         pred = (scores > thr).astype(int)
-        p, r, f1, _ = precision_recall_fscore_support(y_test, pred, average="binary", zero_division=0)
-        rows.append({"Method": "IF+TransFeat", "Seed": seed, "Precision": float(p), "Recall": float(r), "F1": float(f1)})
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_test, pred, average="binary", zero_division=0
+        )
+        rows.append(
+            {
+                "Method": "IF+TransFeat",
+                "Seed": seed,
+                "Precision": float(p),
+                "Recall": float(r),
+                "F1": float(f1),
+                "Nodes": nodes,
+                "Edges": edges,
+            }
+        )
 
         print(
             f"seed={seed} IF-TFIDF={rows[-4]['F1']:.4f} GraphWalk={rows[-3]['F1']:.4f} "
@@ -173,34 +163,29 @@ def summarize(rows):
 
 def main():
     t0 = time.perf_counter()
-    data, events = load_huflit()
+    events, name = load_huflit_events()
     print(
-        f"sequences={len(data)} anomaly_rate={data.y.mean():.4f} templates={events.EventId.nunique()}",
+        f"{name}: {len(events)} lines, {events['ip'].nunique()} clients "
+        f"(client-disjoint → W=10/stride=5)",
         flush=True,
     )
-    # Label rule diagnostics for paper limitation section
     label_diag = {
         "rows": int(len(events)),
-        "anomaly_lines": int(events.LineAnomaly.sum()),
-        "unique_suspicious_tokens": sorted(
-            {
-                tok.strip()
-                for s in events.loc[events.LineAnomaly == 1, "suspicious"].unique()
-                for tok in str(s).replace("|", ",").split(",")
-                if tok.strip() and tok.strip() != "-"
-            }
-        )[:50],
+        "anomaly_lines": int(events["LineAnomaly"].sum()),
         "note": "Labels come from fixed suspicious_signals rules in the access log export.",
+        "split": "client-IP disjoint before windowing",
     }
-    rows = eval_methods(data)
+    rows = eval_methods(events)
     payload = {
         "seeds": SEEDS,
         "feature_names": FEATURE_NAMES,
+        "protocol": "client-IP disjoint; W=10/stride=5; GraphWalk V∪{UNK}; IF 95th-pct",
         "label_diagnostics": label_diag,
         "rows": rows,
         "summary": summarize(rows),
         "elapsed_sec": time.perf_counter() - t0,
     }
+    OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(json.dumps(payload["summary"], indent=2), flush=True)
     print(f"Saved {OUT}", flush=True)

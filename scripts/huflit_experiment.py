@@ -1,8 +1,17 @@
-"""Evaluation on HUFLIT Library Logs.
+"""HUFLIT Library Logs — LEGACY / HISTORICAL deep-model protocol.
 
-Groups logs by client IP address, slices into windows, and runs the entire
-evaluation pipeline (PCA, TruncatedSVD, Isolation Forest, DeepLog, TCN, and Transformer)
-across 5 random seeds.
+WARNING: ``main()`` still windows first (W=10, stride=5) then does a
+sequence-level ``train_test_split``. That matches the historical deep dump
+under ``logs/legacy_contamination/huflit_results.json`` cited in the paper,
+and must NOT be used for current HUFLIT headline classical/GraphWalk numbers.
+
+Headline HUFLIT classical/GraphWalk (client-IP disjoint before windowing):
+  - scripts/huflit_baselines_nopad.py
+  - scripts/huflit_graph_ablation.py
+  - scripts/graph_transition_experiment.py
+
+``split_clients_then_window`` / ``run_baselines(..., train_df, test_df)`` are
+the current-protocol helpers used by the headline scripts above.
 """
 
 import os
@@ -609,6 +618,12 @@ def run_tcn(data, seed):
 
 def main():
     t0 = time.perf_counter()
+    print(
+        "WARNING: huflit_experiment.py main() is LEGACY (window-then-split). "
+        "For current HUFLIT headline results use huflit_baselines_nopad.py / "
+        "huflit_graph_ablation.py / graph_transition_experiment.py.",
+        flush=True,
+    )
     raw_df = load_huflit_data()
     events = drain_parse(raw_df)
     print(f'parsed logs: {len(events)}, templates: {events["EventId"].nunique()}', flush=True)

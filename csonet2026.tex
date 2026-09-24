@@ -39,7 +39,7 @@ Faculty of Information Technology, Ho Chi Minh City University of Foreign Langua
 \maketitle
 %
 \begin{abstract}
-We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. Classical frequency models remain competitive on HDFS; TCN and DeepLog-style LSTM are nearly tied on BGL; on HUFLIT-Career, compact-vocabulary outlier models remain competitive under heuristic/weak labels. Beyond a prior HDFS/BGL study, this work introduces explicit event-transition graph modeling and GraphWalk scoring, broadens evaluation to an institutional HTTP workload, and adds deployment and label-limitation analyses.
+We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. PCA remains strong under the HDFS classical protocol; TCN and DeepLog-style LSTM are nearly tied on BGL; client-disjoint HUFLIT-Career results exhibit substantial seed variation under heuristic/weak labels. Beyond a prior HDFS/BGL study, this work introduces explicit event-transition graph modeling and GraphWalk scoring, broadens evaluation to an institutional HTTP workload, and adds deployment and label-limitation analyses.
 
 \keywords{Log anomaly detection \and event-transition network \and Transformer \and Drain3 \and AIOps.}
 \end{abstract}
@@ -151,7 +151,7 @@ Templates & 137 & 198 & 6 \\
 Table~\ref{tab_cross_dataset}: no single winner across protocols. On HDFS, PCA achieves $0.5711\pm0.0944$ (500k classical), while DeepLog-style and TCN both obtain $0.4613\pm0.0199$ (200k deep; identical per-seed top-$k$). This equality follows from the coarse sequence-level top-$K$ rule rather than identical model outputs: at $K{=}9$, both yield the same binary any-mismatch flags on evaluated HDFS sequences, while NLL scores differ. Prefix sizes also differ, so classical vs.\ deep HDFS F1 is not a head-to-head ranking. On BGL (500k except GraphWalk), TCN top-$k$ ($0.9826\pm0.0022$) is comparable to DeepLog-style ($0.9820\pm0.0042$). On HUFLIT-Career (client-disjoint), Isolation Forest leads regenerated unsupervised scorers ($0.539\pm0.298$) but with high seed variance; GraphWalk $0.496\pm0.270$ and PCA $0.458\pm0.263$; DeepLog/TCN NLL remain $0.592\pm0.010$ under the historical deep dump.
 
 \begin{table}[htbp]
-\caption{Cross-dataset F1 (mean$\pm$std, 5 seeds). HDFS: classical 500k, neural/GraphWalk 200k. BGL: 500k except GraphWalk 200k. HUFLIT: client-disjoint; classical/GraphWalk no pad-event~$0$. Bold/underline: BGL only. No ranking between no-PAD classical/GraphWalk and historical HUFLIT deep rows.}
+\caption{Cross-dataset F1 (mean$\pm$std, 5 seeds). HDFS: classical 500k, neural/GraphWalk 200k. BGL: 500k except GraphWalk 200k. HUFLIT: client-disjoint; PAD token 0 excluded from classical/GraphWalk sequences. Bold/underline: BGL only. No ranking between no-PAD classical/GraphWalk and historical HUFLIT deep rows.}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -172,7 +172,7 @@ GraphWalk (NLL)$^{\S}$ & $0.3082\pm0.0278$ & $0.2328\pm0.0474$ & $0.4963\pm0.269
 \end{tabular}
 \label{tab_cross_dataset}
 \end{table}
-{\footnotesize $^\ddagger$95th-pct.\ on $-\texttt{decision\_function}$ (\texttt{logs/if\_percentile\_hdfs\_bgl.json}; HUFLIT: \texttt{logs/huflit\_baselines\_nopad.json}, client-disjoint). $^\ast$Val-tuned percentile via validation F1. HUFLIT Transformer/DeepLog/TCN: historical dump. $^{\S}$\texttt{logs/huflit\_graph\_ablation.json} / \texttt{logs/graph\_transition\_results.json} (PAD excluded; $V\cup\{\mathrm{UNK}\}$). Per-seed HDFS top-$k$ (200k): $0.4865,0.4444,0.4725,0.4382,0.4649$ for both DeepLog-style and TCN.}
+{\footnotesize $^\ddagger$95th-pct.\ on $-\texttt{decision\_function}$ (\texttt{logs/if\_percentile\_hdfs\_bgl.json}; HUFLIT: \texttt{logs/huflit\_baselines\_nopad.json}, client-disjoint). $^\ast$Val-tuned percentile via validation F1. HUFLIT Transformer/DeepLog/TCN: historical dump (\texttt{logs/legacy\_contamination/huflit\_results.json}). $^{\S}$\texttt{logs/huflit\_graph\_ablation.json} / \texttt{logs/graph\_transition\_results.json} (PAD excluded; $V\cup\{\mathrm{UNK}\}$). Per-seed HDFS top-$k$ (200k): $0.4865,0.4444,0.4725,0.4382,0.4649$ for both DeepLog-style and TCN.}
 
 \begin{figure}[htbp]
 \centering

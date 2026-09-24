@@ -37,7 +37,7 @@ A related HDFS/BGL Drain3–TCN–Transformer manuscript was **accepted at VNICT
 
 **Prefix sizes (artifact-matched):** HDFS classical 500k / deep+GraphWalk 200k; BGL classical+deep 500k / GraphWalk+grouping 200k. See `logs/`.
 
-**Legacy dumps:** `logs/legacy_contamination/` holds pre-percentile IF / older HUFLIT JSON. Headline IF/GraphWalk: `if_percentile_hdfs_bgl.json`, `huflit_baselines_nopad.json`, `graph_transition_results.json`.
+**Legacy dumps:** `logs/legacy_contamination/` holds pre-percentile IF / older HUFLIT JSON (including historical HUFLIT deep rows: `huflit_results.json`). **Headline** IF/GraphWalk/classical HUFLIT: `if_percentile_hdfs_bgl.json`, `huflit_baselines_nopad.json`, `huflit_graph_ablation.json`, `graph_transition_results.json` (client-IP disjoint; GraphWalk $V\cup\{\mathrm{UNK}\}$).
 
 ---
 
@@ -62,7 +62,7 @@ A related HDFS/BGL Drain3–TCN–Transformer manuscript was **accepted at VNICT
 └── README.md
 ```
 
-Key public artifacts under `logs/`: `graph_transition_results.json` (GraphWalk 5-seed HDFS/BGL/HUFLIT), `deeplog_results.json`, `huflit_*.json`, grouping/latency dumps. Re-run scripts under `scripts/` to regenerate.
+Key public artifacts under `logs/`: `graph_transition_results.json` (GraphWalk 5-seed HDFS/BGL/HUFLIT), `huflit_baselines_nopad.json`, `huflit_graph_ablation.json`, `bgl_grouping_results.json`, latency dumps. Re-run scripts under `scripts/` to regenerate.
 
 ---
 
@@ -79,18 +79,24 @@ Public benchmarks (HuggingFace LogHub):
 ```bash
 python scripts/multi_seed_experiment.py
 python scripts/bgl_experiment.py
-python scripts/graph_transition_experiment.py   # HDFS/BGL/HUFLIT GraphWalk → logs/graph_transition_results.json
+python scripts/graph_transition_experiment.py   # headline GraphWalk HDFS/BGL/HUFLIT → logs/graph_transition_results.json
 python scripts/if_percentile_hdfs_bgl.py        # unified IF 95th-pct. protocol
-python scripts/bgl_grouping_experiment.py
+python scripts/bgl_grouping_experiment.py       # chronological split before windowing
 ```
 
-HUFLIT-Career (place anonymized export under `data/careerhub_…`, never commit):
+HUFLIT-Career headline (place anonymized export under `data/careerhub_…`, never commit):
 
 ```bash
 set HUFLIT_CAREER_DIR=data\careerhub_20260604_095930
+python scripts/huflit_baselines_nopad.py        # classical PCA/SVD/IF, client-disjoint
+python scripts/huflit_graph_ablation.py         # GraphWalk vs IF vs fusion, client-disjoint
+# optional HUFLIT-only GraphWalk (same protocol; no HF):
 python scripts/graph_transition_huflit_experiment.py
-python scripts/huflit_graph_ablation.py
 ```
+
+**Legacy / do not use for headline numbers**
+
+- `scripts/huflit_experiment.py` — historical deep (DeepLog/TCN/Transformer) path: windows first then sequence-level split. Matches `logs/legacy_contamination/huflit_results.json` only; paper marks those rows as non-comparable to current classical/GraphWalk.
 
 Do **not** extract the multi-GB campus RAR on `D:\huflit_logs`.
 
