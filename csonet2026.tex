@@ -47,7 +47,7 @@ We present a network-aware log anomaly detection pipeline that treats Drain3 tem
 \section{Introduction}
 Modern infrastructures generate diverse logs that capture operational state and behavioral patterns. Rule-based detectors age poorly; effective detection requires sequence-level analysis. We model the log stream as a directed event-transition network: Drain3 templates are vertices and successive co-occurrences are edges. A Block ID, time window, or client session is a walk on this graph. On HUFLIT-Career, client IPs define client-specific walks over the event-transition graph; IP identifiers are used only for grouping and are excluded from model features. Anomalies are walks that visit rare transitions or deviate quantitatively from normal traversal statistics.
 
-This is primarily an applied evaluation study rather than a new end-to-end detector architecture. The template sequence after Drain3 is an intermediate layer: compact for lightweight baselines, structured for sequence models, and mappable to operational units. We ask: (RQ1)~how does post-Drain3 grouping affect the signal; (RQ2)~how do reconstruction, isolation, graph-walk NLL, next-event prediction, TCN, and masked modeling compare on the same walks; (RQ3)~does the ranking hold from LogHub benchmarks to an institutional web log.
+This is primarily an applied evaluation study rather than a proposal of a new end-to-end detector architecture. The template sequence after Drain3 is an intermediate layer: compact for lightweight baselines, structured for sequence models, and mappable to operational units. We ask: (RQ1)~how does post-Drain3 grouping affect the signal; (RQ2)~how do reconstruction, isolation, graph-walk NLL, next-event prediction, TCN, and masked modeling compare on the same walks; (RQ3)~does the ranking hold from LogHub benchmarks to an institutional web log.
 
 \textbf{Contributions:} (1)~a leakage-aware pipeline that structures logs as walks on directed event-transition graphs; (2)~\emph{operational} GraphWalk scoring via Laplace-smoothed $P(v\mid u)$, alongside classical and deep branches; (3)~evaluation on HDFS, BGL, and HUFLIT-Career; (4)~deployment trade-offs (F1, latency, explainability) and explicit proxy-label limits.
 
@@ -253,20 +253,20 @@ Transformer (CPU) & 2.395 & 2.966 & 3.267 & 418/s \\
 \textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping; HDFS deep 200k prefix; Drain3/vocabulary on evaluated prefix before split (transductive, unlabeled); withdrawn VNICT manuscript~\cite{b26} overlaps the HDFS/BGL backbone.
 
 \section{Conclusion}
-We evaluated a Drain3 pipeline that uses an event-transition graph (GraphWalk) alongside classical and deep scorers. No branch dominates: PCA remains competitive under the classical HDFS protocol; TCN and DeepLog-style are nearly tied on BGL; under Career weak labels, percentile IF obtains the highest mean F1 among regenerated unsupervised scorers, with GraphWalk providing complementary transition signal without material AUROC gain in fusion. Choose scorers by vocabulary size, walk length, and label semantics. Future work: gold SOC labels, GNN embeddings, train-only parser/vocabulary construction, regenerated HUFLIT deep dumps under the no-PAD walk construction, and matched-prefix HDFS protocols.
+We evaluated a Drain3 pipeline that uses an event-transition graph (GraphWalk) alongside classical and deep scorers. No branch dominates: PCA remains competitive under the classical HDFS protocol; TCN and DeepLog-style are nearly tied on BGL; under Career weak labels, percentile IF leads regenerated unsupervised scorers, with GraphWalk providing complementary transition signal without material AUROC gain in fusion. Choose scorers by vocabulary size, walk length, and label semantics. Future work: gold SOC labels, GNN embeddings, train-only parser/vocabulary construction, and matched-prefix HDFS protocols.
 
 \begin{thebibliography}{00}
 \scriptsize
 \setlength{\itemsep}{0pt}
 \setlength{\parskip}{0pt}
 \bibitem{b1} M. Du et al., ``DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning,'' in \textit{Proc. ACM CCS}, 2017.
-\bibitem{b2} H. Guo et al., ``LogBERT: Log Anomaly Detection via BERT,'' in \textit{Proc. IJCNN}, 2021, doi: 10.1109/IJCNN52387.2021.9534113.
+\bibitem{b2} H. Guo et al., ``LogBERT: Log Anomaly Detection via BERT,'' in \textit{Proc. IJCNN}, 2021.
 \bibitem{b3} P. He et al., ``Drain: An Online Log Parsing Approach with Fixed Depth Tree,'' in \textit{Proc. IEEE ICWS}, 2017.
 \bibitem{b4} A. Vaswani et al., ``Attention Is All You Need,'' in \textit{Proc. NeurIPS}, 2017.
 \bibitem{b6} J. Zhu et al., ``Tools and Benchmarks for Automated Log Parsing,'' in \textit{Proc. ICSE}, 2019.
 \bibitem{b7} V. H. Le and H. Zhang, ``Log Parsing with Prompt-based Few-shot Learning,'' in \textit{Proc. ICSE}, 2023.
 \bibitem{b8} T. Zhang et al., ``LogPrompt: A Log-based Anomaly Detection Framework Using Prompts,'' in \textit{Proc. IJCNN}, 2023.
-\bibitem{b9} X. Han et al., ``LogGPT: Log Anomaly Detection via GPT,'' in \textit{Proc. IEEE BigData}, 2023, doi: 10.1109/BigData59044.2023.10386543.
+\bibitem{b9} X. Han et al., ``LogGPT: Log Anomaly Detection via GPT,'' in \textit{Proc. IEEE BigData}, 2023.
 \bibitem{b10} V. Chandola et al., ``Anomaly Detection: A Survey,'' \textit{ACM Comput. Surv.}, 2009.
 \bibitem{b11} F. T. Liu et al., ``Isolation Forest,'' in \textit{Proc. IEEE ICDM}, 2008.
 \bibitem{b12} J. Zhu et al., ``Loghub: A Large Collection of System Log Datasets for AI-driven Log Analytics,'' in \textit{Proc. IEEE ISSRE}, 2023.
@@ -279,12 +279,12 @@ We evaluated a Drain3 pipeline that uses an event-transition graph (GraphWalk) a
 \bibitem{b20} W. Guan et al., ``LogLLM: Log-Based Anomaly Detection Using Large Language Models,'' \textit{arXiv:2411.08561}, 2024.
 \bibitem{b21} X. Zhu et al., ``CoLA: Model Collaboration for Log-based Anomaly Detection,'' \textit{Proc. VLDB Endow.}, 2025.
 \bibitem{b22} C. Almodovar et al., ``LogFiT: Log Anomaly Detection Using Fine-Tuned Language Models,'' \textit{IEEE Trans. Netw. Service Manag.}, 2024.
-\bibitem{b23} X. Liu et al., ``LINEADAPTER: Parameter-Efficient Fine-Tuning for Log Anomaly Detection and Root Cause Analysis,'' in \textit{Proc. IEEE ICPADS}, 2025, doi: 10.1109/ICPADS67057.2025.11322907.
+\bibitem{b23} X. Liu et al., ``LINEADAPTER: Parameter-Efficient Fine-Tuning for Log Anomaly Detection and Root Cause Analysis,'' in \textit{Proc. IEEE ICPADS}, 2025.
 \bibitem{b24} B. Yu et al., ``Deep Learning or Classical Machine Learning? An Empirical Study on Log-Based Anomaly Detection,'' in \textit{Proc. ICSE}, 2024.
-\bibitem{b25} C. Duan et al., ``LogAction: Consistent Cross-system Anomaly Detection through Logs via Active Domain Adaptation,'' in \textit{Proc. ASE}, pp.~700--712, 2025, doi: 10.1109/ASE63991.2025.00064.
+\bibitem{b25} C. Duan et al., ``LogAction: Consistent Cross-system Anomaly Detection through Logs via Active Domain Adaptation,'' in \textit{Proc. ASE}, 2025.
 \bibitem{b26} H.-T. Trinh and T.-T. Cao, ``Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks,'' unpublished manuscript, accepted at VNICT~2026 and subsequently withdrawn before publication, 2026.
-\bibitem{b27} Y. Xie, H. Zhang, and M. A. Babar, ``LogGD: Detecting Anomalies from System Logs with Graph Neural Networks,'' in \textit{Proc. IEEE QRS}, pp.~299--310, 2022, doi: 10.1109/QRS57517.2022.00039.
-\bibitem{b28} Z. Li, J. Shi, and M. van Leeuwen, ``Graph Neural Networks based Log Anomaly Detection and Explanation,'' \textit{Data Min. Knowl. Disc.}, vol.~40, art.~66, 2026, doi: 10.1007/s10618-026-01235-6.
+\bibitem{b27} Y. Xie et al., ``LogGD: Detecting Anomalies from System Logs with Graph Neural Networks,'' in \textit{Proc. IEEE QRS}, 2022.
+\bibitem{b28} Z. Li et al., ``Graph Neural Networks based Log Anomaly Detection and Explanation,'' \textit{Data Min. Knowl. Disc.}, 2026.
 \end{thebibliography}
 
 \end{document}
