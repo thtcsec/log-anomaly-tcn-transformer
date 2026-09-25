@@ -39,7 +39,8 @@ Faculty of Information Technology, Ho Chi Minh City University of Foreign Langua
 \maketitle
 %
 \begin{abstract}
-We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. PCA remains strong under the HDFS classical protocol; TCN and DeepLog-style LSTM are nearly tied on BGL; client-disjoint HUFLIT-Career results exhibit substantial seed variation under heuristic/weak labels. Beyond a prior HDFS/BGL study, this work introduces explicit event-transition graph modeling and GraphWalk scoring, broadens evaluation to an institutional HTTP workload, and adds deployment and label-limitation analyses.
+System and web logs record both infrastructure state and user behavior, yet rule-based detectors age quickly and many learning methods either ignore event order or compare scorers under incompatible protocols. Casting parsed templates as nodes of a transition network makes that structure explicit: a block, a time window, or a client session is a walk, not a bag of events.
+We present a network-aware log anomaly detection pipeline that treats Drain3 templates as vertices of a directed transition graph and each log sequence as a walk on that graph. Walks are scored with explicit transition-probability features (GraphWalk) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer. PCA remains strong under the HDFS classical protocol; TCN and DeepLog-style LSTM are nearly tied on BGL; on an institutional web log, method behavior depends on grouping and weak-label semantics. The study pairs GraphWalk with grouping, latency, and label-limitation analyses.
 
 \keywords{Log anomaly detection \and event-transition network \and Transformer \and Drain3 \and AIOps.}
 \end{abstract}
@@ -50,9 +51,6 @@ Modern infrastructures generate diverse logs that capture operational state and 
 This is primarily an applied evaluation study rather than a proposal of a new end-to-end detector architecture. The template sequence after Drain3 is an intermediate layer: compact for lightweight baselines, structured for sequence models, and mappable to operational units. We ask: (RQ1)~how does post-Drain3 grouping affect the signal; (RQ2)~how do reconstruction, isolation, graph-walk NLL, next-event prediction, TCN, and masked modeling compare on the same walks; (RQ3)~how do method behaviors and failure modes change from LogHub benchmarks to an institutional web log.
 
 \textbf{Contributions:} (1)~a Drain3 walk pipeline with client-disjoint (HUFLIT) and chronological (BGL grouping) splits before windowing; (2)~\emph{operational} GraphWalk scoring via Laplace-smoothed $P(v\mid u)$ over $V\cup\{\mathrm{UNK}\}$, alongside classical and deep branches; (3)~evaluation on HDFS, BGL, and HUFLIT-Career; (4)~deployment trade-offs and proxy-label limits.
-
-\paragraph{Relation to prior manuscript.}
-A related HDFS/BGL Drain3--TCN--Transformer manuscript was accepted at VNICT~2026 but subsequently withdrawn before publication~\cite{b26}. This CSoNet paper extends that manuscript by introducing explicit event-transition graph modeling and GraphWalk scoring, broadening evaluation to institutional user-behavior logs, and adding grouping, latency, explainability, and clearer label/reproduction analyses.
 
 \section{Related Work}
 Early statistical approaches include PCA and Isolation Forest~\cite{b10,b11}; empirical work~\cite{b24} shows classical models can remain competitive. Sequential models such as DeepLog~\cite{b1}, LogAnomaly~\cite{b13}, and LogRobust~\cite{b14} score event trajectories. Drain/Drain3~\cite{b3} address parsing; Transformers (LogBERT~\cite{b2}, surveys~\cite{b16}) build on self-attention~\cite{b4}. Recent LLM-oriented detectors~\cite{b20,b22} and GNN log graphs~\cite{b27,b28} are complementary to our lighter GraphWalk branch.
@@ -248,7 +246,7 @@ Transformer (CPU) & 2.395 & 2.966 & 3.267 & 418/s \\
 \label{tab_latency}
 \end{table}
 
-\textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping; HDFS deep 200k prefix; Drain3 fit on the evaluated prefix before split (transductive, unlabeled); withdrawn VNICT manuscript~\cite{b26} overlaps the HDFS/BGL backbone.
+\textbf{Threats:} heuristic HUFLIT labels; Drain3 $\theta$/grouping; HDFS deep 200k prefix; Drain3 fit on the evaluated prefix before split (transductive, unlabeled).
 
 \section{Conclusion}
 We evaluated a Drain3 pipeline with GraphWalk alongside classical and deep scorers. No branch dominates across protocols and label regimes. Choose scorers by vocabulary size, walk length, and label semantics. Future work: gold SOC labels, GNN embeddings, train-only parser construction, and matched-prefix HDFS protocols.
@@ -272,7 +270,6 @@ We evaluated a Drain3 pipeline with GraphWalk alongside classical and deep score
 \bibitem{b20} W. Guan et al., ``LogLLM: Log-Based Anomaly Detection Using Large Language Models,'' \textit{arXiv:2411.08561}, 2024.
 \bibitem{b22} C. Almodovar et al., ``LogFiT: Log Anomaly Detection Using Fine-Tuned Language Models,'' \textit{IEEE Trans. Netw. Service Manag.}, 2024.
 \bibitem{b24} B. Yu et al., ``Deep Learning or Classical Machine Learning? An Empirical Study on Log-Based Anomaly Detection,'' in \textit{Proc. ICSE}, 2024.
-\bibitem{b26} H.-T. Trinh and T.-T. Cao, ``TCN and Transformer Networks for Log Anomaly Detection in Enterprise and Industrial Networks,'' unpublished manuscript, accepted at VNICT~2026 then withdrawn before publication, 2026.
 \bibitem{b27} Y. Xie et al., ``LogGD: Detecting Anomalies from System Logs with Graph Neural Networks,'' in \textit{Proc. IEEE QRS}, 2022.
 \bibitem{b28} Z. Li et al., ``Graph Neural Networks based Log Anomaly Detection and Explanation,'' \textit{Data Min. Knowl. Disc.}, 2026.
 \end{thebibliography}
