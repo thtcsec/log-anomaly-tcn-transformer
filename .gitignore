@@ -32,6 +32,7 @@ results/
 *.json
 !logs/*.json
 !logs/*.csv
+!.zenodo.json
 
 # Private / bulky (never publish)
 data/

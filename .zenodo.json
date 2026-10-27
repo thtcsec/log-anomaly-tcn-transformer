@@ -1,0 +1,32 @@
+{
+  "title": "Network-Aware Event Sequence Modeling for User-Behavior and System Log Anomaly Detection",
+  "upload_type": "publication",
+  "publication_type": "conferencepaper",
+  "description": "Research artifact for CSoNet 2026. Drain3 templates are vertices of a directed transition graph; walks are scored with GraphWalk alongside classical and sequence models on HDFS, BGL, and HUFLIT-Career. Applied evaluation study. No Springer DOI is claimed.",
+  "creators": [
+    {
+      "name": "Cao, Thanh Tien",
+      "affiliation": "Industrial University of Ho Chi Minh City and HUFLIT"
+    },
+    {
+      "name": "Trinh, Tu Hoang",
+      "affiliation": "Faculty of Information Technology, HUFLIT"
+    },
+    {
+      "name": "Tran, Ha Manh",
+      "affiliation": "Faculty of Information Technology, HUFLIT"
+    }
+  ],
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "Log Anomaly Detection",
+    "Event-Transition Network",
+    "GraphWalk",
+    "Drain3",
+    "TCN",
+    "Transformer",
+    "AIOps",
+    "CSoNet 2026"
+  ]
+}

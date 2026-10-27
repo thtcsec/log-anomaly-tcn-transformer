@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use this research software or paper, please cite it as below."
+authors:
+  - family-names: "Cao"
+    given-names: "Thanh Tien"
+    email: "thanhct@huflit.edu.vn"
+    affiliation: "Industrial University of Ho Chi Minh City and Faculty of Information Technology, Ho Chi Minh City University of Foreign Languages -- Information Technology"
+  - family-names: "Trinh"
+    given-names: "Tu Hoang"
+    email: "23dh113972@st.huflit.edu.vn"
+    affiliation: "Faculty of Information Technology, Ho Chi Minh City University of Foreign Languages -- Information Technology"
+  - family-names: "Tran"
+    given-names: "Ha Manh"
+    email: "hatm@huflit.edu.vn"
+    affiliation: "Faculty of Information Technology, Ho Chi Minh City University of Foreign Languages -- Information Technology"
+title: "Network-Aware Event Sequence Modeling for User-Behavior and System Log Anomaly Detection"
+version: "1.0.0"
+date-released: "2026-10-27"
+url: "https://github.com/thtcsec/log-anomaly-tcn-transformer"
+repository-code: "https://github.com/thtcsec/log-anomaly-tcn-transformer"
+license: MIT
+preferred-citation:
+  type: conference-paper
+  authors:
+    - family-names: "Cao"
+      given-names: "Thanh Tien"
+    - family-names: "Trinh"
+      given-names: "Tu Hoang"
+    - family-names: "Tran"
+      given-names: "Ha Manh"
+  title: "Network-Aware Event Sequence Modeling for User-Behavior and System Log Anomaly Detection"
+  collection-title: "Proceedings of the 15th International Conference on Computational Social Networks (CSoNet 2026)"
+  conference:
+    name: "The 15th International Conference on Computational Social Networks (CSoNet 2026)"
+    city: "Ho Chi Minh City"
+    country: "VN"
+    date-start: "2026-11-16"
+    date-end: "2026-11-18"
+  year: 2026
+  status: in-press
+  url: "https://github.com/thtcsec/log-anomaly-tcn-transformer"

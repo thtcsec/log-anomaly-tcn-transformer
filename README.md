@@ -1,111 +1,103 @@
 <p align="center">
   <img src="assets/hcmut.png" height="64" alt="HCMUT — CSoNet 2026 Organizer" />
+  <br />
+  <sub>Conference organizer. Authors are affiliated with IUH and HUFLIT, not HCMUT.</sub>
 </p>
 
-<h1 align="center">CSoNet 2026 — Network-Aware Event Sequence Modeling for Log Anomaly Detection</h1>
+<h1 align="center">Network-Aware Event Sequence Modeling</h1>
+<p align="center"><em>User-behavior and system log anomaly detection</em></p>
 
 <p align="center">
-  <a href="https://csonet-conf.github.io/csonet26/"><img src="https://img.shields.io/badge/Conference-CSoNet%202026-0B5FFF.svg" alt="Conference" /></a>
-  <a href="https://csonet-conf.github.io/csonet26/"><img src="https://img.shields.io/badge/Organizer-HCMUT%20%7C%20Bach%20Khoa-CC0000.svg" alt="Organizer" /></a>
-  <a href="https://link.springer.com/conference/csonet"><img src="https://img.shields.io/badge/Proceedings-Springer%20LNCS-FF6600.svg" alt="Proceedings" /></a>
-  <img src="https://img.shields.io/badge/Indexing-ISI%20%7C%20EI%20%7C%20Scopus-6A0DAD.svg" alt="Indexing" />
-  <img src="https://img.shields.io/badge/Status-Camera--ready%20revision-orange.svg" alt="Status" />
+  <a href="https://csonet-conf.github.io/csonet26/"><img src="https://img.shields.io/badge/CSoNet-2026-0B5FFF.svg" alt="CSoNet 2026" /></a>
+  <a href="https://github.com/thtcsec/log-anomaly-tcn-transformer/tree/csonet2026-camera-ready"><img src="https://img.shields.io/badge/artifact-camera--ready-2ea44f.svg" alt="Camera-ready artifact tag" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code%20license-MIT-blue.svg" alt="MIT license" /></a>
+  <a href="ARTIFACT.md"><img src="https://img.shields.io/badge/reproducibility-logs%20dumps-informational.svg" alt="Frozen metric dumps" /></a>
 </p>
-
----
 
 ## Paper metadata
 
-| Field | Info |
+| Field | Record |
 |---|---|
 | **Title** | *Network-Aware Event Sequence Modeling for User-Behavior and System Log Anomaly Detection* |
-| **Venue** | CSoNet 2026 — Ho Chi Minh City, 16–18 Nov 2026 (organized at **HCMUT**) |
-| **Authors** | Thanh Tien Cao, Tu Hoang Trinh, Ha Manh Tran |
-| **Affiliation** | IUH & HUFLIT |
-| **LaTeX** | `csonet2026.tex` (Springer LNCS) |
-| **Code** | https://github.com/thtcsec/log-anomaly-tcn-transformer |
+| **Authors** | Thanh Tien Cao, Tu Hoang Trinh, and Ha Manh Tran* |
+| **Affiliation** | IUH (Cao) and Faculty of Information Technology, HUFLIT |
+| **Venue** | CSoNet 2026, HCMUT, Ho Chi Minh City, 16–18 November 2026 |
+| **Status** | Accepted; Springer LNCS forthcoming. No DOI is claimed. |
+| **Artifact tag** | [`csonet2026-camera-ready`](https://github.com/thtcsec/log-anomaly-tcn-transformer/tree/csonet2026-camera-ready) |
+| **Code license** | MIT (`LICENSE`). LogHub corpora remain under their owners' terms. Institutional HTTP logs are not released. |
 
----
-
-## Relation to prior manuscript (disclosure)
-
-A related HDFS/BGL Drain3–TCN–Transformer manuscript was **accepted at VNICT 2026 but subsequently withdrawn before publication**:
-
-> H.-T. Trinh and T.-T. Cao, *Application of TCN and Transformer Networks for Log Anomaly Detection in Large-Scale Enterprise and Industrial Networks*, unpublished manuscript (accepted at VNICT 2026; withdrawn before publication).
-
-**This CSoNet manuscript extends that work** by introducing explicit event-transition graph modeling and GraphWalk scoring, broadening evaluation to institutional user-behavior logs, and adding grouping, latency, explainability, and clearer label/reproduction analyses. **Email CSoNet TPC chairs** about the overlap (and the withdrawal) before camera-ready if not already on record.
-
-**Prefix sizes (artifact-matched):** HDFS classical 500k / deep+GraphWalk 200k; BGL classical+deep 500k / GraphWalk+grouping 200k. See `logs/`.
-
-**Legacy dumps:** `logs/legacy_contamination/` holds pre-percentile IF / older HUFLIT JSON (including historical HUFLIT deep rows: `huflit_results.json`). **Headline** IF/GraphWalk/classical HUFLIT: `if_percentile_hdfs_bgl.json`, `huflit_baselines_nopad.json`, `huflit_graph_ablation.json`, `graph_transition_results.json` (client-IP disjoint; GraphWalk $V\cup\{\mathrm{UNK}\}$).
-
----
+\*Corresponding authors: `hatm@huflit.edu.vn`, `tht.csec2005@gmail.com`
 
 ## Overview
 
-1. **Parsing** — Drain3 templates as graph vertices  
-2. **Grouping** — Block ID / time window / client-IP walks  
-3. **Scoring** — PCA, TruncatedSVD, Isolation Forest, DeepLog, TCN, Transformer, GraphWalk  
+This is an applied evaluation study, not a new detector architecture. Drain3 templates are vertices of a directed transition graph; a Block ID, time window, or client session is a walk on that graph. Walks are scored with GraphWalk (Laplace-smoothed \(P(v\mid u)\)) alongside PCA/SVD, Isolation Forest, a DeepLog-style LSTM, TCN, and a masked Transformer.
 
----
+## Headline results
 
-## Repository layout
+Cross-dataset F1 (mean±std, 5 seeds). Prefix sizes are **not** matched across every cell: HDFS classical 500k / neural+GraphWalk 200k; BGL 500k except GraphWalk 200k. HUFLIT classical/GraphWalk: client-disjoint. Do not rank historical HUFLIT deep rows against current classical/GraphWalk.
 
-```text
-├── csonet2026.tex / llncs.cls     # LNCS manuscript
-├── assets/hcmut.png               # Conference organizer (HCMUT)
-├── images/                        # Figures for the paper
-├── scripts/                       # Experiment runners (public)
-├── logs/                          # Public metric dumps (incl. GraphWalk HDFS/BGL/HUFLIT)
-├── data/                          # Private logs (gitignored; not published)
-├── results/                       # Scratch / local reruns (gitignored)
-└── README.md
-```
+| Method | HDFS | BGL | HUFLIT |
+|---|---|---|---|
+| PCA | 0.5711±0.0944 | 0.9217±0.0098 | 0.4583±0.2633 |
+| Isolation Forest | 0.0381±0.0174 | 0.0172±0.0063 | 0.5395±0.2982 |
+| DeepLog-style (top-k) | 0.4613±0.0199 | 0.9820±0.0042 | historical dump |
+| TCN (top-k) | 0.4613±0.0199 | **0.9826±0.0022** | historical dump |
+| GraphWalk (NLL) | 0.3082±0.0278 | 0.2328±0.0474 | 0.4963±0.2698 |
 
-Key public artifacts under `logs/`: `graph_transition_results.json` (GraphWalk 5-seed HDFS/BGL/HUFLIT), `huflit_baselines_nopad.json`, `huflit_graph_ablation.json`, `bgl_grouping_results.json`, latency dumps. Re-run scripts under `scripts/` to regenerate.
+Source: `logs/` dumps listed in `ARTIFACT.md`. HUFLIT labels are heuristic scanner-probe rules, not SOC ground truth.
 
----
+## Relation to a withdrawn manuscript
 
-## Quick start
+A related HDFS/BGL Drain3–TCN–Transformer manuscript was accepted at VNICT 2026 and **withdrawn before publication**. This CSoNet paper extends that work with GraphWalk, HUFLIT-Career, and grouping/latency analyses. It is a different question from the SOICT 2026 campus-archive validity study.
+
+## Reproduce
 
 ```bash
 python -m venv .venv
-.\.venv\Scripts\activate          # Windows
-pip install torch numpy pandas scikit-learn datasets drain3 tqdm matplotlib
+# Windows: .venv\Scripts\activate
+python -m pip install -r requirements.txt
 ```
 
-Public benchmarks (HuggingFace LogHub):
+Public LogHub prefixes:
 
 ```bash
 python scripts/multi_seed_experiment.py
 python scripts/bgl_experiment.py
-python scripts/graph_transition_experiment.py   # headline GraphWalk HDFS/BGL/HUFLIT → logs/graph_transition_results.json
-python scripts/if_percentile_hdfs_bgl.py        # unified IF 95th-pct. protocol
-python scripts/bgl_grouping_experiment.py       # chronological split before windowing
+python scripts/graph_transition_experiment.py
+python scripts/if_percentile_hdfs_bgl.py
+python scripts/bgl_grouping_experiment.py
 ```
 
-HUFLIT-Career headline (place anonymized export under `data/careerhub_…`, never commit):
+HUFLIT-Career (local CSV only; never commit):
 
 ```bash
-set HUFLIT_CAREER_DIR=data\careerhub_20260604_095930
-python scripts/huflit_baselines_nopad.py        # classical PCA/SVD/IF, client-disjoint
-python scripts/huflit_graph_ablation.py         # GraphWalk vs IF vs fusion, client-disjoint
-# optional HUFLIT-only GraphWalk (same protocol; no HF):
-python scripts/graph_transition_huflit_experiment.py
+set HUFLIT_CAREER_CSV=data\careerhub_20260604_095930\access.csv
+python scripts/huflit_baselines_nopad.py
+python scripts/huflit_graph_ablation.py
 ```
 
-**Legacy / do not use for headline numbers**
+Do **not** use `scripts/huflit_experiment.py` for headline HUFLIT deep numbers (`logs/legacy_contamination/` only).
 
-- `scripts/huflit_experiment.py` — historical deep (DeepLog/TCN/Transformer) path: windows first then sequence-level split. Matches `logs/legacy_contamination/huflit_results.json` only; paper marks those rows as non-comparable to current classical/GraphWalk.
+The compiled manuscript PDF is not published in this repository. Source: `csonet2026.tex`. PDF after SpringerLink.
 
-Do **not** extract the multi-GB campus RAR on `D:\huflit_logs`.
+## Limitations
 
----
+Prefix sizes and splits differ across scorers, so HDFS classical vs deep F1 is not a head-to-head ranking. Drain3 is fit on the evaluated prefix. HUFLIT Isolation Forest F1 has large seed variance. No operational incident-detection claim.
 
-## Contact
+## Citation
 
-- **Tu Hoang Trinh** — `tht.csec2005@gmail.com` / `23dh113972@st.huflit.edu.vn`
-- **Tien Thanh Cao** — `thanhct@huflit.edu.vn`
-- **Ha Manh Tran** — `hatm@huflit.edu.vn`
+```bibtex
+@inproceedings{cao2026networkaware,
+  author    = {Thanh Tien Cao and Tu Hoang Trinh and Ha Manh Tran},
+  title     = {Network-Aware Event Sequence Modeling for User-Behavior and System Log Anomaly Detection},
+  booktitle = {Proc. 15th Int. Conf. Computational Social Networks (CSoNet)},
+  year      = {2026},
+  note      = {Accepted manuscript. Artifact: https://github.com/thtcsec/log-anomaly-tcn-transformer/tree/csonet2026-camera-ready}
+}
+```
 
-Faculty of Information Technology, HUFLIT · Ho Chi Minh City, Vietnam
+Machine-readable citation: [`CITATION.cff`](CITATION.cff). Evaluation protocol: [`ARTIFACT.md`](ARTIFACT.md).
+
+## License
+
+Code is MIT. Do not redistribute LogHub dumps or HUFLIT HTTP logs from this repository.
